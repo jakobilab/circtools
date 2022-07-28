@@ -32,11 +32,11 @@ class PostInstallCommand(install):
 
         import os
         # read the docs does not need any further dependencies
-        if not os.environ.get('READTHEDOCS') == 'True':
-
-            subprocess.check_call(["bash", "scripts/install_create_r_environ.sh"])
-            subprocess.check_call(["bash", "scripts/install_external.sh"])
-            subprocess.check_call(["bash", "scripts/install_add_to_bashrc.sh"])
+        # if not os.environ.get('READTHEDOCS') == 'True':
+        #
+        #     subprocess.check_call(["bash", "scripts/install_create_r_environ.sh"])
+        #     subprocess.check_call(["bash", "scripts/install_external.sh"])
+        #     subprocess.check_call(["bash", "scripts/install_add_to_bashrc.sh"])
 
         install.run(self)
         # place for post install commands
@@ -63,7 +63,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.2.0',
+    version='1.2.2',
 
     description='circtools - a circular RNA toolbox',
     long_description=long_description,
