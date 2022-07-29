@@ -63,18 +63,18 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.2.2',
+    version='1.3.0-dev',
 
     description='circtools - a circular RNA toolbox',
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/dieterich-lab/circtools',
+    url='https://github.com/jakobilab/circtools',
 
     # Author details
 
     author='Tobias Jakobi',
-    author_email='Tobias.Jakobi@med.Uni-Heidelberg.DE',
+    author_email='tjakobi@arizona.edu',
 
     # Choose your license
     license='GNU General Public License (GPL)',
@@ -110,9 +110,11 @@ setup(
         # 'Programming Language :: Python :: 3.3',
         # 'Programming Language :: Python :: 3.4',
         # 'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        # 'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
 
     ],
 
@@ -139,7 +141,7 @@ setup(
        'statsmodels >= 0.9.0'
     ],
 
-    python_requires='>3.5',
+    python_requires='>3.6',
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -206,9 +208,9 @@ setup(
     },
 
     project_urls={  # Optional
-        'Bug Reports': 'https://github.com/dieterich-lab/circtools/issues',
-        'Dieterich Lab': 'https://dieterichlab.org',
-        'Source': 'https://github.com/dieterich-lab/circtools',
+        'Bug Reports': 'https://github.com/jakobilab/circtools/issues',
+        'Jakobi Lab': 'https://jakobilab.org',
+        'Source': 'https://github.com/jakobilab/circtools',
         'Documentation': 'http://docs.circ.tools'
 },
 )
