@@ -20,7 +20,7 @@ import os.path
 import sys
 
 # global settings
-version = "1.2.0"
+version = "1.3.0-dev"
 program_name = "circtools"
 
 
@@ -46,17 +46,17 @@ class CircTools(object):
             description="circtools: a modular, python-based framework for circRNA-related tools that unifies "
                         "several functions in single command line driven software.",
             usage="""circtools [-V] <command> [<args>]
-            
+
             Available commands:
 
                enrich:       circular RNA RBP enrichment scan
                primex:       circular RNA primer design tool
                sirna:        circular RNA sirna design tool
-               detect:       circular RNA detection with DCC
-               reconstruct:  circular RNA reconstruction with FUCHS
+               detect:       circular RNA detection
+               reconstruct:  circular RNA reconstruction
                circtest:     circular RNA statistical testing
                exon:         circular RNA alternative exon analysis
-               quickcheck:   circular RNA sequencing library quick checks               
+               quickcheck:   circular RNA sequencing library quick checks
             """)
         parser.add_argument("command", help="Command to run")
 
@@ -529,7 +529,7 @@ class CircTools(object):
         )
 
         parser.add_argument("--version", action="version", version=version)
-        parser.add_argument("Command", choices=['detect'])
+
         parser.add_argument("Input", metavar="Input", nargs="+",
                             help="Input of the Chimeric.out.junction file from STAR. Alternatively, a sample sheet "
                                  "specifying where your chimeric.out.junction files are, each sample per line, "
@@ -539,9 +539,9 @@ class CircTools(object):
         parser.add_argument("-T", "--threads", dest="cpu_threads", type=int, default=2,
                             help="Number of CPU threads used for computation [default: 2]")
         parser.add_argument("-O", "--output", dest="out_dir", default="./",
-                            help="DCC output directory [default: .]")
-        parser.add_argument("-t", "--temp", dest="tmp_dir", default="_tmp_DCC/",
-                            help="DCC temporary directory [default: _tmp_DCC/]")
+                            help="Output directory [default: .]")
+        parser.add_argument("-t", "--temp", dest="tmp_dir", default="_tmp_circtools/",
+                            help="Temporary directory [default: _tmp_circtools/]")
 
         group = parser.add_argument_group("Find circRNA Options", "Options to find circRNAs from STAR output")
         group.add_argument("-D", "--detect", action="store_true", dest="detect", default=False,
@@ -595,7 +595,7 @@ class CircTools(object):
                                 "[default: False]")
         group.add_argument("-C", "--circ", dest="circ",
                            help="User specified circRNA coordinates, any tab delimited file with first three "
-                                "columns as circRNA coordinates: chr\tstart\tend, which DCC will use to count "
+                                "columns as circRNA coordinates: chr\tstart\tend, which circtools will use to count "
                                 "host gene expression")
         group.add_argument("-B", "--bam", dest="bam", nargs="+",
                            help="A file specifying the mapped BAM files from which host gene expression is computed; "
@@ -605,8 +605,14 @@ class CircTools(object):
 
         parser.add_argument_group(group)
 
-        import DCC
-        DCC.main(parser)
+        args = parser.parse_args(sys.argv[2:])
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import detect.detect
+        detect_instance = detect.detect.Detect(args, program_name, version)
+        detect_instance.run_module()
 
     @staticmethod
     def circtest():
