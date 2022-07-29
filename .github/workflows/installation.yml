@@ -20,28 +20,27 @@ jobs:
           github::dieterich-lab/primex
     - run: Rscript -e 'library(primex)'
     runs-on: ${{ matrix.os }}
-
-   Python_dependency_installation:
-     strategy:
-       matrix:
-         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-         python-version: ["3.7", "3.8", "3.9", "3.10"]
-     name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
-     steps:
-     - uses: actions/checkout@v3
-       with:
-        ref: devel
-     - uses: actions/setup-python@v4
-       with:
-         python-version: ${{ matrix.python-version }}
-         architecture: 'x64'
-     - uses: actions/cache@v2
-       with:
-         path: ~/.cache/pip
-         key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
-     - run: |
-         python3 -m pip install -U pip setuptools
-         python3 -m pip install --upgrade pip
-         python3 -m pip install circtools/
-         circtools --version
-     runs-on: ${{ matrix.os }}
+  Python_dependency_installation:
+   strategy:
+     matrix:
+       os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+       python-version: ["3.7", "3.8", "3.9", "3.10"]
+   name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
+   steps:
+   - uses: actions/checkout@v3
+     with:
+      ref: devel
+   - uses: actions/setup-python@v4
+     with:
+       python-version: ${{ matrix.python-version }}
+       architecture: 'x64'
+   - uses: actions/cache@v2
+     with:
+       path: ~/.cache/pip
+       key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
+   - run: |
+       python3 -m pip install -U pip setuptools
+       python3 -m pip install --upgrade pip
+       python3 -m pip install circtools/
+       circtools --version
+   runs-on: ${{ matrix.os }}
