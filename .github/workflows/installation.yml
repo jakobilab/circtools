@@ -16,8 +16,8 @@ jobs:
       with:
         cache-version: 1
         extra-packages: |
-          ./contrib/circtest
-          ./contrib/primex
+          local::circtools/contrib/circtest
+          local::circtools/contrib/primex
     - run: Rscript -e 'library(primex)'
     runs-on: ${{ matrix.os }}
   Python_dependency_installation:
