@@ -1,5 +1,5 @@
-name: Run circtools detect
-on: [push]
+name: Installation
+on: [pull-request]
 jobs:
   R_dependency_installation:
     strategy:
