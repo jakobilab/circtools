@@ -1,0 +1,57 @@
+name: Run circtools detect
+on: [push]
+jobs:
+  R_dependency_installation:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        R: ['4.1.0' , '4.2.0' ]
+    name: R ${{ matrix.R }} | ${{ matrix.os }}
+    steps:
+    - name: Create files
+      uses: actions/checkout@v3
+      with:
+       ref: devel
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    - run: pwd; ls -la
+    - name: Set up R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        extra-packages: |
+          local::contrib/circtest
+          local::contrib/primex
+    - name: Checking library loading
+      run: Rscript -e 'library(primex)'
+
+    runs-on: ${{ matrix.os }}
+
+#
+#
+#  Python_dependency_installation:
+#   strategy:
+#     matrix:
+#       os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+#       python-version: ["3.7", "3.8", "3.9", "3.10"]
+#   name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
+#   steps:
+#   - uses: actions/checkout@v3
+#     with:
+#      ref: devel
+#   - uses: actions/setup-python@v4
+#     with:
+#       python-version: ${{ matrix.python-version }}
+#       architecture: 'x64'
+#   - run: |
+#       python3 -m pip install -U pip setuptools
+#       python3 -m pip install --upgrade pip
+#       python3 -m pip install ./
+#       circtools --version
+#   - uses: actions/cache@v2
+#     with:
+#       path: ~/.cache/pip
+#       key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
+#   runs-on: ${{ matrix.os }}
