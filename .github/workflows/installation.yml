@@ -1,4 +1,4 @@
-name: Test of base installation procedure for R and Python
+name: Run circtools detect
 on: [push]
 jobs:
   R_dependency_installation:
@@ -22,7 +22,11 @@ jobs:
           local::contrib/circtest
           local::contrib/primex
     - run: Rscript -e 'library(primex)'
+
     runs-on: ${{ matrix.os }}
+
+
+
   Python_dependency_installation:
    strategy:
      matrix:
@@ -37,13 +41,13 @@ jobs:
      with:
        python-version: ${{ matrix.python-version }}
        architecture: 'x64'
-   - uses: actions/cache@v2
-     with:
-       path: ~/.cache/pip
-       key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
    - run: |
        python3 -m pip install -U pip setuptools
        python3 -m pip install --upgrade pip
        python3 -m pip install ./
        circtools --version
+   - uses: actions/cache@v2
+     with:
+       path: ~/.cache/pip
+       key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
    runs-on: ${{ matrix.os }}
