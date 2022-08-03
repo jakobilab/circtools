@@ -1,7 +1,7 @@
 name: Circtools CI
 on: [push]
 jobs:
-  R_dependency_installation:
+  Main:
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
@@ -32,7 +32,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
     - name: Updating setuptools
-     - run: |
+      run: |
          python3 -m pip install -U pip setuptools
     - name: Updating pip
       run: |
@@ -45,35 +45,8 @@ jobs:
       run: |
          circtools --version
     - name: Caching Python setup
-     - uses: actions/cache@v2
-       with:
-         path: ~/.cache/pip
-         key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
     runs-on: ${{ matrix.os }}
-
-#
-#
-#  Python_dependency_installation:
-#   strategy:
-#     matrix:
-#       os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-#       python-version: ["3.7", "3.8", "3.9", "3.10"]
-#   name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
-#   steps:
-#   - uses: actions/checkout@v3
-#     with:
-#      ref: devel
-#   - uses: actions/setup-python@v4
-#     with:
-#       python-version: ${{ matrix.python-version }}
-#       architecture: 'x64'
-#   - run: |
-#       python3 -m pip install -U pip setuptools
-#       python3 -m pip install --upgrade pip
-#       python3 -m pip install ./
-#       circtools --version
-#   - uses: actions/cache@v2
-#     with:
-#       path: ~/.cache/pip
-#       key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
-#   runs-on: ${{ matrix.os }}
