@@ -53,29 +53,20 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          python3 -m pip install ./
-         circtools --version
-         which circtools
     - name: Check if circtools starts
       run: |
          circtools --version
+         which circtools
     - name: Downloading circtools detect test data
       run: |
-         wget https://arizona.box.com/shared/static/0wsx9py8w4unot7pslx6uavjpqp62vrf.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         wget https://arizona.box.com/shared/static/rcjn6tshjlgvfvngcvtzma8wx464wipo.bz2 -O circtools_detect_ci_input_data.tar.bz2
          tar xvf circtools_detect_ci_input_data.tar.bz2
+    - name: Running circtools detect with minimal data set
+      run: |
          cd circtools_detect_ci_input_data
-         pwd
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+         circtools detect @samplesheet -ss -T 2 -D -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 2 2 -fg -G -F -L 20 -O circtools_ci
+    - name: Checking generated output against master output
+      run: |
+         cd circtools_ci
+         md5sum -c ../circtools_master/md5sums
     runs-on: ${{ matrix.os }}
