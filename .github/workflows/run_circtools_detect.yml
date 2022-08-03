@@ -1,5 +1,10 @@
 name: Circtools CI
-on: [push]
+
+on:
+  push:
+  pull_request:
+#  schedule:
+#    - cron: '0 7 * * *'
 
 concurrency:
   group: ci-tests-${{ github.ref }}-1
