@@ -33,7 +33,6 @@ jobs:
     - name: Set up R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        cache-version: 1
         extra-packages: |
           local::contrib/circtest
           local::contrib/primex
@@ -57,9 +56,9 @@ jobs:
     - name: Check if circtools starts
       run: |
          circtools --version
-    - name: Caching Python setup
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
+#    - name: Caching Python setup
+#      uses: actions/cache@v2
+#      with:
+#        path: ~/.cache/pip
+#        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
     runs-on: ${{ matrix.os }}
