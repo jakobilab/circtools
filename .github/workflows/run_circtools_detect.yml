@@ -33,6 +33,7 @@ jobs:
     - name: Set up R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
+        cache-version: 1
         extra-packages: |
           local::contrib/circtest
           local::contrib/primex
