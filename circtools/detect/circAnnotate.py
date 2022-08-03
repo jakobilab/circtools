@@ -75,7 +75,7 @@ class CircAnnotate(object):
 
     def uniqstring(self, strings, sep=','):
         string = set(strings.split(sep))
-        string = sep.join(string)
+        string = sep.join(sorted(string))
         return string
 
     def annotateregions(self, circfile, annotation_tree, output):
