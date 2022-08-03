@@ -53,12 +53,28 @@ jobs:
       run: |
          python3 -m pip install ./
          circtools --version
+         which circtools
     - name: Check if circtools starts
       run: |
          circtools --version
-#    - name: Caching Python setup
-#      uses: actions/cache@v2
-#      with:
-#        path: ~/.cache/pip
-#        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
+    - name: Downloading circtools detect test data
+      run: |
+         wget https://arizona.box.com/shared/static/0wsx9py8w4unot7pslx6uavjpqp62vrf.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         tar xvf circtools_detect_ci_input_data.tar.bz2
+         cd circtools_detect_ci_input_data
+         pwd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     runs-on: ${{ matrix.os }}
