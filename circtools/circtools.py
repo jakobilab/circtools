@@ -1020,7 +1020,7 @@ class CircTools(object):
     def reconstruct():
         parser = argparse.ArgumentParser(
             description="circular RNA reconstruction")
-        # NOT prefixing the argument with -- means it"s not optional
+        # NOT prefixing the argument with -- means it's not optional
 
         # input
         parser.add_argument('-C', '--circIDs', dest='circlefile', default='none',
@@ -1068,8 +1068,15 @@ class CircTools(object):
         parser.add_argument('-P', '--cpus', dest='num_cpus', default=4, type=int,
                             help='Number of CPUs used.')
 
-        import FUCHS
-        FUCHS.main(parser)
+        args = parser.parse_args(sys.argv[2:])
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import reconstruct.reconstruct
+        reconstruct_instance = reconstruct.reconstruct.Reconstruct(args, program_name, version)
+        reconstruct_instance.run_module()
+
 
 if __name__ == "__main__":
     main()
