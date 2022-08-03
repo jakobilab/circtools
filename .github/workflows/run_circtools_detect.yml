@@ -70,6 +70,6 @@ jobs:
          cd circtools_detect_ci_input_data
          cd circtools_ci
          ls -la
-         md5sum -c ../circtools_master/md5sums
          diff ../circtools_master/LinearCount LinearCount
+         md5sum -c ../circtools_master/md5sums
     runs-on: ${{ matrix.os }}
