@@ -1,5 +1,10 @@
 name: Circtools CI
 on: [push]
+
+concurrency:
+  group: ci-tests-${{ github.ref }}-1
+  cancel-in-progress: true
+
 jobs:
   Main:
     strategy:
