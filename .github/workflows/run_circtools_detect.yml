@@ -4,9 +4,12 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-        R: ['4.1.0' , '4.2.0' ]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+#        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+#        R: ['4.1.0' , '4.2.0' ]
+#        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-22.04]
+        R: ['4.2.0' ]
+        python-version: ["3.10"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
@@ -48,5 +51,5 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('dev-requirements.txt') }}
+        key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
     runs-on: ${{ matrix.os }}
