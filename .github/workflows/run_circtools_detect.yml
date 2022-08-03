@@ -64,10 +64,11 @@ jobs:
     - name: Running circtools detect with minimal data set
       run: |
          cd circtools_detect_ci_input_data
-         circtools detect @samplesheet -ss -T 2 -D -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 2 2 -fg -G -F -L 20 -O circtools_ci -k
+         circtools detect @samplesheet -T 2 -D -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 2 2 -fg -G -F -L 20 -O circtools_ci -k
     - name: Checking generated output against master output
       run: |
          cd circtools_detect_ci_input_data
          cd circtools_ci
+         ls -la
          md5sum -c ../circtools_master/md5sums
     runs-on: ${{ matrix.os }}
