@@ -219,7 +219,7 @@ class CircNonCircExon(object):
                 exon_number = int(custom_exon_id.split(':')[1]) + 1
         else:
             if start:
-                print(custom_exon_id)
+
                 exon_number = int(custom_exon_id.split(':')[1]) - 1
             else:
                 exon_number = int(custom_exon_id.split(':')[1]) + 1
