@@ -59,7 +59,7 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-         wget https://arizona.box.com/shared/static/qe1nlr6oow96hqstrkqw8kd6nbgzjzfi.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         wget https://arizona.box.com/shared/static/k1gyn2h3884s302uzxdvuu6w3ebvnljg.bz2 -O circtools_detect_ci_input_data.tar.bz2
          tar xvf circtools_detect_ci_input_data.tar.bz2
     - name: Running circtools detect with minimal data set
       run: |
