@@ -41,7 +41,7 @@ class Primex(circ_module.circ_template.CircTemplate):
         self.temp_dir = self.cli_params.global_temp_dir
         self.gtf_file = self.cli_params.gtf_file
         self.fasta_file = self.cli_params.fasta_file
-        self.dcc_file = self.cli_params.dcc_file
+        self.detect_dir = self.cli_params.detect_dir
         self.output_dir = self.cli_params.output_dir
         self.organism = self.cli_params.organism
         self.gene_list = self.cli_params.gene_list
@@ -223,7 +223,7 @@ class Primex(circ_module.circ_template.CircTemplate):
         else:
             exons = self.read_annotation_file(self.gtf_file, entity="exon")
 
-            with open(self.dcc_file) as fp:
+            with open(self.detect_dir) as fp:
 
                 for line in fp:
 
