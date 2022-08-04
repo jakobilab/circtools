@@ -131,7 +131,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
        'HTSeq >= 0.11.0',
-       'pysam >= 0.13',
+       'pysam >= 0.16.0.1',
        'numpy >= 1.14.5',
        'pybedtools >= 0.7.10',
        'biopython >= 1.71',
