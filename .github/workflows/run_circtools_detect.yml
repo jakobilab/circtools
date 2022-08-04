@@ -71,5 +71,6 @@ jobs:
          cd circtools_ci
          ls -la
          diff ../circtools_master/LinearCount LinearCount
+         wc -l *
          md5sum -c ../circtools_master/md5sums
     runs-on: ${{ matrix.os }}
