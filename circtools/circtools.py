@@ -49,14 +49,14 @@ class CircTools(object):
 
             Available commands:
 
-               enrich:       circular RNA RBP enrichment scan
+               detect:       circular RNA detection
+               quickcheck:   circular RNA sequencing library quick checks
+               circtest:     circular RNA statistical testing
                primex:       circular RNA primer design tool
                sirna:        circular RNA sirna design tool
-               detect:       circular RNA detection
                reconstruct:  circular RNA reconstruction
-               circtest:     circular RNA statistical testing
+               enrich:       circular RNA RBP enrichment scan
                exon:         circular RNA alternative exon analysis
-               quickcheck:   circular RNA sequencing library quick checks
             """)
         parser.add_argument("command", help="Command to run")
 
@@ -340,7 +340,7 @@ class CircTools(object):
     @staticmethod
     def sirna():
         parser = argparse.ArgumentParser(
-            description="circular RNA sirna design")
+            description="circular RNA siRNA design")
         # NOT prefixing the argument with -- means it"s not optional
 
         group = parser.add_argument_group("Input")
