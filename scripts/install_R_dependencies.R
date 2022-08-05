@@ -43,6 +43,11 @@ pkgs <- c(
     "EnsDb.Hsapiens.v86"
 )
 
+local({r <- getOption("repos")
+       r["CRAN"] <- "https://cloud.r-project.org"
+       options(repos=r)
+})
+
 # check if devtools is already installed
 pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]
 
