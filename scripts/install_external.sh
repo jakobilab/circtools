@@ -19,14 +19,14 @@ function install_bedtools {
     cd /tmp/
 
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        wget https://github.com/arq5x/bedtools2/releases/download/v2.29.2/bedtools-2.29.2.tar.gz
+        wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools-2.30.0.tar.gz
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        curl -O https://github.com/arq5x/bedtools2/releases/download/v2.29.2/bedtools-2.29.2.tar.gz
+        curl -O https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools-2.30.0.tar.gz
     else
         echo "Sorry, this OS type not supported. Please contact circtools@dieterichlab.org for help."
     fi
 
-    tar -zxvf bedtools-2.27.1.tar.gz
+    tar -zxvf bedtools-2.30.0.tar.gz
     cd bedtools2
     make
     mkdir -p  $HOME/.local/bin/
@@ -55,8 +55,8 @@ else
      install_bedtools
 fi
 
-# install DCC
-pip install -U git+https://github.com/dieterich-lab/DCC.git@devel
-
-# install FUCHS
-pip install -U git+https://github.com/dieterich-lab/FUCHS.git@FUCHS-0.3
+## install DCC
+#pip install -U git+https://github.com/dieterich-lab/DCC.git@devel
+#
+## install FUCHS
+#pip install -U git+https://github.com/dieterich-lab/FUCHS.git@FUCHS-0.3
