@@ -62,7 +62,7 @@ if (
             BiocManager::install(pkgs)
 
 } else {
-    source("https://bioconductor.statistik.tu-dortmund.de/biocLite.R")
+    source("https://bioconductor.org/biocLite.R")
     biocLite()
 
     if (length(pkgs) > 0)
