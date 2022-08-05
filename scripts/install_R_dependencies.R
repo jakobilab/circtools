@@ -43,11 +43,6 @@ pkgs <- c(
     "EnsDb.Hsapiens.v86"
 )
 
-local({r <- getOption("repos")
-       r["CRAN"] <- "https://cloud.r-project.org"
-       options(repos=r)
-})
-
 # check if devtools is already installed
 pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]
 
@@ -63,6 +58,11 @@ if (
     if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
 
+        local({r <- getOption("repos")
+             r["CRAN"] <- "https://cloud.r-project.org"
+             options(repos=r)
+        })
+
         if (length(pkgs) > 0)
             BiocManager::install(pkgs)
 
@@ -70,8 +70,14 @@ if (
     source("https://bioconductor.org/biocLite.R")
     biocLite()
 
+    local({r <- getOption("repos")
+         r["CRAN"] <- "https://cloud.r-project.org"
+         options(repos=r)
+    })
+
     if (length(pkgs) > 0)
         biocLite(pkgs)
+
 }
 
 # load devtools library
