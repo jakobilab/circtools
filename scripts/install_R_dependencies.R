@@ -44,7 +44,7 @@ pkgs <- c(
 )
 
 # set mirror
-options(repos = c(CRAN = "https://cran.uni-muenster.de/"))
+# options(repos = c(CRAN = "https://cran.uni-muenster.de/"))
 
 # check if devtools is already installed
 pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]

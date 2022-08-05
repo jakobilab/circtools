@@ -16,29 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function install_bedtools {
-    cd /tmp/
 
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools-2.30.0.tar.gz
+        wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary -O /usr/bin/bedtools
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        curl -O https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools-2.30.0.tar.gz
+        curl -O https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary -o /usr/bin/bedtools
     else
         echo "Sorry, this OS type not supported. Please contact circtools@dieterichlab.org for help."
     fi
-
-    tar -zxvf bedtools-2.30.0.tar.gz
-    cd bedtools2
-    make
-    mkdir -p  $HOME/.local/bin/
-    cp -av bin/* $HOME/.local/bin/
-    # mkdir -p  $HOME/.local/share/bedtools/
-    # cp genomes -av $HOME/.local/share/bedtools/
-    rm /tmp/bedtools2 -rf
 }
-
-
-# install dependencies for R first
-Rscript scripts/install_R_dependencies.R
 
 BEDTOOLS=`which bedtools`
 
@@ -54,9 +40,3 @@ if [ $BEDTOOLS ]; then
 else
      install_bedtools
 fi
-
-## install DCC
-#pip install -U git+https://github.com/dieterich-lab/DCC.git@devel
-#
-## install FUCHS
-#pip install -U git+https://github.com/dieterich-lab/FUCHS.git@FUCHS-0.3
