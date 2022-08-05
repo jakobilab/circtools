@@ -43,9 +43,6 @@ pkgs <- c(
     "EnsDb.Hsapiens.v86"
 )
 
-# set mirror
-# options(repos = c(CRAN = "https://cran.uni-muenster.de/"))
-
 # check if devtools is already installed
 pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]
 
@@ -75,8 +72,8 @@ if (
 # load devtools library
 library(devtools)
 
-# install CircTest from the Dieterich Lab GitHub page from master branch
-install_github("dieterich-lab/CircTest", ref = "master")
-
-# install primex from the Dieterich Lab GitHub page from master branch
-install_github("dieterich-lab/primex", ref = "master")
+# # install CircTest from the Dieterich Lab GitHub page from master branch
+# install_github("dieterich-lab/CircTest", ref = "master")
+#
+# # install primex from the Dieterich Lab GitHub page from master branch
+# install_github("dieterich-lab/primex", ref = "master")
