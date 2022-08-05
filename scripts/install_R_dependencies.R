@@ -37,7 +37,6 @@ pkgs <- c(
     "formattable",
     "dplyr",
     "RColorBrewer",
-    "colortools",
     "EnsDb.Rnorvegicus.v79",
     "EnsDb.Mmusculus.v79",
     "EnsDb.Hsapiens.v86"
