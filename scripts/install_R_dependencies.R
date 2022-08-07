@@ -36,10 +36,7 @@ pkgs <- c(
     "kableExtra",
     "formattable",
     "dplyr",
-    "RColorBrewer",
-    "EnsDb.Rnorvegicus.v79",
-    "EnsDb.Mmusculus.v79",
-    "EnsDb.Hsapiens.v86"
+    "RColorBrewer"
 )
 
 # check if devtools is already installed
