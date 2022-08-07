@@ -6,7 +6,6 @@ suppressMessages(library(kableExtra))
 suppressMessages(library(dplyr))
 suppressMessages(library(magrittr))
 suppressMessages(library(RColorBrewer))
-suppressMessages(library(colortools))
 
 # switch to red warning color if more blast hits are found
 high_count_number = 0
@@ -112,10 +111,6 @@ construct_color_column3 <- function(column)
     color_column <- append(color_column, "#ffffff")
   }
   return(as.character(color_column))
-}
-
-generate_complementary_column <- function (input){
-  return (complementary(input)[2])
 }
 
 # read data file name from args
