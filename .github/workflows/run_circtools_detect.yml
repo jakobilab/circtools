@@ -72,7 +72,7 @@ jobs:
          ls -la
          wc -l *
          diff ../circtools_master/LinearCount LinearCount
-         if [ "$RUNNER_OS" == "Linux" ];
+         if [ "$RUNNER_OS" == "Linux" ]; then
             md5sum -c ../circtools_master/md5sums
          elif [ "$RUNNER_OS" == "macOS" ]; then
             md5 -c ../circtools_master/md5sums
