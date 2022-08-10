@@ -39,11 +39,6 @@ jobs:
           local::contrib/primex
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
-    - name: Install Ubuntu coreutils
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          sudo apt-get install -y coreutils
-        fi
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -77,6 +72,6 @@ jobs:
          ls -la
          wc -l *
          diff ../circtools_master/LinearCount LinearCount
-         sha1sum -c ../circtools_master/sha1sums
+         sha1sum -c ../circtools_master/sha1sums.txt
 
     runs-on: ${{ matrix.os }}
