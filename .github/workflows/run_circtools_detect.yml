@@ -72,6 +72,10 @@ jobs:
          ls -la
          wc -l *
          diff ../circtools_master/LinearCount LinearCount
-         sha1sum -c ../circtools_master/sha1sums.txt
+         if [ "$RUNNER_OS" == "Linux" ]; then
+           sha1sum -c ../circtools_master/sha1sums.txt
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+           shasum -c ../circtools_master/sha1sums.txt
+         fi
 
     runs-on: ${{ matrix.os }}
