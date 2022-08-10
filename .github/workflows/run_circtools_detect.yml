@@ -39,6 +39,11 @@ jobs:
           local::contrib/primex
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
+    - name: Install Ubuntu coreutils
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          apt-get install -y coreutils
+        fi
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
