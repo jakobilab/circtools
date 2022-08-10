@@ -59,7 +59,7 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-         wget https://arizona.box.com/shared/static/k1gyn2h3884s302uzxdvuu6w3ebvnljg.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         wget https://arizona.box.com/shared/static/3xr9wmu2rq2i240leh5rothntgkmgzq3.bz2 -O circtools_detect_ci_input_data.tar.bz2
          tar xvf circtools_detect_ci_input_data.tar.bz2
     - name: Running circtools detect with minimal data set
       run: |
@@ -72,9 +72,6 @@ jobs:
          ls -la
          wc -l *
          diff ../circtools_master/LinearCount LinearCount
-         if [ "$RUNNER_OS" == "Linux" ]; then
-            md5sum -c ../circtools_master/md5sums
-         elif [ "$RUNNER_OS" == "macOS" ]; then
-            md5 -c ../circtools_master/md5sums
-         fi
+         sha1sum -c ../circtools_master/sha1sums
+
     runs-on: ${{ matrix.os }}
