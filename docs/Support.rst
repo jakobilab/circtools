@@ -20,8 +20,8 @@ Via GitHub
 
 Please use the following GitHub projects to file your issues:
 
-* `circtools <https://github.com/dieterich-lab/circtools/issues>`_: for issues related to circtools itself
-* `DCC <https://github.com/dieterich-lab/DCC/issues>`_: for issues related to the circtools detect module / DCC
+* `circtools <https://github.com/jakobilab/circtools/issues>`_: for issues related to circtools itself
+* `DCC <https://github.com/jakobilab/DCC/issues>`_: for issues related to the circtools detect module / DCC
 * `CircTest <https://github.com/dieterich-lab/CircTest/issues>`_: for issues related to the circtools circtest module / the CircTest library
 * `FUCHS <https://github.com/dieterich-lab/FUCHS/issues>`_: for issues related to the circtools circtest reconstruct module / FUCHS
 * `primex <https://github.com/dieterich-lab/primex/issues>`_: for issues related to the circtools primex module / the primex library
@@ -29,7 +29,7 @@ Please use the following GitHub projects to file your issues:
 Via Mail
 ^^^^^^^^^^^
 
-If you do not have a GitHub account you can also reach use via mail: `circtools@dieterichlab.org <mailto:circtools@dieterichlab.org>`_
+If you do not have a GitHub account you can also reach use via mail: `circtools@jakobilab.org <mailto:circtools@jakobilab.org>`_
 
 
 Literature

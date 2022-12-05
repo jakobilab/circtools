@@ -71,7 +71,7 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
 
     # ... place your copy of wonderdump.sh in this directory ...
     # We need to update it slightly:
-    wget https://raw.githubusercontent.com/dieterich-lab/circtools/master/docs/wonderdump.sh.patch
+    wget https://raw.githubusercontent.com/jakobilab/circtools/master/docs/wonderdump.sh.patch
     patch wonderdump.sh < wonderdump.sh.patch
 
     # get list of accession numbers to download
@@ -138,7 +138,7 @@ In a first step, remaining adapter sequences originating from the sequencing-pro
 .. code-block:: bash
 
     # download the wrapper scrips for flexbar
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_flexbar_paired.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_flexbar_paired.sh
     # add execute permission
     chmod 755 slurm_flexbar_paired.sh
     mkdir flexbar
@@ -157,7 +157,7 @@ Next, rRNA reads are removed. Normally, we are not interested in these reads, es
 .. code-block:: bash
 
     # download wrapper for bowtie2
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_bowtie2_rRNA_filter_paired.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_bowtie2_rRNA_filter_paired.sh
     chmod 755 slurm_bowtie2_rRNA_filter_paired.sh
     mkdir rrna/
     cd flexbar/
@@ -182,7 +182,7 @@ Please note that the supplied examples are a little aged and will not work with 
 .. code-block:: bash
 
     # download wrapper for STAR
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_circtools_detect_paired_mapping.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_circtools_detect_paired_mapping.sh
     chmod 755 slurm_circtools_detect_paired_mapping.sh
 
 To allow this script to work the following changes are needed:

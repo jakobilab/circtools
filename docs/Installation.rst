@@ -33,7 +33,7 @@ The GitHub installation will install the most recent version directly from the s
 
 .. code-block:: bash
 
-    git clone https://github.com/dieterich-lab/circtools.git
+    git clone https://github.com/jakobilab/circtools.git
     cd circtools
     pip3 install . --verbose --user
 
@@ -104,7 +104,7 @@ Getting the source code
 
 .. code-block:: bash
 
-    git clone https://github.com/dieterich-lab/circtools.git
+    git clone https://github.com/jakobilab/circtools.git
 
 Installation
 ^^^^^^^^^^^^
