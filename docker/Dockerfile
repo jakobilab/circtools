@@ -22,6 +22,8 @@ RUN useradd -ms /bin/bash circtools
 
 RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/R.gpg  >/dev/null; echo "deb [signed-by=/etc/apt/trusted.gpg.d/R.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | tee -a /etc/apt/sources.list.d/r-project.list;  mkdir /root/.R/;  wget https://raw.githubusercontent.com/jakobilab/circtools/devel/docker/Makevars -O /root/.R/Makevars; apt-get update -y
 
+COPY Makevars /root/.R/Makevars
+
 # install R and Python
 
 RUN apt-get update; DEBIAN_FRONTEND=noninteractive TZ=America/Phoenix apt-get install --no-install-recommends r-base python3 python3-dev make g++ gfortran libpng-dev zlib1g-dev libbz2-dev libjpeg-turbo8-dev libcurl4-openssl-dev libxml2-dev libblas-dev liblzma-dev libfontconfig1-dev liblapack-dev libssl-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libtiff5-dev libjpeg-dev -y;
