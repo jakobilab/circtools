@@ -27,17 +27,14 @@ If you are using **circtools** in your work, **please cite the following publica
 
 `Jakobi, T., Uvarovskii, A., & Dieterich, C. (2019). circtools — a one-stop software solution for circular RNA research. Bioinformatics, 35(13), 2326-2328. <https://academic.oup.com/bioinformatics/article/35/13/2326/5194340>`_
 
-
 License
 ========
 **circtools** is freely available under the GNU General Public License v3.0.
-
 
 Issues
 ===============
 
 Problems or issues should be reported `via the GitHub issue system <https://github.com/jakobilab/circtools/issues>`_.
-
 
 Table of contents
 ==================
