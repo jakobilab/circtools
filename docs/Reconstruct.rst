@@ -5,30 +5,7 @@ The circtools reconstruct module is based on FUCHS (FUll circular RNA CHaracteri
 
 The reads from each circle are extracted by the reconstruction module and saved in an individual BAM files. Based on these BAM files, circtools will detect alternative splicing within the same circle boundaries, summarize different circular isoforms from the same host-gene, and generate coverage plots for each circRNA. It will also cluster circles based on their coverage profile. These results can be used to identify potential false positive circRNAs.
 
-Manual installation instructions
---------------------------------
-
-Required tools and packages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-FUCHS dependes on **bedtools (>= 2.27.0)**, **samtools (>= 1.3.1)**,  **Python (> 2.7; pysam>=0.13.0, pybedtools>=0.7.8, numpy>=1.11.2, pathos>=0.2.1)**, and **R(>= 3.2.0; amap, Hmisc, gplots)**. All Python an R dependencies will be installed automatically when installing FUCHS. Please make sure to have the correct versions of bedtools and samtools in your ``$PATH``.
-
-Installation of FUCHS
-^^^^^^^^^^^^^^^^^^^^^
-.. code-block:: bash
-
-  $ git clone https://github.com/dieterich-lab/FUCHS.git
-  $ cd FUCHS
-
-  $ python2 setup.py install --user
-
-  # This will install a FUCHS binary in $HOME/.local/bin/
-  # make sure this folder is in your $PATH
-
-  # Check the installation:
-
-  $ FUCHS --help
-
+The reconstruction module depends on **bedtools (>= 2.27.0)**, **samtools (>= 1.3.1)**,  **Python (>= 3.7; pysam> pybedtools, numpy, and pathos)**, and **R(>= 4.0.0; amap, Hmisc, gplots)**. All Python an R dependencies will be installed automatically when installing **circtools**. Please make sure to have the correct versions of bedtools and samtools in your ``$PATH``.
 
 General usage
 --------------
@@ -47,10 +24,10 @@ Mapping of RNA-Seq data and detection of circRNAs
 
 Please see the documentation of `circtools detect <Detect.html>`_ for instructions how to pre-process the data.
 
-Use a wrapper script for the circtools reconstruct call
+Usage of circtools reconstruct
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As for other parts of the circtools pipeline, a wrapper Bash script has been developed that does all necessary preprocessing after the initial detection step and directly calls the reconstruction module afterwards. We continue by using the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/article/pii/S167202291630033X>`_ data set that also has been used as an example for the `circtools detect <Detect.html>`_ module.
+We continue by using the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/article/pii/S167202291630033X>`_ data set that also has been used as an example for the `circtools detect <Detect.html>`_ module.
 
 .. code-block:: bash
 
@@ -72,7 +49,6 @@ As for other parts of the circtools pipeline, a wrapper Bash script has been dev
 
 Manually running the reconstruction module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 The above wrapper scripts handles all preprocessing and conversion steps. However, advanced users may want to start the module directly. ``circtools reconstruct`` starts the pipeline which will extract reads, check mate status, detect alternative splicing events, classify different isoforms, coverage profiles, and cluster circRNAs based on coverage profiles. Below a sample call for the reconstruct module in single sample mode using circtools detect input data:
 

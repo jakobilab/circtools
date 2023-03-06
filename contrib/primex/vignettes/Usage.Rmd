@@ -1,0 +1,244 @@
+---
+title: "Primer design"
+author: "Alexey Uvarovskii"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+body {
+  max-width: 900px;
+}
+</style>
+
+## Primer design for transcripts and arbitrary sequences
+
+The package allows to run the Primer3 with user specified parameters.
+There is a shortcut for design, in which one of the primers
+must overlap with the splice junction.
+
+### A quick start
+
+```{r eval = FALSE}
+library(primex)
+exon1 <- paste0(
+  "CTCACCATGGATGATGATATCGCCGCGCTCGTCGTCGACAACGGCTCCGGCATGTGCAAG",
+  "GCCGGCTTCGCGGGCGACGATGCCCCCCGGGCCGTCTTCCCCTCCATCGTGGGGCGCCCC",
+  "AGGCACCAG")
+exon2 <- paste0(
+ "GGCGTGATGGTGGGCATGGGTCAGAAGGATTCCTATGTGGGCGACGAGGCCCAGAGCAAG",
+ "AGAGGCATCCTCACCCTGAAGTACCCCATCGAGCACGGCATCGTCACCAACTGGGACGAC",
+ "ATGGAGAAAATCTGGCACCACACCTTCTACAATGAGCTGCGTGTGGCTCCCGAGGAGCAC",
+ "CCCGTGCTGCTGACCGAGGCCCCCCTGAACCCCAAGGCCAACCGCGAGAAGATGACCCAG") 
+
+seqOpts <- seqSettings(
+  seqId = "example1",
+  seq = c(exon1, exon2))
+
+primers <- design(seqOpts)
+```
+
+### A quick start with annotations
+
+```{r eval = FALSE}
+library(primex)  
+
+library(EnsDb.Hsapiens.v86)
+library(BSgenome.Hsapiens.NCBI.GRCh38)
+db <- EnsDb.Hsapiens.v86
+bsg <- BSgenome.Hsapiens.NCBI.GRCh38
+
+# define sequences
+geneName <- "BCL6"
+exonsByTx <- ensembldb::exonsBy(db, filter = GenenameFilter(geneName))
+# find unique splice junctions 
+sjExonPairs <- selectPairs(exonsByTx)
+# or report all the pairs
+# sjExonPairs <- selectPairs(exonsByTx, tolerance = -1)
+
+# take your transcript of interest
+exseqs <- addSeq(sjExonPairs$ENST00000419510, bsg)
+
+# run Primer3 for one of splice junction pair
+seqOpts <- seqSettings(gr = exseqs$`ENSE00001666929|ENSE00001377234`)
+primers <- design(seqOpts)
+```
+
+## Step by step
+
+```{r include = FALSE}
+suppressPackageStartupMessages(
+library(primex)  
+)
+```
+
+
+### Find unique exons 
+
+Let us consider human BCL6 gene, which has a lot of isoforms.
+To identify which exons to use for the primer design,
+we need a `GRanges` list with the gene model, such as:
+
+1. Names of the list items correspond to the transcript names.
+2. Exons are ordered according to their rank 
+(`exon_rank` in the `ensembldb` packages).
+3. A metadata column `exon_id` must be present in the GRanges objects.
+
+```{r}
+primex::bcl6exons[[1]]
+```
+
+In order to distinguish isoforms using PCR, we look for unique splice junctions,
+i.e. unique exon pairs. **This is the default behaviour. **
+For every transcript we may receive several such 
+candidates.
+```{r}
+sjExonPairs <- selectPairs(primex::bcl6exons)
+```
+Since we included transcripts with all types of support, 
+there are not so many unique junctions:
+```{r}
+sapply(sjExonPairs, length)
+```
+
+The gene model can be visualised using `primex` as well:
+
+```{r fig.width=6, fig.height=4, dpi = 300, out.width="70%"}
+plotSegments(primex::bcl6exons)
+```
+
+
+### Provide sequences 
+
+If there is available BSgenome package,
+one may retrieve exonic sequences from it.
+We implemented a functionality  to ease this interface:
+
+```{r}
+suppressPackageStartupMessages(
+  library(BSgenome.Hsapiens.NCBI.GRCh38)
+)
+bsg <- BSgenome.Hsapiens.NCBI.GRCh38
+
+exonPairs <- sjExonPairs$ENST00000438077
+exseqs <- addSeq(exonPairs, bsg)
+exseqs$`ENSE00001752117|ENSE00001377234`
+```
+
+### Run Primer3
+
+The *Primer3* program has a lot of parameters.
+There are two sets, *SEQUENCE* parameters and *PRIMER* parameters.
+The *SEQUENCE* parameters describe such items, as a sequence identificator,
+the sequence of nucleotides itself, 
+splice junction position, etc. One may start from the `GRanges` object, 
+which has a column `seq` with a nucleotide sequence for every item:
+```{r}
+seqOpts <- seqSettings(gr = exseqs$`ENSE00001752117|ENSE00001377234`)
+res <- design(seqOpts)
+# take first two pairs: Primer3 reports by default maximum 5 pairs
+knitr::kable(t(res$primers)[,1:2])
+```
+
+### Result in GRanges 
+
+```{r fig.width=6, fig.height=5, dpi = 300, out.width="70%"}
+grPrimers <- toGRanges(res$primers, exseqs$`ENSE00001752117|ENSE00001377234`)
+names(grPrimers) <- paste("primers", 1:2)
+plotSegments(bcl6exons, primersToList(grPrimers))
+```
+
+
+### More on parameters
+
+There are some shortcuts for the most common parameters.
+They can be combined with the pipe operator `%>%`
+
+```{r}
+p3Opts <- p3Settings() %>%
+  primerSize(min = 18, optimal = 20, max = 22) %>%
+  primerTm(min = 57, optimal = 61, max = 64) %>%
+  productSize(c(100,400))
+```
+
+or they can be used on their own:
+```{r}
+p3Opts <- productSize(p3Opts, c(200,300))
+```
+
+
+All the parameters can be explicitly specified:
+```{r}
+seqOpts <- seqSettings(seqId = "example2", seq = c("AAATGCTGAAGGT"))
+seqOpts$SEQUENCE_TARGET <- "37,21"
+str(seqOpts)
+```
+The parameters must be set as character strings.  
+
+The run settings are set using `p3Settings`:
+```{r}
+primerOpts <- p3Settings()
+primerOpts$PRIMER_PRODUCT_OPT_SIZE <- "100,300"
+primerOpts$PRIMER_OPT_TM <- "60.0"
+```
+
+
+## I want to use own executable
+
+It is possible to run your own *Primer3* executable, having
+provided the needed paths.
+```{r eval = FALSE}
+primerOpts <- p3Settings(
+  defaultsFile = 
+    "/home/tsawyer/primer3/primer3_v1_1_4_default_settings.txt")
+design(
+  seqOpts,
+  primerOpts,
+  returnStats = TRUE,
+  path = list(primer3 = "/home/tsawyer/primer3/primer3_core",
+              config  = "/home/tsawyer/primer3/primer3_config")
+)
+```
+
+Please, refer to the [Primer3 manual page](http://primer3.sourceforge.net/primer3_manual.htm) for more details.
+
+## No primers?
+
+Let us have two subsequent exons and we would like to design a pair of 
+primers for them.
+```{r}
+exon1 <- paste0(
+  "CTCACCATGGATGATGATATCGCCGCGCTCGTCGTCGACAACGGCTCCGGCATGTGCAAG",
+  "GCCGGCTTCGCGGGCGACGATGCCCCCCGGGCCGTCTTCCCCTCCATCGTGGGGCGCCCC",
+  "AGGCACCAG")
+exon2 <- paste0(
+ "GGCGTGATGGTGGGCATGGGTCAGAAGGATTCCTATGTGGGCGACGAGGCCCAGAGCAAG",
+ "AGAGGCATCCTCACCCTGAAGTACCCCATCGAGCACGGCATCGTCACCAACTGGGACGAC",
+ "ATGGAGAAAATCTGGCACCACACCTTCTACAATGAGCTGCGTGTGGCTCCCGAGGAGCAC",
+ "CCCGTGCTGCTGACCGAGGCCCCCCTGAACCCCAAGGCCAACCGCGAGAAGATGACCCAG") 
+
+```
+
+It is straightforward to call Primer3 with the default values:
+```{r}
+seqOpts <- seqSettings(
+  seqId = "example1",
+  seq = c(exon1, exon2))
+
+result <- design(seqOpts)
+result$primers
+```
+
+We can see, that there are no primers returned. Let us see, 
+what can be a reason for their rejection:
+```{r}
+diagnose(result)
+```
+
+By default, `design` overwrites the option 
+`PRIMER_EXPLAIN_FLAG`, which allows to see the run statistics.
+

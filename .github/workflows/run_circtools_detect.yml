@@ -1,0 +1,81 @@
+name: Circtools CI
+
+on:
+  push:
+  pull_request:
+#  schedule:
+#    - cron: '0 7 * * *'
+
+concurrency:
+  group: ci-tests-${{ github.ref }}-1
+  cancel-in-progress: true
+
+jobs:
+  Main:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        R: ['4.1.0' , '4.2.0' ]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+#        os: [ubuntu-22.04]
+#        R: ['4.2.0' ]
+#        python-version: ["3.7"]
+    name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    steps:
+    - name: Create files
+      uses: actions/checkout@v3
+      with:
+       ref: devel
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    - name: Set up R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        extra-packages: |
+          local::contrib/circtest
+          local::contrib/primex
+    - name: Checking library loading
+      run: Rscript -e 'library(primex)'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+    - name: Updating setuptools
+      run: |
+         python3 -m pip install -U pip setuptools
+    - name: Updating pip
+      run: |
+         python3 -m pip install --upgrade pip
+    - name: Installing circtools & Python dependencies
+      run: |
+         python3 -m pip install ./
+    - name: Check if circtools starts
+      run: |
+         circtools --version
+         which circtools
+    - name: Downloading circtools detect test data
+      run: |
+         wget https://arizona.box.com/shared/static/3xr9wmu2rq2i240leh5rothntgkmgzq3.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         tar xvf circtools_detect_ci_input_data.tar.bz2
+    - name: Running circtools detect with minimal data set
+      run: |
+         cd circtools_detect_ci_input_data
+         circtools detect @samplesheet -ss -T 2 -D -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 2 2 -fg -G -F -L 20 -O circtools_ci -k
+    - name: Checking generated output against master output
+      run: |
+         cd circtools_detect_ci_input_data
+         cd circtools_ci
+         ls -la
+         wc -l *
+         diff ../circtools_master/LinearCount LinearCount
+         if [ "$RUNNER_OS" == "Linux" ]; then
+           sha1sum -c ../circtools_master/sha1sums.txt
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+           shasum -c ../circtools_master/sha1sums.txt
+         fi
+
+    runs-on: ${{ matrix.os }}

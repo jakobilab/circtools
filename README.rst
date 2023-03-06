@@ -140,10 +140,10 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://circtools.readthedocs.io/en/latest/?badge=latest
 
-.. |build| image:: https://travis-ci.org/dieterich-lab/circtools.svg?branch=master
+.. |build| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=devel
     :alt: Build Status
     :scale: 100%
-    :target: https://travis-ci.org/dieterich-lab/circtools
+    :target: https://github.com/jakobilab/circtools/actions
 
 .. |zenodo| image:: https://zenodo.org/badge/83248654.svg
     :alt: Zenodo DOI link

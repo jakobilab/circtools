@@ -83,10 +83,6 @@ construct_color_column <- function(column, default_value, palette)
     return(as.character(cut(column,seq( from, to, length.out= length(palette)+1 ), labels=palette, include.lowest = T)))
 }
 
-generate_complementary_column <- function (input){
-    return (complementary(input)[2])
-}
-
 # read data file name from args
 data_file_name <- args[1]
 

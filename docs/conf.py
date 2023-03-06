@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'circtools'
-copyright = u'2022, Tobias Jakobi, Jakobi Lab'
+copyright = u'2023, Tobias Jakobi, Jakobi Lab'
 author = u'Tobias Jakobi'
 
 # The short X.Y version
@@ -80,7 +80,7 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 html_logo = 'img/circtools_150px.png'
 

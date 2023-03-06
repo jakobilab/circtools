@@ -28,7 +28,7 @@ class Sirna(circ_module.circ_template.CircTemplate):
 
         self.other_blast_db = "nt"
         
-        self.dcc_file = self.cli_params.dcc_file
+        self.detect_dir = self.cli_params.detect_dir
 
         self.fasta_file = self.cli_params.fasta_file
         self.gtf_file = self.cli_params.gtf_file
@@ -185,8 +185,8 @@ class Sirna(circ_module.circ_template.CircTemplate):
         else:
             exons = self.read_annotation_file(self.gtf_file, entity="exon")
 
-            dcc_file = self.dcc_file
-            with open(dcc_file) as fp:
+            detect_dir = self.detect_dir
+            with open(detect_dir) as fp:
 
                 for line in fp:
 

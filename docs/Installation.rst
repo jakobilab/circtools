@@ -2,17 +2,17 @@ Installation
 ********************************************************
 
 
-**circtools** is written in Python2 (>= 2.7, ``detect`` and ``reconstruct`` module) and Python3 (>=3.4, all other modules). The tool has a number of external dependencies, mostly standard bioinformatics tools and packages. The installation will, by default, try to install all required dependencies.
+**circtools** is written in Python 3 (>=3.7) for most of the data processing code and R (>=4.0.0) for plotting and statistical analyses. The tool has a number of external dependencies, mostly standard bioinformatics tools and packages. The installation will, by default, try to install all required dependencies.
 
-Installation is performed via `python3 setup.py install`. No sudo access is required if the installation is suffixed with ``--user`` which will install the package in a user-writeable folder. In this case, the binaries should be installed to ``/home/$USER/.local/bin/`` (for Debian-based systems).
+Installation is performed via `pip install circtools` or `python3 setup.py install`. No sudo access is required if the installation is suffixed with ``--user`` which will install the package in a user-writeable folder. In this case, the binaries should be installed to ``/home/$USER/.local/bin/`` (for Debian-based systems).
 
 
 Supported operating systems
 -----------------------------------
 
-``circtools`` was developed and tested on Debian Jessie 8 64 Bit and Debian Stretch 9 64 bit. macOS support is currently (09/2018) being tested and is already available in the ``mac-dev`` branch of the github repository (however, the macOS functionality cannot be fully guaranteed yet).
+``circtools`` was developed and tested on Debian Buster (10) and Ubuntu Jammy Jellyfish (22.04). macOS is supported, but still in development. However, macOS functionality cannot be fully guaranteed yet.
 
-Installation from PyPi (preferred)
+Installation via PyPi
 -----------------------------------
 
 The default installation will install everything needed to run circtools *except R, STAR, or Stringtie* (see below). If you like you may install circtools locally (first call) or globally (second call, SU required).
@@ -26,7 +26,25 @@ Please note:
 * The required R libraries will be installed in the default location in your home directory - unless you set enviromnet variable $R_LIBS_USER.
 * In case want to install globally or into a dedicated 'venv' drop the --user option.
 
-Installation from GitHub
+Installation via docker
+-----------------------------------
+
+Docker can be used as a simple alternative to install **circtools**, taking care of all Python and R dependencies, thus making it well-suited for novice users. The only requirement is a working docker installation. The following command will install the latest stable version of **circtools**:
+
+.. code-block:: bash
+
+    docker pull jakobilab/circtools
+
+Subsequently, **circtools** can be run via
+
+.. code-block:: bash
+
+    docker run circtools [insert arguments here]
+
+Other than the additional command `docker run circtools` vs. just `circtools` all commands remain unchanged.
+
+
+Installation via GitHub
 --------------------------
 
 The GitHub installation will install the most recent version directly from the source repository. Use this method if you want the latest fixes and features.
@@ -40,7 +58,7 @@ The GitHub installation will install the most recent version directly from the s
 Updating circtools
 --------------------------
 
-You may want to update the circtools package if new versions are published. Like for the initial installation there are two ways to update circtools:
+You may want to update the circtools package if new versions are published. Similar to the initial installation, there are two ways to update circtools:
 
 .. code-block:: bash
 
@@ -50,6 +68,7 @@ You may want to update the circtools package if new versions are published. Like
 
     cd /path/to/circtools/repo/
     git pull
+    cd circtools/
     pip3 install . install --verbose --user --upgrade
 
 Required dependencies
@@ -60,41 +79,29 @@ External tools
 
 * `bedtools [>= 2.27.1] <http://bedtools.readthedocs.io/en/latest/content/installation.html>`_ required by the enrichment module
 
-* `R [>= 3.3] <https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-16-04-2>`_ required by visualisation scripts and the primer design module
+* `R [>= 4.0.0] <https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-16-04-2>`_ required by visualisation scripts and the primer design module
 
 * `STAR [>= 2.6.0] <https://github.com/alexdobin/STAR>`_ required by the ``detect`` and ``reconstruct`` module to map RNA-seq reads against a reference genome and detect back splice junctions
 
 * `Stringtie [>= 1.3.3b, optional] <https://github.com/gpertea/stringtie>`_ required by the ``exon`` module to carry out exon level analyses.
 
-The installation procedure will automatically install two additional Python-based dependencies: `DCC <https://github.com/dieterich-lab/DCC>`_ and `FUCHS <https://github.com/dieterich-lab/FUCHS>`_ by temporarily cloning the repositories and installing both tools via `setuptools` to ``/home/$USER/.local/bin/``. Both tools **require Python 2** in order to run.
-
 The primer design module as well as the exon analysis and circRNA testing module require a working installation of `R <https://cran.r-project.org/>`_ with `BioConductor <https://www.bioconductor.org/install/>`_. All R packages required are automatically installed during the setup.
 
 .. important:: The setup scripts assumes that the folder for R plugins is writeable (either in the user's home or the system folder).
 
-Python packages
+Required Python packages (automatically installed)
 ^^^^^^^^^^^^^^^
-- For circRNA detection
-    * HTSeq>=0.11.0
-    * pysam>=0.13.0
-    * numpy>=1.8.2
-    * pandas>=0.18.1
+- HTSeq >= 0.11.0
+- pysam >= 0.16.0.1
+- numpy >= 1.14.5
+- pybedtools >= 0.7.10
+- biopython >= 1.71
+- scipy >= 0.19.0
+- reportlab >= 3.3.0
+- pandas >= 0.25.0
+- statsmodels >= 0.9.0
 
-- For circRNA reconstruction
-    * HTSeq>=0.11.0
-    * pysam>=0.13.0
-    * numpy>=1.8.2
-    * pathos>=0.2.1
-
-- For circRNA enrichment
-    * pybedtools>=0.7.10
-    * statsmodels>=0.8.0
-
-- For circRNA primer design
-    * BioPython>=1.71
-
-
-Detailed installation
+Detailed manual installation
 ----------------------
 
 Getting the source code
@@ -121,11 +128,6 @@ R environment
 
 **Step 3**: Setting up R environment. In order for the automatic installation of R packages to work we need to set the package directory to a user-writeable path. The setup automatically sets that path to ``/home/$USER/.R/``.
 
-
-Dependencies
-^^^^^^^^^^^^
-
-**Step 4**: The setup script is designed to make sure that the environment is setup correctly to run circtools. The circtools setup will automatically install `CircTest <https://github.com/dieterich-lab/CircTest>`_, `primex <https://github.com/dieterich-lab/primex>`_, `DCC <https://github.com/dieterich-lab/DCC>`_ and `FUCHS <https://github.com/dieterich-lab/FUCHS>`_.
 
 Finishing up
 ^^^^^^^^^^^^

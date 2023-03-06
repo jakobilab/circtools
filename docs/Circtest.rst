@@ -17,16 +17,6 @@ Required tools and packages
 
 The ``CircTest`` R package as well as all dependencies are installed during the circtools installation procedure.
 
-Manual installation instructions
---------------------------------
-
-The following commands have to be performed within an R shell::
-
-    > install.packages("devtools")
-    > require(devtools)
-    > install_github('dieterich-lab/CircTest')
-    > library(CircTest)
-
 Usage with ``circtools detect`` data
 -------------------------------------
 

@@ -50,17 +50,17 @@ class ExonUsage(circ_module.circ_template.CircTemplate):
             os.makedirs(self.cli_params.output_directory)
 
         # check DCC directory
-        if not (os.path.exists(self.cli_params.DCC_dir)):
+        if not (os.path.exists(self.cli_params.detect_dir)):
             self.log_entry("DCC/detect data directory %s does not exist (or is not accessible)."
-                           % self.cli_params.DCC_dir)
+                           % self.cli_params.detect_dir)
             # exit with -1 error if we can't use it
             exit(-1)
 
         # check DCC files (only existence, not the content)
         self.check_input_files([
-                                self.cli_params.DCC_dir+"CircRNACount",
-                                self.cli_params.DCC_dir+"LinearCount",
-                                self.cli_params.DCC_dir+"CircCoordinates"
+                                self.cli_params.detect_dir+"CircRNACount",
+                                self.cli_params.detect_dir+"LinearCount",
+                                self.cli_params.detect_dir+"CircCoordinates"
                                 ])
 
         # check Ballgown directory
@@ -128,7 +128,7 @@ class ExonUsage(circ_module.circ_template.CircTemplate):
 
         # Variable number of args in a list
         args = [
-                self.cli_params.DCC_dir,
+                self.cli_params.detect_dir,
                 self.cli_params.replicates,
                 self.cli_params.condition_list,
                 self.cli_params.condition_columns,

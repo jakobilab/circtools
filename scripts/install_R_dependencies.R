@@ -36,15 +36,8 @@ pkgs <- c(
     "kableExtra",
     "formattable",
     "dplyr",
-    "RColorBrewer",
-    "colortools",
-    "EnsDb.Rnorvegicus.v79",
-    "EnsDb.Mmusculus.v79",
-    "EnsDb.Hsapiens.v86"
+    "RColorBrewer"
 )
-
-# set mirror
-options(repos = c(CRAN = "https://cran.uni-muenster.de/"))
 
 # check if devtools is already installed
 pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]
@@ -61,22 +54,33 @@ if (
     if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
 
+        local({r <- getOption("repos")
+             r["CRAN"] <- "https://cran.microsoft.com/"
+             options(repos=r)
+        })
+
         if (length(pkgs) > 0)
             BiocManager::install(pkgs)
 
 } else {
-    source("https://bioconductor.statistik.tu-dortmund.de/biocLite.R")
+    source("https://bioconductor.org/biocLite.R")
     biocLite()
+
+    local({r <- getOption("repos")
+         r["CRAN"] <- "https://cloud.r-project.org"
+         options(repos=r)
+    })
 
     if (length(pkgs) > 0)
         biocLite(pkgs)
+
 }
 
 # load devtools library
 library(devtools)
 
-# install CircTest from the Dieterich Lab GitHub page from master branch
-install_github("dieterich-lab/CircTest", ref = "master")
-
-# install primex from the Dieterich Lab GitHub page from master branch
-install_github("dieterich-lab/primex", ref = "master")
+# # install CircTest from the Dieterich Lab GitHub page from master branch
+# install_github("dieterich-lab/CircTest", ref = "master")
+#
+# # install primex from the Dieterich Lab GitHub page from master branch
+# install_github("dieterich-lab/primex", ref = "master")

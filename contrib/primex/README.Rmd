@@ -1,0 +1,61 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+[![Build Status](https://travis-ci.org/dieterich-lab/primex.svg?branch=master)](https://travis-ci.org/dieterich-lab/primex)
+[![codecov](https://codecov.io/gh/dieterich-lab/primex/branch/master/graph/badge.svg)](https://codecov.io/gh/dieterich-lab/primex/)
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# primex
+
+An R package to ease primer design using Primer3. 
+
+## Installation
+
+You can install `primex` from github with:
+
+```{r gh-installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("dieterich-lab/primex")
+```
+
+## Quick start
+
+```{r eval = TRUE, message=FALSE}
+library(primex)
+
+exonSeqs <- c(
+  exon1 = paste0(
+    "CTCACCATGGATGATGATATCGCCGCGCTCGTCGTCGACAACGGCTCCGGCATGTGCAAG",
+    "GCCGGCTTCGCGGGCGACGATGCCCCCCGGGCCGTCTTCCCCTCCATCGTGGC",
+    "AGGCACCAG"
+    ), 
+  exon2 = paste0(
+    "GGCGTGATGGTGGGCATGGGTCAGAAGGATTCCTATGTGGGCGACGAGGCCCAGAGCAAG",
+    "AGAGGCATCCTCACCCTGAAGTACCCCATCGAGCACGGCATCGTCACCAACTGGGACGAC",
+    "ATGGAGAAAATCTGGCACCACACCTTCTACAATGAGCTGCGTGTGGCTCCCGAGGAGCAC",
+    "CCCGTGCTGCTGACCGAGGCCCCCCTGAACCCCAAGGCCAACCGCGAGAAGATGACCCAG"
+  )
+)
+
+seqOpts <- seqSettings(seqId = "transcript2", seq = exonSeqs) 
+
+p3Opts  <- p3Settings() %>%  
+  primerTm(min = 58, optimal = 63, max = 67)
+
+primers <- design(seqOpts, p3Opts)
+```
+First two candidate pairs:
+```{r echo = FALSE}
+res <- t(data.frame(primers$primers))[,1:2]
+colnames(res) <- c("first", "second")
+knitr::kable(res)
+```
+
