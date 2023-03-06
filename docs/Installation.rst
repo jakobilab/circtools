@@ -12,7 +12,7 @@ Supported operating systems
 
 ``circtools`` was developed and tested on Debian Buster (10) and Ubuntu Jammy Jellyfish (22.04). macOS is supported, but still in development. However, macOS functionality cannot be fully guaranteed yet.
 
-Installation from PyPi (preferred)
+Installation via PyPi
 -----------------------------------
 
 The default installation will install everything needed to run circtools *except R, STAR, or Stringtie* (see below). If you like you may install circtools locally (first call) or globally (second call, SU required).
@@ -26,7 +26,27 @@ Please note:
 * The required R libraries will be installed in the default location in your home directory - unless you set enviromnet variable $R_LIBS_USER.
 * In case want to install globally or into a dedicated 'venv' drop the --user option.
 
-Installation from GitHub
+Installation via docker
+-----------------------------------
+
+Docker can be used as a simple alternative to install **circtools**, taking care of all Python and R dependencies, thus making it well-suited for novice users. The only requirement is a working docker installation. The following command will install the latest stable version of **circtools**:
+
+.. code-block:: bash
+
+    docker pull jakobilab/circtools
+
+Subsequently, **circtools** can be run via
+
+.. code-block:: bash
+
+    docker run circtools [insert command args here]
+
+.. code-block:: bash
+
+Other than the additional command `docker run circtools` vs. just `circtools` all commands remain unchanged.
+
+
+Installation via GitHub
 --------------------------
 
 The GitHub installation will install the most recent version directly from the source repository. Use this method if you want the latest fixes and features.
