@@ -3,8 +3,8 @@ name: Circtools CI
 on:
   push:
   pull_request:
-#  schedule:
-#    - cron: '0 7 * * *'
+  schedule:
+    - cron: '0 11 * * *'
 
 concurrency:
   group: ci-tests-${{ github.ref }}-1
@@ -14,12 +14,12 @@ jobs:
   Main:
     strategy:
       matrix:
-        #os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-        #R: ['4.1.0' , '4.2.0' ]
-#        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        os: [macos-12]
-        R: ['4.2.0' ]
-        python-version: ["3.7"]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        R: ['4.1.0' , '4.2.0' ]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        #os: [macos-12]
+        #R: ['4.2.0' ]
+        #python-version: ["3.7"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
