@@ -52,9 +52,9 @@ jobs:
          python3 -m pip install --upgrade pip
     - name: Installing circtools & Python dependencies
       run: |
-        if [ "$RUNNER_OS" == "macOS" ]; then
-          sudo xcode-select --switch /Library/Developer/CommandLineTools
-        fi
+         if [ "$RUNNER_OS" == "macOS" ]; then
+           sudo xcode-select --switch /Library/Developer/CommandLineTools
+         fi
          python3 -m pip install ./
     - name: Check if circtools starts
       run: |
