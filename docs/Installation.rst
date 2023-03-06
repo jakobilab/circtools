@@ -39,9 +39,7 @@ Subsequently, **circtools** can be run via
 
 .. code-block:: bash
 
-    docker run circtools [insert command args here]
-
-.. code-block:: bash
+    docker run circtools [insert arguments here]
 
 Other than the additional command `docker run circtools` vs. just `circtools` all commands remain unchanged.
 
