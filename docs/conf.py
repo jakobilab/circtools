@@ -143,7 +143,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'circtools.tex', u'circtools Documentation',
-     u'Tobias Jakobi, Dieterich Lab', 'manual'),
+     u'Tobias Jakobi, Jakobi Lab', 'manual'),
 ]
 
 
