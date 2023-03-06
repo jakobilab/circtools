@@ -21,6 +21,17 @@ We intend to add more and more modules in the future in order to provide a compr
 **circtools** is developed at the `Jakobi Lab <https://jakobilab.org>`_, part of the `Translational Cardiovascular Research Center (TCRC) <https://https://phoenixmed.arizona.edu/tcrc/>`_ in the Department of Internal Medicine at `The University of Arizona College of Medicine – Phoenix <https://https://phoenixmed.arizona.edu/>`_ with contributions from the `Dieterich Lab <https://dieterichlab.org>`_ at the `University Hospital Heidelberg <https://www.heidelberg-university-hospital.com/>`_, where `Tobias Jakobi <https://tobias.jako.bi>`_ initially developed the software.
 
 
+License
+========
+**circtools** is freely available under the GNU General Public License v3.0.
+
+
+Issues
+===============
+
+Problems or issues should be reported `via the GitHub issue system <https://github.com/jakobilab/circtools/issues>`_.
+
+
 Table of contents
 ==================
 
@@ -36,15 +47,3 @@ Table of contents
    Exon.rst
    Primer.rst
    Support.rst
-
-
-License
-========
-**circtools** is freely available under the GNU General Public License v3.0.
-
-
-Issues
-===============
-
-Problems or issues should be reported `via the GitHub issue system <https://github.com/jakobilab/circtools/issues>`_.
-
