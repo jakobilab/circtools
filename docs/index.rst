@@ -20,7 +20,10 @@ We intend to add more and more modules in the future in order to provide a compr
 
 **circtools** is developed at the `Jakobi Lab <https://jakobilab.org>`_, part of the `Translational Cardiovascular Research Center (TCRC) <https://https://phoenixmed.arizona.edu/tcrc/>`_ in the Department of Internal Medicine at `The University of Arizona College of Medicine – Phoenix <https://https://phoenixmed.arizona.edu/>`_ with contributions from the `Dieterich Lab <https://dieterichlab.org>`_ at the `University Hospital Heidelberg <https://www.heidelberg-university-hospital.com/>`_, where `Tobias Jakobi <https://tobias.jako.bi>`_ initially developed the software.
 
-If you are using circtools in your work, please cite the following publication to help us provide support and continued development for the software:
+Citation
+==========
+
+If you are using **circtools** in your work, **please cite the following publication** to help us provide support and continued development for the software:
 
 `Jakobi, T., Uvarovskii, A., & Dieterich, C. (2019). circtools — a one-stop software solution for circular RNA research. Bioinformatics, 35(13), 2326-2328. <https://academic.oup.com/bioinformatics/article/35/13/2326/5194340>`_
 
