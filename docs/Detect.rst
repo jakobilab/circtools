@@ -1,28 +1,9 @@
 Detect module
 =========================================
 
-The circRNA detection module of circtools is based on DCC, a Python 2.7-based tool built to detect and quantify circRNAs with high specificity. DCC works with the STAR (Dobin et al., 2013) ``chimeric.out.junction`` files which contains chimerically aligned reads including circRNA junction spanning reads.
+The circRNA detection module of circtools is based on DCC, built to detect and quantify circRNAs with high specificity. DCC works with the STAR (Dobin et al., 2013) ``chimeric.out.junction`` files which contains chimerically aligned reads including circRNA junction spanning reads.
 
-DCC depends on ``pysam``, ``pandas``, ``numpy``, and ``HTSeq``. The installation process of circtools will normally automatically check for the dependencies, install or update missing Python packages and install the latest stable version of DCC.
-
-Manual installation instructions
---------------------------------
-
-Cloning the source repository::
-
-    $ git clone https://github.com/dieterich-lab/DCC.git
-    $ cd DCC
-    $ python2 setup.py install --user
-
-Verifying the installation::
-
-    $ DCC --version
-
-If the Python installation binary path [e.g. `/$HOME/.local/bin` for Debian] is not included the ``$PATH``, it is also possible run DCC directly::
-
-    $ python2 <DCC directory>/scripts/DCC <Options>
-    # or even
-    $ python2 <DCC directory>/DCC/main.py <Options>
+The module depends on ``pysam``, ``pandas``, ``numpy``, and ``HTSeq``. The installation process of circtools will automatically check for the dependencies and install or update missing Python packages.
 
 
 General usage
@@ -71,7 +52,7 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
 
     # ... place your copy of wonderdump.sh in this directory ...
     # We need to update it slightly:
-    wget https://raw.githubusercontent.com/dieterich-lab/circtools/master/docs/wonderdump.sh.patch
+    wget https://raw.githubusercontent.com/jakobilab/circtools/master/docs/wonderdump.sh.patch
     patch wonderdump.sh < wonderdump.sh.patch
 
     # get list of accession numbers to download
@@ -98,7 +79,6 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
 
     # for mate 2:
     parallel --link ln -s {2}_2.fastq.gz {1}2.fastq.gz :::: mapping.txt :::: jakobi2016_sra_list.txt
-
 
 
 Data structure
@@ -138,7 +118,7 @@ In a first step, remaining adapter sequences originating from the sequencing-pro
 .. code-block:: bash
 
     # download the wrapper scrips for flexbar
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_flexbar_paired.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_flexbar_paired.sh
     # add execute permission
     chmod 755 slurm_flexbar_paired.sh
     mkdir flexbar
@@ -157,7 +137,7 @@ Next, rRNA reads are removed. Normally, we are not interested in these reads, es
 .. code-block:: bash
 
     # download wrapper for bowtie2
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_bowtie2_rRNA_filter_paired.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_bowtie2_rRNA_filter_paired.sh
     chmod 755 slurm_bowtie2_rRNA_filter_paired.sh
     mkdir rrna/
     cd flexbar/
@@ -182,7 +162,7 @@ Please note that the supplied examples are a little aged and will not work with 
 .. code-block:: bash
 
     # download wrapper for STAR
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_circtools_detect_paired_mapping.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_circtools_detect_paired_mapping.sh
     chmod 755 slurm_circtools_detect_paired_mapping.sh
 
 To allow this script to work the following changes are needed:

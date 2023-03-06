@@ -93,7 +93,7 @@ In order to perform per-exon analyses, the circtools exon module requires additi
 .. code-block:: bash
 
     # download wrapper for Stringtie
-    wget https://raw.githubusercontent.com/dieterich-lab/bioinfo-scripts/master/slurm_stringtie.sh
+    wget https://raw.githubusercontent.com/jakobilab/bioinfo-scripts/master/slurm_stringtie.sh
     chmod 755 slurm_stringtie.sh
     mkdir stringtie/
 
