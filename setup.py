@@ -51,7 +51,7 @@ if sys.version_info.major < 3:
              'Try \'pip3 install circtools\'')
 
 elif sys.version_info.minor < 5:
-    sys.exit('\nSorry, Python < 3.5 is not supported\n')
+    sys.exit('\nSorry, Python < 3.7 is not supported\n')
 
 # Get the long description from the relevant file
 with open(path.join(here, 'README.rst')) as f:
@@ -130,15 +130,15 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-       'HTSeq >= 0.11.0',
-       'pysam >= 0.16.0.1',
-       'numpy >= 1.14.5',
-       'pybedtools >= 0.7.10',
-       'biopython >= 1.71',
-       'scipy >= 0.19.0',
-       'reportlab >= 3.3.0',
-       'pandas >= 0.25.0',
-       'statsmodels >= 0.9.0'
+        'numpy >= 1.14.5',
+        'HTSeq >= 0.11.0',
+        'pysam >= 0.16.0.1',
+        'pybedtools >= 0.7.10',
+        'biopython >= 1.71',
+        'scipy >= 0.19.0',
+        'reportlab >= 3.3.0',
+        'pandas >= 0.25.0',
+        'statsmodels >= 0.9.0'
     ],
 
     python_requires='>3.6',
