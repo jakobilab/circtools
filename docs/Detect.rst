@@ -83,7 +83,7 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
     ln -s SRR7881333_1.fastq.gz ALL_1654_S__R1.fastq.gz
     ln -s SRR7881334_1.fastq.gz ALL_1654_T__R1.fastq.gz
 
-    mate 2
+    # mate 2
     ln -s SRR7881338_2.fastq.gz ALL_1654_N__R2.fastq.gz
     ln -s SRR7881276_2.fastq.gz ALL_1654_M__R2.fastq.gz
     ln -s SRR7881275_2.fastq.gz ALL_1654_P__R2.fastq.gz
@@ -92,7 +92,6 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
     ln -s SRR7881336_2.fastq.gz ALL_1654_R__R2.fastq.gz
     ln -s SRR7881333_2.fastq.gz ALL_1654_S__R2.fastq.gz
     ln -s SRR7881334_2.fastq.gz ALL_1654_T__R2.fastq.gz
-
 
 Data structure
 ^^^^^^^^^^^^^^^^
