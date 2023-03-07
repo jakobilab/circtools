@@ -50,20 +50,19 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
 
     cd workflow/reads
 
-    # ... place your copy of wonderdump.sh in this directory ...
-    # We need to update it slightly:
-    wget https://raw.githubusercontent.com/jakobilab/circtools/master/docs/wonderdump.sh.patch
-    patch wonderdump.sh < wonderdump.sh.patch
+    # place your copy of wonderdump.sh in this directory
+    # also make it executable
+    wget https://links.jakobilab.org/wonderdump.sh
+    chmod 755 wonderdump.sh
 
-    # get list of accession numbers to download
+    # get list of accession numbers (sequencing runs) to download
     # also get a mapping file from SRA accession to original file name
-    wget https://data.dieterichlab.org/s/jakobi2016_sra_list/download -O jakobi2016_sra_list.txt
-    dos2unix jakobi2016_sra_list.txt
-    wget https://data.dieterichlab.org/s/sra_mapping/download -O mapping.txt
-    dos2unix mapping.txt
+    wget https://links.jakobilab.org/jakobi2016_sra_list.txt
+    wget https://links.jakobilab.org/file_name_mapping.txt
 
     # downloading and rewriting the files as gzipped .fastq files will take some time
     # in the end, the process will generate a set of 16 files (8 samples x 2 pairs)
+    # this step requires an installed and configured NCBI sratoolkit
 
     # start wonderdump with the accession list and download data (~29GB)
     for i in $( jakobi2016_sra_list.txt )
@@ -74,11 +73,25 @@ The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/a
 
     # rename files from SRA accessions to file names used throughout this tutorial
 
-    # for mate 1:
-    parallel --link ln -s {2}_1.fastq.gz {1}1.fastq.gz :::: mapping.txt :::: jakobi2016_sra_list.txt
+    # mate 1
+    ln -s SRR7881338_1.fastq.gz ALL_1654_N__R1.fastq.gz
+    ln -s SRR7881276_1.fastq.gz ALL_1654_M__R1.fastq.gz
+    ln -s SRR7881275_1.fastq.gz ALL_1654_P__R1.fastq.gz
+    ln -s SRR7881335_1.fastq.gz ALL_1654_O__R1.fastq.gz
+    ln -s SRR7881337_1.fastq.gz ALL_1654_Q__R1.fastq.gz
+    ln -s SRR7881336_1.fastq.gz ALL_1654_R__R1.fastq.gz
+    ln -s SRR7881333_1.fastq.gz ALL_1654_S__R1.fastq.gz
+    ln -s SRR7881334_1.fastq.gz ALL_1654_T__R1.fastq.gz
 
-    # for mate 2:
-    parallel --link ln -s {2}_2.fastq.gz {1}2.fastq.gz :::: mapping.txt :::: jakobi2016_sra_list.txt
+    mate 2
+    ln -s SRR7881338_2.fastq.gz ALL_1654_N__R2.fastq.gz
+    ln -s SRR7881276_2.fastq.gz ALL_1654_M__R2.fastq.gz
+    ln -s SRR7881275_2.fastq.gz ALL_1654_P__R2.fastq.gz
+    ln -s SRR7881335_2.fastq.gz ALL_1654_O__R2.fastq.gz
+    ln -s SRR7881337_2.fastq.gz ALL_1654_Q__R2.fastq.gz
+    ln -s SRR7881336_2.fastq.gz ALL_1654_R__R2.fastq.gz
+    ln -s SRR7881333_2.fastq.gz ALL_1654_S__R2.fastq.gz
+    ln -s SRR7881334_2.fastq.gz ALL_1654_T__R2.fastq.gz
 
 
 Data structure
