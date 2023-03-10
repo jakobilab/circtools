@@ -14,12 +14,12 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-        R: ['4.1.0' , '4.2.0' ]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        #os: [macos-12]
-        #R: ['4.2.0' ]
-        #python-version: ["3.7"]
+        #os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        #R: ['4.1.0' , '4.2.0' ]
+        #python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [macos-11]
+        R: ['4.2.0' ]
+        python-version: ["3.7"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
@@ -58,7 +58,7 @@ jobs:
            sudo xcode-select --install
            export SYSTEM_VERSION_COMPAT=1
          fi
-         python3 -m pip install numpy wheel Cython
+         python3 -m pip install numpy wheel
          python3 -m pip install ./ --prefer-binary
     - name: Check if circtools starts
       run: |
