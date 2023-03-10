@@ -53,9 +53,9 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          if [ "$RUNNER_OS" == "macOS" ]; then
-           softwareupdate --all --install --force
-           sudo xcode-select --switch /Library/Developer/CommandLineTools
-           export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
+           #softwareupdate --all --install --force
+           sudo rm -rf /Library/Developer/CommandLineTools
+           sudo xcode-select --install
          fi
          python3 -m pip install numpy wheel Cython
          python3 -m pip install ./ --prefer-binary
