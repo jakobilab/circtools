@@ -56,7 +56,7 @@ jobs:
            sudo xcode-select --switch /Library/Developer/CommandLineTools
          fi
          python3 -m pip install numpy wheel Cython
-         python3 -m pip install ./
+         python3 -m pip install ./ --prefer-binary
     - name: Check if circtools starts
       run: |
          circtools --version
