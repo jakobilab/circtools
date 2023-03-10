@@ -54,8 +54,9 @@ jobs:
       run: |
          if [ "$RUNNER_OS" == "macOS" ]; then
            sudo xcode-select --switch /Library/Developer/CommandLineTools
+           export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
          fi
-         python3 -m pip install numpy wheel Cython --prefer-binary
+         python3 -m pip install numpy wheel Cython
          python3 -m pip install ./ --prefer-binary
     - name: Check if circtools starts
       run: |
