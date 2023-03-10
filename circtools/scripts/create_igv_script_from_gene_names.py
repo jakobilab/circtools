@@ -54,18 +54,24 @@ def generate_reconstruct_tracks(reconstruct_file_list):
         print("load " + bed_file)
 
 
-def generate_header(gene_name, genome_build, output_directory):
+def generate_header(genome_build, output_directory):
 
     print("new")
     print("genome " + genome_build)
     print("snapshotDirectory " + output_directory)
     print("maxPanelHeight 50000")
+    print("#####################")
     print("load /mnt/big_data/genomes/GRCh38_85/GRCh38.85.sorted.gtf")
 
 
 def generate_footer(bam_file_list):
+    # print("load /mnt/big_data/genomes/GRCh38_85/GRCh38.85.sorted.gtf")
+    print("collapse")
+    # print("squish GRCh38.85.sorted.gtf")
 
-    print("#####################")
+    # squish BAM tracks
+    for bam_file in bam_file_list:
+        print("squish " + bam_file)
 
 
 def location_zoom(location, zoom_level):
@@ -80,27 +86,18 @@ def location_zoom(location, zoom_level):
 def generate_igv_script(parsed_data, cli_args):
 
     max_genes_to_show = 0
+
     for gene_name in parsed_data:
         for location in parsed_data[gene_name]['location'].keys():
-
-            generate_header(gene_name, cli_args.genome_build, cli_args.output_directory)
-
-            generate_raw_data_tracks(cli_args.bam_files)
+            generate_header(cli_args.genome_build, cli_args.output_directory)
             generate_alternative_exon_tracks(cli_args.alt_exon_dirs)
             generate_reconstruct_tracks(cli_args.fuchs_files)
+            generate_raw_data_tracks(cli_args.bam_files)
 
-            generate_footer(cli_args.bam_files)
-
-            print("region " + location)
-            print("goto " + location_zoom(location, 100000))
+            print("goto " + location)
             print("squish")
-
-            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + location + "_gene.png")
-            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + location + "_gene.svg")
-
-            print("goto " + location_zoom(location, 5000))
-            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + location + "_zoom.png")
-            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + location + "_gene.svg")
+            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + "gene.png")
+            print("snapshot " + str(parsed_data[gene_name]['rank']) + "_" + gene_name + "_" + "gene.svg")
 
         # stop if we reached the maximum number of genes to print
         max_genes_to_show += 1
@@ -118,7 +115,7 @@ def parse_file(input_file):
         for line in fp:
             current_line = line.split('\t')
             host_gene = current_line[0]
-            location = "chr" + current_line[1] + ":" + current_line[2] + "-" + current_line[3]
+            location = host_gene
 
             # create key
             if host_gene not in entries_list:
@@ -135,69 +132,70 @@ def parse_file(input_file):
 
 
 # main script starts here
+def main():
 
-parser = argparse.ArgumentParser(description='Create an auto-executing IGV script')
+    parser = argparse.ArgumentParser(description='Create an auto-executing IGV script')
 
-group = parser.add_argument_group("Input")
+    group = parser.add_argument_group("Input")
 
-group.add_argument("-i",
-                   "--input-file",
-                   dest="input_file",
-                   help="A CSV/BED file from DCC / CircTest",
-                   required=True
-                   )
+    group.add_argument("-i",
+                       "--input-file",
+                       dest="input_file",
+                       help="A CSV/BED file from DCC / CircTest",
+                       required=True
+                       )
 
-group.add_argument("-b",
-                   "--bam-files",
-                   dest="bam_files",
-                   nargs='*',
-                   help="List of one or more BAM files with read mapping data",
-                   required=True
-                   )
+    group.add_argument("-b",
+                       "--bam-files",
+                       dest="bam_files",
+                       nargs='*',
+                       help="List of one or more BAM files with read mapping data",
+                       required=True
+                       )
 
-group.add_argument("-a",
-                   "--alternative-exon-dirs",
-                   dest="alt_exon_dirs",
-                   nargs='*',
-                   help="List of one or more directories containing the result files "
-                        "of the exon module",
-                   required=True
-                   )
+    group.add_argument("-a",
+                       "--alternative-exon-dirs",
+                       dest="alt_exon_dirs",
+                       nargs='*',
+                       help="List of one or more directories containing the result files "
+                            "of the exon module",
+                       required=True
+                       )
 
-group.add_argument("-f",
-                   "--fuchs-files",
-                   dest="fuchs_files",
-                   nargs='*',
-                   help="List of one or more BED files containing results of "
-                        "FUCHS / reconstruct module",
-                   required=True
-                   )
+    group.add_argument("-f",
+                       "--fuchs-files",
+                       dest="fuchs_files",
+                       nargs='*',
+                       help="List of one or more BED files containing results of "
+                            "FUCHS / reconstruct module",
+                       required=True
+                       )
 
-group.add_argument("-g",
-                   "--genome",
-                   dest="genome_build",
-                   help="Which genome build to use as reference [Default: hg38]",
-                   choices=("hg38", "hg19", "mm9", "mm10"),
-                   default="hg38"
-                   )
+    group.add_argument("-g",
+                       "--genome",
+                       dest="genome_build",
+                       help="Which genome build to use as reference [Default: hg38]",
+                       choices=("hg38", "hg19", "mm9", "mm10"),
+                       default="hg38"
+                       )
 
-group.add_argument("-m",
-                   "--max-number",
-                   dest="max_genes",
-                   help="Maximum number of genes to show [Default: 5]",
-                   type=int,
-                   default=5
-                   )
+    group.add_argument("-m",
+                       "--max-number",
+                       dest="max_genes",
+                       help="Maximum number of genes to show [Default: 5]",
+                       type=int,
+                       default=5
+                       )
 
-group = parser.add_argument_group("Output")
+    group = parser.add_argument_group("Output")
 
-group.add_argument("-o",
-                   "--output-directory",
-                   dest="output_directory",
-                   help="Directory for snapshots created by IGV [Default: ./]",
-                   default="./"
-                   )
+    group.add_argument("-o",
+                       "--output-directory",
+                       dest="output_directory",
+                       help="Directory for snapshots created by IGV [Default: ./]",
+                       default="./"
+                       )
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-build_tracks(args)
+    build_tracks(args)

@@ -172,83 +172,85 @@ def parse_file(input_file):
 
 # main script starts here
 
-parser = argparse.ArgumentParser(description='Create an auto-executing IGV script')
+def main():
 
-group = parser.add_argument_group("Input")
+    parser = argparse.ArgumentParser(description='Create an auto-executing IGV script')
 
-group.add_argument("-e",
-                   "--enrichment-file",
-                   dest="enrichment_file",
-                   help="An enrichment module output file",
-                   required=True
-                   )
+    group = parser.add_argument_group("Input")
 
-group.add_argument("-b",
-                   "--bam-files",
-                   dest="bam_files",
-                   nargs='*',
-                   help="List of one or more BAM files with read mapping data",
-                   required=True
-                   )
+    group.add_argument("-e",
+                       "--enrichment-file",
+                       dest="enrichment_file",
+                       help="An enrichment module output file",
+                       required=True
+                       )
 
-group.add_argument("-a",
-                   "--alternative-exon-dirs",
-                   dest="alt_exon_dirs",
-                   nargs='*',
-                   help="List of one or more directories containing the result files "
-                        "of the exon module",
-                   required=True
-                   )
+    group.add_argument("-b",
+                       "--bam-files",
+                       dest="bam_files",
+                       nargs='*',
+                       help="List of one or more BAM files with read mapping data",
+                       required=True
+                       )
 
-group.add_argument("-f",
-                   "--fuchs-files",
-                   dest="fuchs_files",
-                   nargs='*',
-                   help="List of one or more BED files containing results of "
-                        "FUCHS / reconstruct module",
-                   required=True
-                   )
+    group.add_argument("-a",
+                       "--alternative-exon-dirs",
+                       dest="alt_exon_dirs",
+                       nargs='*',
+                       help="List of one or more directories containing the result files "
+                            "of the exon module",
+                       required=True
+                       )
 
-group.add_argument("-c",
-                   "--clip-peaks",
-                   dest="peak_directory",
-                   help="Directory of the CLIP peal bed files",
-                   required=True
-                   )
+    group.add_argument("-f",
+                       "--fuchs-files",
+                       dest="fuchs_files",
+                       nargs='*',
+                       help="List of one or more BED files containing results of "
+                            "FUCHS / reconstruct module",
+                       required=True
+                       )
 
-group.add_argument("-g",
-                   "--genome",
-                   dest="genome_build",
-                   help="Which genome build to use as reference [Default: hg38]",
-                   choices=("hg38", "hg19", "mm9", "mm10"),
-                   default="hg38"
-                   )
+    group.add_argument("-c",
+                       "--clip-peaks",
+                       dest="peak_directory",
+                       help="Directory of the CLIP peal bed files",
+                       required=True
+                       )
 
-group.add_argument("-s",
-                   "--samples",
-                   dest="sample_list",
-                   nargs='*',
-                   help="List of one or more sample/conditions",
-                   required=True
-                   )
+    group.add_argument("-g",
+                       "--genome",
+                       dest="genome_build",
+                       help="Which genome build to use as reference [Default: hg38]",
+                       choices=("hg38", "hg19", "mm9", "mm10"),
+                       default="hg38"
+                       )
 
-group.add_argument("-m",
-                   "--max-number",
-                   dest="max_genes",
-                   help="Maximum number of genes to show [Default: 5]",
-                   type=int,
-                   default=5
-                   )
+    group.add_argument("-s",
+                       "--samples",
+                       dest="sample_list",
+                       nargs='*',
+                       help="List of one or more sample/conditions",
+                       required=True
+                       )
 
-group = parser.add_argument_group("Output")
+    group.add_argument("-m",
+                       "--max-number",
+                       dest="max_genes",
+                       help="Maximum number of genes to show [Default: 5]",
+                       type=int,
+                       default=5
+                       )
 
-group.add_argument("-o",
-                   "--output-directory",
-                   dest="output_directory",
-                   help="Directory for snapshots created by IGV [Default: ./]",
-                   default="./"
-                   )
+    group = parser.add_argument_group("Output")
 
-args = parser.parse_args()
+    group.add_argument("-o",
+                       "--output-directory",
+                       dest="output_directory",
+                       help="Directory for snapshots created by IGV [Default: ./]",
+                       default="./"
+                       )
 
-build_tracks(args)
+    args = parser.parse_args()
+
+    build_tracks(args)

@@ -1,5 +1,10 @@
+include pyproject.toml
+
+# Include setup.py
+include setup.py
+
 include README.rst
 include LICENSE
 include DESCRIPTION.rst
-recursive-include data *
-recursive-include scripts *
+recursive-include circtools/scripts *
+recursive-include circtools/contrib *

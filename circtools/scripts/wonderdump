@@ -17,14 +17,14 @@ set -ue
 # This is where we will store the file.
 SRA_DIR=./
 
-# Make the directory if it does not exist.
-mkdir -p $SRA_DIR
-
-# All other parameters up to last.
-PARAMS=${@:1:$(($# - 1))}
+# check if we have 6 arguments
+if [ ! $# == 1 ]; then
+  echo "Usage: $(basename -- $0) [SRR accession number]"
+  exit
+fi
 
 # The last parameter must be the SRR number.
-SRR=${@:$#}
+SRR=${1}
 
 if [ -z "$SRR" ]
 then

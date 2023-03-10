@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2017 Tobias Jakobi
+# Copyright (C) 2023 Tobias Jakobi
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import circtools
+# runner idea from https://stackoverflow.com/a/73649412/1900920
 
-circtools
+import subprocess
+import circtools as _
+
+base_path = _.__path__[0]
+
+
+def _run(bash_script):
+    return subprocess.call(bash_script, shell=True)
+
+
+def wonderdump():
+    return _run("/" + base_path + "/scripts/wonderdump")
+

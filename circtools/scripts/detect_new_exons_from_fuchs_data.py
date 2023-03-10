@@ -208,151 +208,150 @@ def print_gtf(bed_obj, output_file):
 # main script starts here
 
 
-parser = argparse.ArgumentParser(description='Output newly identified exons compare to reference annotation')
+def main():
 
-group = parser.add_argument_group("Input")
+    parser = argparse.ArgumentParser(description='Output newly identified exons compare to reference annotation')
 
-group.add_argument("-a",
-                   "--annotation",
-                   dest="base_exon_file",
-                   help="Base annotation in GTF format (ENSEMBL)",
-                   required=True
-                   )
+    group = parser.add_argument_group("Input")
 
-group.add_argument("-g",
-                   "--group-assignment",
-                   dest="assignment",
-                   help="Assignment of BED files to sample groups",
-                   required=True,
-                   nargs='+',
-                   type=int
-                   )
+    group.add_argument("-a",
+                       "--annotation",
+                       dest="base_exon_file",
+                       help="Base annotation in GTF format (ENSEMBL)",
+                       required=True
+                       )
 
-group.add_argument("-f",
-                   "--bed-files",
-                   dest="bed_files",
-                   help="Space-separated list of BED files to scan",
-                   required=True,
-                   nargs='+',
-                   )
+    group.add_argument("-g",
+                       "--group-assignment",
+                       dest="assignment",
+                       help="Assignment of BED files to sample groups",
+                       required=True,
+                       nargs='+',
+                       type=int
+                       )
 
-group.add_argument("-t",
-                   "--threshold",
-                   dest="threshold",
-                   help="Minimal number of samples that have to agree on a novel exon [default: 2]",
-                   type=int,
-                   default=2
-                   )
+    group.add_argument("-f",
+                       "--bed-files",
+                       dest="bed_files",
+                       help="Space-separated list of BED files to scan",
+                       required=True,
+                       nargs='+',
+                       )
 
-group.add_argument("-c",
-                   "--coverage",
-                   dest="min_coverage",
-                   help="Minimal coverage of exons [default: 1.0 == 100]",
-                   type=float,
-                   default=1.0
-                   )
+    group.add_argument("-t",
+                       "--threshold",
+                       dest="threshold",
+                       help="Minimal number of samples that have to agree on a novel exon [default: 2]",
+                       type=int,
+                       default=2
+                       )
 
-group.add_argument("-w",
-                   "--wobble",
-                   dest="wobble",
-                   help="Specify the amount of wobble bases to identify novel exons",
-                   type=int,
-                   default=10
-                   )
+    group.add_argument("-c",
+                       "--coverage",
+                       dest="min_coverage",
+                       help="Minimal coverage of exons [default: 1.0 == 100]",
+                       type=float,
+                       default=1.0
+                       )
 
-group.add_argument("-m",
-                   "--max-length",
-                   dest="max_length",
-                   help="Maximum length (in BP) of novel exons [Default: 2000]",
-                   type=int,
-                   default=2000
-                   )
+    group.add_argument("-w",
+                       "--wobble",
+                       dest="wobble",
+                       help="Specify the amount of wobble bases to identify novel exons",
+                       type=int,
+                       default=10
+                       )
 
-group.add_argument("-B",
-                   "--bed-type",
-                   dest="bed_type",
-                   help="Which BED file type: bed6 or bed12 [Default: bed6]",
-                   choices=("bed6", "bed12"),
-                   default="bed12"
-                   )
+    group.add_argument("-m",
+                       "--max-length",
+                       dest="max_length",
+                       help="Maximum length (in BP) of novel exons [Default: 2000]",
+                       type=int,
+                       default=2000
+                       )
 
-args = parser.parse_args()
+    group.add_argument("-B",
+                       "--bed-type",
+                       dest="bed_type",
+                       help="Which BED file type: bed6 or bed12 [Default: bed6]",
+                       choices=("bed6", "bed12"),
+                       default="bed12"
+                       )
 
-check_input_files(args.bed_files)
+    args = parser.parse_args()
 
-if len(args.bed_files) != len(args.assignment):
-    print("Differing counts for BED files and group assignment, exiting.")
-    exit(-1)
+    check_input_files(args.bed_files)
 
-if args.threshold > len(args.bed_files):
-    print("Threshold > number of provided sources files.")
-    exit(-1)
+    if len(args.bed_files) != len(args.assignment):
+        print("Differing counts for BED files and group assignment, exiting.")
+        exit(-1)
 
-global_dict = {}
+    if args.threshold > len(args.bed_files):
+        print("Threshold > number of provided sources files.")
+        exit(-1)
 
-assignment_dict = {}
+    global_dict = {}
 
-final_dict = {}
+    assignment_dict = {}
 
-gtf_input = parse_gtf_file(args.base_exon_file)
+    final_dict = {}
 
-num_files = len(args.bed_files)
+    gtf_input = parse_gtf_file(args.base_exon_file)
 
-sample_num = len(set(args.assignment))
+    num_files = len(args.bed_files)
 
-file_dict = {}
+    sample_num = len(set(args.assignment))
 
-for file in range(0, num_files):
+    file_dict = {}
 
-    if args.assignment[file] not in global_dict:
-        global_dict[args.assignment[file]] = {}
+    for file in range(0, num_files):
 
-    file_dict[args.bed_files[file]] = args.assignment[file]
+        if args.assignment[file] not in global_dict:
+            global_dict[args.assignment[file]] = {}
 
-    if args.assignment[file] not in assignment_dict:
-        assignment_dict[args.assignment[file]] = 1
-    else:
-        assignment_dict[args.assignment[file]] += 1
+        file_dict[args.bed_files[file]] = args.assignment[file]
 
-    if args.bed_type == "bed6":
+        if args.assignment[file] not in assignment_dict:
+            assignment_dict[args.assignment[file]] = 1
+        else:
+            assignment_dict[args.assignment[file]] += 1
 
-        global_dict[args.assignment[file]] = parse_bed_6_file(args.bed_files[file],
-                                                              gtf_input,
-                                                              global_dict[args.assignment[file]],
-                                                              args.wobble
-                                                              )
-    else:
-        global_dict[args.assignment[file]] = parse_bed_12_file(args.bed_files[file],
-                                                               gtf_input,
-                                                               global_dict[args.assignment[file]],
-                                                               args.min_coverage,
-                                                               args.wobble
-                                                               )
-# remove non-stringent exons
-for sample in global_dict:
-    final_dict[sample] = {}
-    for key in global_dict[sample]:
-        if global_dict[sample][key] >= args.threshold:
-            final_dict[sample][key] = global_dict[sample][key]
+        if args.bed_type == "bed6":
 
-
-reference_annotation = pybedtools.BedTool(args.base_exon_file)
-
-for sample in final_dict:
-
-    file = ""
-    for key in final_dict[sample]:
-        entry = key.split('\t')
-
-        sep = "\t"
-
-        if int(entry[2]) - int(entry[1]) <= args.max_length:
-            file += (sep.join([entry[0], "circtools", "exon", entry[1], entry[2], ".", ".", ".", "."]) + "\n")
-
-    sample_bed = pybedtools.BedTool(file, from_string=True)
-    return_bed = sample_bed.intersect(reference_annotation, v=True)
-
-    print_gtf(return_bed, open("sample_"+str(sample)+".gtf", "w"))
+            global_dict[args.assignment[file]] = parse_bed_6_file(args.bed_files[file],
+                                                                  gtf_input,
+                                                                  global_dict[args.assignment[file]],
+                                                                  args.wobble
+                                                                  )
+        else:
+            global_dict[args.assignment[file]] = parse_bed_12_file(args.bed_files[file],
+                                                                   gtf_input,
+                                                                   global_dict[args.assignment[file]],
+                                                                   args.min_coverage,
+                                                                   args.wobble
+                                                                   )
+    # remove non-stringent exons
+    for sample in global_dict:
+        final_dict[sample] = {}
+        for key in global_dict[sample]:
+            if global_dict[sample][key] >= args.threshold:
+                final_dict[sample][key] = global_dict[sample][key]
 
 
+    reference_annotation = pybedtools.BedTool(args.base_exon_file)
 
+    for sample in final_dict:
+
+        file = ""
+        for key in final_dict[sample]:
+            entry = key.split('\t')
+
+            sep = "\t"
+
+            if int(entry[2]) - int(entry[1]) <= args.max_length:
+                file += (sep.join([entry[0], "circtools", "exon", entry[1], entry[2], ".", ".", ".", "."]) + "\n")
+
+        sample_bed = pybedtools.BedTool(file, from_string=True)
+        return_bed = sample_bed.intersect(reference_annotation, v=True)
+
+        print_gtf(return_bed, open("sample_"+str(sample)+".gtf", "w"))
