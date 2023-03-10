@@ -35,8 +35,8 @@ jobs:
       with:
         cache-version: 1
         extra-packages: |
-          local::contrib/circtest
-          local::contrib/primex
+          local::circtools/contrib/circtest
+          local::circtools/contrib/primex
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Set up Python
@@ -62,7 +62,7 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-         wget https://arizona.box.com/shared/static/3xr9wmu2rq2i240leh5rothntgkmgzq3.bz2 -O circtools_detect_ci_input_data.tar.bz2
+         wget https://links.jakobilab.org/circtools_github_test_data -O circtools_detect_ci_input_data.tar.bz2
          tar xvf circtools_detect_ci_input_data.tar.bz2
     - name: Running circtools detect with minimal data set
       run: |
