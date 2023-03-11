@@ -47,9 +47,6 @@ jobs:
     - name: Updating setuptools
       run: |
          python3 -m pip install -U pip setuptools
-    - name: Updating pip
-      run: |
-         python3 -m pip install --upgrade pip
     - name: Installing circtools & Python dependencies
       run: |
          python3 -m pip install numpy wheel
