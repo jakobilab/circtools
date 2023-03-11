@@ -52,11 +52,6 @@ jobs:
          python3 -m pip install --upgrade pip
     - name: Installing circtools & Python dependencies
       run: |
-         export SYSTEM_VERSION_COMPAT=1
-         #if [ "$RUNNER_OS" == "macOS" ]; then
-#           sudo rm -rf /Library/Developer/CommandLineTools
-#           sudo xcode-select --install
-         #fi
          python3 -m pip install numpy wheel
          python3 -m pip install ./ --prefer-binary
     - name: Check if circtools starts
