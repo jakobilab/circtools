@@ -53,7 +53,6 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          if [ "$RUNNER_OS" == "macOS" ]; then
-           softwareupdate --all --install --force
            sudo rm -rf /Library/Developer/CommandLineTools
            sudo xcode-select --install
            export SYSTEM_VERSION_COMPAT=1
