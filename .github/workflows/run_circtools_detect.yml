@@ -53,8 +53,8 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          if [ "$RUNNER_OS" == "macOS" ]; then
-           sudo rm -rf /Library/Developer/CommandLineTools
-           sudo xcode-select --install
+#           sudo rm -rf /Library/Developer/CommandLineTools
+#           sudo xcode-select --install
            export SYSTEM_VERSION_COMPAT=1
          fi
          python3 -m pip install numpy wheel
