@@ -50,7 +50,12 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          python3 -m pip install numpy wheel
-         python3 -m pip install ./ --prefer-binary
+         if [ "$RUNNER_OS" == "macOS" and "$python-version" == "3.9"]; then
+            export SYSTEM_VERSION_COMPAT=1
+            python3 -m pip install ./ --prefer-binary
+         else
+            python3 -m pip install ./ --prefer-binary
+         fi
     - name: Check if circtools starts
       run: |
          circtools --version
