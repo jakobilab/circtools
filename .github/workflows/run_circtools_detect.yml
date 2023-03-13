@@ -54,8 +54,7 @@ jobs:
          python3 -m pip install numpy wheel
          if [ "$RUNNER_OS" == "macOS"]; then
             #sudo rm -rf /Library/Developer/CommandLineTools
-            #sudo xcode-select --install
-            brew install gcc
+            sudo xcode-select --install
             python3 -m pip install ./
          else
             python3 -m pip install ./
