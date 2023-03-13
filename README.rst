@@ -140,7 +140,7 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://circtools.readthedocs.io/en/latest/?badge=latest
 
-.. |build| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=devel
+.. |build| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master
     :alt: Build Status
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions
