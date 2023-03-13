@@ -50,6 +50,7 @@ jobs:
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
+         export SYSTEM_VERSION_COMPAT=1
          python3 -m pip install numpy wheel
          if [ "$RUNNER_OS" == "macOS"]; then
             sudo rm -rf /Library/Developer/CommandLineTools
