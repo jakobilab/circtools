@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: ci-tests-${{ github.ref }}-1
-#  cancel-in-progress: true
+  cancel-in-progress: true
 
 jobs:
   Main:
@@ -27,19 +27,6 @@ jobs:
       uses: actions/checkout@v3
       with:
        ref: master
-#    - name: Set up R
-#      uses: r-lib/actions/setup-r@v2
-#      with:
-#        r-version: ${{ matrix.R }}
-#    - name: Set up R dependencies
-#      uses: r-lib/actions/setup-r-dependencies@v2
-#      with:
-#        cache-version: 1
-#        extra-packages: |
-#          local::circtools/contrib/circtest
-#          local::circtools/contrib/primex
-#    - name: Checking library loading
-#      run: Rscript -e 'library(primex)'
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -62,6 +49,19 @@ jobs:
          else
             python3 -m pip install ./
          fi
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    - name: Set up R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        extra-packages: |
+          local::circtools/contrib/circtest
+          local::circtools/contrib/primex
+    - name: Checking library loading
+      run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
       run: |
          circtools --version
