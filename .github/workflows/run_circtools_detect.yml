@@ -52,13 +52,7 @@ jobs:
       run: |
          export SYSTEM_VERSION_COMPAT=1
          python3 -m pip install numpy wheel
-         if [ "$RUNNER_OS" == "macOS"]; then
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
+         python3 -m pip install ./
     - name: Check if circtools starts
       run: |
          circtools --version
