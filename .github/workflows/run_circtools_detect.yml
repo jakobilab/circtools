@@ -37,7 +37,7 @@ jobs:
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
-         python3 -m pip install numpy wheel
+         python3 -m pip install numpy wheel Cython
          if [ "$RUNNER_OS" == "ubuntu-22.04"]; then
             apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
          fi
