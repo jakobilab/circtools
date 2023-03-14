@@ -116,7 +116,7 @@ Additionally, the shuffling algorithm of ``bedtools`` requires knowledge of chro
 
 .. code-block:: bash
 
-    wget https://data.dieterichlab.org/s/mm10_chrom_sizes/download -O mm10.chrom.sizes
+    wget https://links.jakobilab.org/mm10.chrom.sizes
 
 
 In order to provide a working example of reasonable size we do not use the full set of repeats as provided by the UCSC genome browser but only the 3 most-common ones, i.e. :
@@ -128,7 +128,7 @@ In order to provide a working example of reasonable size we do not use the full 
 
 .. code-block:: bash
 
-    wget https://data.dieterichlab.org/s/repeat_selection_mm10/download -O repeat_selection_mm10.tar.bz2
+    wget https://links.jakobilab.org/repeat_selection_mm10.tar.bz2
     tar -jxvf repeat_selection_mm10.tar.bz2
 
 After unzipping the downloaded file, the folder ``repeats/`` contains BED files with coordinates of the three aforementioned repeat categories. Those files will be used as input in the next step. The circtools enrich module is able to work with arbitrary features of a GTF annotation file. However, our aim is to search in introns for enrichment and introns are not part of normal ENSEMBL GTF annotation files. circtools includes a script that easily converts ENSEMBL GTF files in GTF files enriched with intron information.
