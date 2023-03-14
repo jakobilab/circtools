@@ -36,7 +36,7 @@ RUN apt-get update; DEBIAN_FRONTEND=noninteractive TZ=America/Phoenix apt-get in
 
 #RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash /circtools/scripts/install_external.sh; Rscript /circtools/scripts/install_R_dependencies.R; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
 
-RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash circtools/scripts/install_external.sh; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
+RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash circtools/circtools/scripts/install_external.sh; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
 
 USER circtools
 
