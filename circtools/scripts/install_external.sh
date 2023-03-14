@@ -22,7 +22,7 @@ function install_bedtools {
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         curl -O https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary -o /usr/bin/bedtools
     else
-        echo "Sorry, this OS type not supported. Please contact circtools@dieterichlab.org for help."
+        echo "Sorry, this OS type not supported. Please contact tjakobi@arizona.edu for help."
     fi
 }
 
