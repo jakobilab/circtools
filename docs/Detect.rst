@@ -424,6 +424,6 @@ The output of circtools detect consists of the following four files: CircRNACoun
 Feedback
 --------
 
-* In case of any problems or feature requests please do not hesitate to open an issue on GitHub: `Create an issue <https://github.com/dieterich-lab/DCC/issues/new>`_
+* In case of any problems or feature requests please do not hesitate to open an issue on GitHub: `Create an issue <https://github.com/jakobilab/circtools/issues/new>`_
 * Please make sure to run circtools detect with the ``-k`` flag when reporting an error to keep temporary files important for debugging purposes
 * Please also always paste or include the log file
