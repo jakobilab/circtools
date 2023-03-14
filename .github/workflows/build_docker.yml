@@ -47,7 +47,7 @@ jobs:
             jakobilab/circtools:master
             ghcr.io/jakobilab/circtools/circtools:master
           # build on feature branches, push only on main branch
-          push: ${{ github.ref == 'refs/heads/devel' }}
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
