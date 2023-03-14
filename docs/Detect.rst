@@ -144,7 +144,7 @@ After flexbar finished processing, the folder ``flexbar/`` contains the trimmed,
 Removal of rRNA with Bowtie2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Next, rRNA reads are removed. Normally, we are not interested in these reads, especially when performing circRNA analysis. Removing those reads will also slightly speed up subsequent steps due to the reduced computational load. In this tutorial, Bowtie2 is used in order to discard reads that map against rRNA loci. This tutorial assumes `bowtie2 <http://bowtie-bio.sourceforge.net/bowtie2/index.shtml>`_ has already been installed an is callable with ``$PATH``. A `precompiled bowtie2 index <https://data.dieterichlab.org/s/mouse_rrna_index>`_ of mouse rRNA loci can has been uploaded for this purpose. In brief, bowtie2 maps the reads against a "reference genome" of rRNA loci and only keeps reads, that do *not* align and therefore are rRNA-free.
+Next, rRNA reads are removed. Normally, we are not interested in these reads, especially when performing circRNA analysis. Removing those reads will also slightly speed up subsequent steps due to the reduced computational load. In this tutorial, Bowtie2 is used in order to discard reads that map against rRNA loci. This tutorial assumes `bowtie2 <http://bowtie-bio.sourceforge.net/bowtie2/index.shtml>`_ has already been installed an is callable with ``$PATH``. A `precompiled bowtie2 index <https://links.jakobilab.org/rrna_mouse.tar.bz2>`_ of mouse rRNA loci can has been uploaded for this purpose. In brief, bowtie2 maps the reads against a "reference genome" of rRNA loci and only keeps reads, that do *not* align and therefore are rRNA-free.
 
 .. code-block:: bash
 
@@ -161,7 +161,7 @@ After this step the ``rrna/`` folder contains adapter-free, rRNA-free reads read
 Mapping against the reference genome
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to map the preprocessed reads against the reference genome and, ultimately detect possible cirRNAs the `STAR <https://github.com/alexdobin/STAR>`_ read mapper is employed. STAR has shown to exhibit a good performance, is highly customizable and, most importantly is able to directly export chimeric reads that are the basis for the circRNA detection process. Again, we are using a wrapper script that simplifies the process of calling STAR for all samples. Like bowtie2, STAR requires an index in order to align reads. Since building this index requires a huge amount of RAM, a `precomputed STAR index <https://data.dieterichlab.org/s/mouse_star_index>`_ for the mouse ENSEMBL 90 build has been prepared for direct download (~22GB).
+In order to map the preprocessed reads against the reference genome and, ultimately detect possible cirRNAs the `STAR <https://github.com/alexdobin/STAR>`_ read mapper is employed. STAR has shown to exhibit a good performance, is highly customizable and, most importantly is able to directly export chimeric reads that are the basis for the circRNA detection process. Again, we are using a wrapper script that simplifies the process of calling STAR for all samples. Like bowtie2, STAR requires an index in order to align reads. Since building this index requires a huge amount of RAM, a `precomputed STAR index <https://links.jakobilab.org/star_index_m38_90.tar.bz2>`_ for the mouse ENSEMBL 90 build has been prepared for direct download (~22GB).
 
 Essentially, the wrapper script for STAR performs the following tasks:
 
@@ -326,7 +326,7 @@ Acquiring suitable GTF files for repeat masking
 
 - **Note**: the output file needs to comply with the GTF format specification. Additionally it may be the case that the names of chromosomes from different databases differ, e.g. **1** for chromosome 1 from ENSEMBL compared to **chr1** for chromosome 1 from UCSC. Since the chromosome names are important for the correct functionality of circtools a sample command for converting the identifiers may be:
 
-- A sample repeat file for the mouse mm10 genome can also `be downloaded <https://data.dieterichlab.org/s/mouse_repeats>`_
+- A sample repeat file for the mouse mm10 genome can also `be downloaded <https://links.jakobilab.org/mouse_repeats.gtf.bz2>`_
 
 .. code-block:: bash
 
@@ -374,8 +374,8 @@ Additionally the newly created files, a reference genome in Fasta format as well
     gzip -d Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
 
     # step two: repeat masker file for the genome build:
-    wget https://data.dieterichlab.org/s/mouse_repeats/download -O GRCm38_90_repeatmasker.gtf.bz2
-    bunzip2 GRCm38_90_repeatmasker.gtf.bz2
+    wget https://links.jakobilab.org/mouse_repeats.gtf.bz2
+    bunzip2 mouse_repeats.gtf.bz2
 
 
 Running circtools circRNA detection
@@ -392,7 +392,7 @@ After performing all preparation steps the detection module can now be started:
         -mt2 @mate2 \
         -B @bam_files.txt \
         -D \
-        -R GRCm38_90_repeatmasker.gtf \
+        -R mouse_repeats.gtf \
         -an ../../Mus_musculus.GRCm38.90.gtf \
         -Pi \
         -F \
