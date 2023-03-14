@@ -40,7 +40,7 @@ We continue by using the `Jakobi et al. 2016 <https://www.sciencedirect.com/scie
     mkdir 03_reconstruct
 
     # download exon annotations required by the reconstruct module
-    wget https://data.dieterichlab.org/s/mouse_exons_bed/download -O mm10.ensembl.exons.bed.bz2
+    wget https://links.jakobilab.org/mm10.ensembl.exons.bed.bz2
     bunzip mm10.ensembl.exons.bed.bz2
 
     # circtools reconstruct is independently run on all samples:
