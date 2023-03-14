@@ -385,7 +385,7 @@ After performing all preparation steps the detection module can now be started:
 
 .. code-block:: bash
 
-  # Run circtools detection to detect circRNAs, using the Jakobi 2016 data set
+  # Run circtools detection to detect circRNAs, using the`Jakobi et al. 2016 <https://www.sciencedirect.com/science/article/pii/S167202291630033X>`_ data set
 
   $ circtools detect @samplesheet \
         -mt1 @mate1 \
@@ -402,12 +402,6 @@ After performing all preparation steps the detection module can now be started:
         -G \
         -A Mus_musculus.GRCm38.dna.primary_assembly.fa
 
-Circtools with the detect command is mostly a wrapper around the DCC tool.
-To learn more about the options used above please check:
-
-.. code-block:: bash
-
-  $ DCC -h
 
 .. note:: By default, circtools assumes that the data is stranded. For non-stranded data the ``-N`` flag should be used
 
