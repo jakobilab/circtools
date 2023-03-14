@@ -24,25 +24,22 @@ RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc |
 
 COPY Makevars /root/.R/Makevars
 
-# install R and Python
+# install R, Python and dependencies
 
 RUN apt-get update; DEBIAN_FRONTEND=noninteractive TZ=America/Phoenix apt-get install --no-install-recommends r-base python3 python3-dev make g++ gfortran libpng-dev zlib1g-dev libbz2-dev libjpeg-turbo8-dev libcurl4-openssl-dev libxml2-dev libblas-dev liblzma-dev libfontconfig1-dev liblapack-dev libssl-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libtiff5-dev libjpeg-dev -y;
 
 # clone circtools
 # install circtools deps (i.e. bedtools)
 # install R packages
-# install pip
+# install and update pip
 # install circtools
 
-RUN git clone -b devel https://github.com/jakobilab/circtools.git ; ls -la circtools/; bash /circtools/scripts/install_external.sh; Rscript /circtools/scripts/install_R_dependencies.R;
+#RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash /circtools/scripts/install_external.sh; Rscript /circtools/scripts/install_R_dependencies.R; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
 
-RUN wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools; python3 -m pip install circtools/; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
+RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash /circtools/scripts/install_external.sh; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
 
 USER circtools
 
 # define entrypoint
 
 ENTRYPOINT ["circtools"]
-
-
-
