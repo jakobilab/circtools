@@ -55,8 +55,6 @@ The installation can be performed directly from Pypi:
     # install R packages for circtools
     circtools_install_R_dependencies
 
-
-
 Additionally, this repository offers the latest development version:
 
 .. code-block:: console
@@ -64,11 +62,10 @@ Additionally, this repository offers the latest development version:
     pip install numpy # required for HTSeq, a dependency of circtools
     pip install git+https://github.com/jakobilab/circtools.git
 
-
 The primer-design module as well as the exon analysis and circRNA testing module
 require a working installation of `R <https://cran.r-project.org/>`__ with
 `BioConductor <https://www.bioconductor.org/install/>`__. All R packages
-required are automatically installed during the setup. Please see the
+required can be automatically installed during the setup. Please see the
 `"Installing circtools" <http://docs.circ.tools/en/latest/Installation.html>`__
 chapter of the main circtools documentation for more detailed installation instructions.
 
