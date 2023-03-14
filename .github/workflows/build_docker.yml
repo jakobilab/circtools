@@ -43,8 +43,8 @@ jobs:
           context: ./docker/
           # Note: tags has to be all lower-case
           tags: |
-            jakobilab/circtools:master
-            ghcr.io/jakobilab/circtools/circtools:master
+#            jakobilab/circtools:master
+            ghcr.io/jakobilab/circtools/circtools:latest
           # build on feature branches, push only on main branch
           push: ${{ github.ref == 'refs/heads/master' }}
 
