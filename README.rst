@@ -3,10 +3,10 @@
 
 **a one-stop software solution for circular RNA research**
 
-.. figure:: https://raw.githubusercontent.com/dieterich-lab/circtools/master/docs/img/circtools_200px.png
+.. figure:: https://raw.githubusercontent.com/jakobilab/circtools/master/docs/img/circtools_200px.png
    :alt: circtools
 
-|docs| |build| |zenodo| |downloads| |pypi|
+|docs| |build| |docker| |zenodo| |downloads| |pypi|
 
 Introduction
 -------------
@@ -23,40 +23,50 @@ a quick check of circRNA mapping results, RBP enrichment screenings, circRNA pri
 Documentation
 -------------
 
-Click `here <http://docs.circ.tools/>`__ to access the complete documentation on Read the Docs.
+Click `here <https://docs.circ.tools/>`__ to access the complete documentation on Read the Docs.
 
 Installation
 ------------
 
-The ``circtools`` package is written in Python3 (>=3.4), two modules, namely ``detect`` and ``reconstruct`` also require a working Python 2 installation (>=2.7). It requires only a small number of external dependencies, namely standard bioinformatics tools:
+The ``circtools`` package is written in Python 3 (supporting Python 3.7 - 3.10). It requires only a small number of external dependencies, namely standard bioinformatics tools:
 
 -  `bedtools (>= 2.27.1) <https://bedtools.readthedocs.io/en/latest/content/installation.html>`__
    [RBP enrichment module, installed automatically]
--  `R (>= 3.3) <https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-16-04-2>`__
+-  `R (>= 4.0) <https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-22-04>`__
    [Data visualization and data processing]
 
-Installation is managed through ``python3 setup.py install``. No sudo
-access is required if the installation is executed with ``--user`` which
-will install the package in a user-writeable folder. The binaries should
-be installed to ``/home/$user/.local/bin/`` in case of Debian-based
-systems.
+Installation is managed through ``pip3 install circtools`` or ``python3 setup.py
+install`` when installed from the cloned GitHub repository. No sudo access is
+required if the installation is executed with ``--user`` which will install the
+package in a user-writeable folder. The binaries should be installed
+to ``/home/$user/.local/bin/`` in case of Debian-based systems.
 
-``circtools`` was developed and tested on Debian Jessie but should also
-run with any distribution.
+``circtools`` was developed and tested on Debian Buster, but should also
+run with any other distribution.
 
-The installation requires running python on the command line:
+The installation can be performed directly from Pypi:
 
-::
+.. code-block:: console
 
-    git clone https://github.com/dieterich-lab/circtools.git
-    cd circtools
-    python3 setup.py install --verbose --user
+    # install circtools
+    pip install numpy # required for HTSeq, a dependency of circtools
+    pip install circtools
 
-The installation procedure will automatically install two dependencies:
-`DCC <https://github.com/dieterich-lab/DCC>`__ and
-`FUCHS <https://github.com/dieterich-lab/FUCHS>`__. The primer-design
-module as well as the exon analysis and circRNA testing module require a
-working installation of `R <https://cran.r-project.org/>`__ with
+    # install R packages for circtools
+    circtools_install_R_dependencies
+
+
+
+Additionally, this repository offers the latest development version:
+
+.. code-block:: console
+
+    pip install numpy # required for HTSeq, a dependency of circtools
+    pip install git+https://github.com/jakobilab/circtools.git
+
+
+The primer-design module as well as the exon analysis and circRNA testing module
+require a working installation of `R <https://cran.r-project.org/>`__ with
 `BioConductor <https://www.bioconductor.org/install/>`__. All R packages
 required are automatically installed during the setup. Please see the
 `"Installing circtools" <http://docs.circ.tools/en/latest/Installation.html>`__
@@ -71,7 +81,7 @@ detect `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Det
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``detect`` command is an interface to
-`DCC <https://github.com/dieterich-lab/DCC>`__, also developed at the
+`DCC <https://github.com/dieterich-lab/DCC>`__, developed at the
 Dieterich Lab. The module allows to detect circRNAs from RNA sequencing
 data. The module is the foundation of all other steps for the circtools
 work flow. All parameters supplied to circtools will be directly passed
@@ -135,15 +145,21 @@ primer `(detailed documentation) <https://circtools.readthedocs.io/en/latest/pri
 The ``primer`` command is used to design and visualize primers required
 for follow up wet lab experiments to verify circRNA candidates.
 
+
 .. |docs| image:: https://readthedocs.org/projects/circtools/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
     :target: https://circtools.readthedocs.io/en/latest/?badge=latest
 
 .. |build| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master
-    :alt: Build Status
+    :alt: CI Status
     :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions
+    :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
+
+.. |docker| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml/badge.svg?branch=master
+    :alt: Docker Build
+    :scale: 100%
+    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml
 
 .. |zenodo| image:: https://zenodo.org/badge/83248654.svg
     :alt: Zenodo DOI link
