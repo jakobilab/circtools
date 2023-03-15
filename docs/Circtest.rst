@@ -24,33 +24,34 @@ A call to ``circtools circtest --help`` shows all available command line flags:
 
 .. code-block:: bash
 
-    usage: circtools [-h] -d DCC_DIR -l CONDITION_LIST -c CONDITION_COLUMNS -g
+    usage: circtools [-h] -d DETECT_DIR -l CONDITION_LIST -c CONDITION_COLUMNS -g
                      GROUPING [-r NUM_REPLICATES] [-f MAX_FDR] [-p PERCENTAGE]
                      [-s FILTER_SAMPLE] [-C FILTER_COUNT] [-o OUTPUT_DIRECTORY]
                      [-n OUTPUT_NAME] [-m MAX_PLOTS] [-a LABEL] [-L RANGE]
                      [-O ONLY_NEGATIVE] [-H ADD_HEADER] [-M {colour,bw}]
-    
-    circular RNA statistical testing - Interface to https://github.com/dieterich-lab/CircTest
-    
+
+    circular RNA statistical testing - Interface to https://github.com/dieterich-
+    lab/CircTest
+
     optional arguments:
       -h, --help            show this help message and exit
-    
+
     Required:
-      -d DCC_DIR, --DCC DCC_DIR
-                            Path to the detect/DCC data directory
+      -d DETECT_DIR, --detect DETECT_DIR
+                            Path to the circtools detect data directory
       -l CONDITION_LIST, --condition-list CONDITION_LIST
                             Comma-separated list of conditions which should be
                             comparedE.g. "RNaseR +","RNaseR -"
       -c CONDITION_COLUMNS, --condition-columns CONDITION_COLUMNS
                             Comma-separated list of 1-based column numbers in the
-                            detect/DCC output which should be compared; e.g.
+                            circtools detect output which should be compared; e.g.
                             10,11,12,13,14,15
       -g GROUPING, --grouping GROUPING
                             Comma-separated list describing the relation of the
                             columns specified via -c to the sample names specified
                             via -l; e.g. -g 1,2 and -r 3 would assign sample1 to
                             each even column and sample 2 to each odd column
-    
+
     Processing options:
       -r NUM_REPLICATES, --replicates NUM_REPLICATES
                             Number of replicates used for the circRNA experiment
@@ -67,13 +68,13 @@ A call to ``circtools circtest --help`` shows all available command line flags:
       -C FILTER_COUNT, --filter-count FILTER_COUNT
                             Number of CircRNA reads that each sample specified via
                             -s has to contain [Default: 5]
-    
+
     Output options:
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
-                            The output directory for files created by circtest
+                            The output directory for files created by circtools
                             [Default: .]
       -n OUTPUT_NAME, --output-name OUTPUT_NAME
-                            The output name for files created by circtest
+                            The output name for files created by circtools
                             [Default: circtest]
       -m MAX_PLOTS, --max-plots MAX_PLOTS
                             How many of candidates should be plotted as bar chart?
