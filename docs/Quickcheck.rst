@@ -76,7 +76,7 @@ Sample call
 
     circtools quickcheck -d 01_detect/ -s ../star  -l minus,plus -g 1,2,1,2,1,2,1,2  -o 02_quickcheck/  -C .Chimeric.out.junction
 
-Here we have the DCC data located in the folder ``01_detect/``, the STAR mapping are stored in ``star/``, the experiment had 4 conditions, listed via ``-l RNaseR_minus,RNaseR_plus``, the samples in the detection data file are sorted in the the order specified via ``-g 1,2,1,2,1,2,1,2``.
+Here we have the circtools data located in the folder ``01_detect/``, the STAR mapping are stored in ``star/``, the experiment had 4 conditions, listed via ``-l RNaseR_minus,RNaseR_plus``, the samples in the detection data file are sorted in the the order specified via ``-g 1,2,1,2,1,2,1,2``.
 
 .. code-block:: bash
 
