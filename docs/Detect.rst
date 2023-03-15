@@ -341,31 +341,20 @@ We first create a new folder for the circtools detection step and populate that 
 
 .. code-block:: bash
 
-    # create new folder
-    mkdir -p circtools/01_detect/
-    cd star/
+    # create new folder for circRNA detection
+    mkdir -p circtools_detect/
 
-    # link aligned reads (bam files) and indexing files for the aligned reads (.bai)
-    parallel --plus ln -s $(pwd)/{}/Aligned.noS.bam $(dirname $(pwd))/circtools/01_detect/{}.bam ::: ALL_1654_*
-    parallel --plus ln -s $(pwd)/{}/Aligned.noS.bam.bai $(dirname $(pwd))/circtools/01_detect/{}.bam.bai ::: ALL_1654_*
+    # the following script automatically prepares all
+    # required input files for circtools detect
+    wget https://links.jakobilab.org/prep_circtools.sh
+    chmod 755 prep_circtools.sh
 
-    # link chimeric junction files of the main mapping
-    parallel --plus ln -s $(pwd)/{}/Chimeric.out.junction $(dirname $(pwd))/circtools/01_detect/{}.Chimeric.out.junction ::: ALL_1654_*
+    # two parameters required:
+    # 1) STAR directory
+    # 2) circtools directory
+    ./prep_circtools.sh star/ circtools_detect/
 
-    # link chimeric junction files of the single mappings
-    parallel --plus ln -s $(pwd)/{}/mate1/Chimeric.out.junction $(dirname $(pwd))/circtools/01_detect/{}.mate1.Chimeric.out.junction ::: ALL_1654_*
-    parallel --plus ln -s $(pwd)/{}/mate2/Chimeric.out.junction $(dirname $(pwd))/circtools/01_detect/{}.mate2.Chimeric.out.junction ::: ALL_1654_*
-
-    cd ..
-    cd circtools/01_detect/
-
-    # create input files for detection step
-    ls | grep bam$ | grep -v mate > bam_files.txt
-    ls | grep junction$ | grep  mate1 > mate1
-    ls | grep junction$ | grep  mate2 > mate2
-    ls | grep junction$ | grep -v mate > samplesheet
-
-Additionally the newly created files, a reference genome in Fasta format as well as an appropriate annotation containing repetitive regions should be provided:
+Additionally to the newly created files, a reference genome in Fasta format as well as an appropriate annotation containing repetitive regions should be provided:
 
 .. code-block:: bash
 
