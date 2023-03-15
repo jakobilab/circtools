@@ -19,19 +19,19 @@ A call to ``circtools quickcheck --help`` shows all available command line flags
 
 .. code-block:: bash
 
-    usage: circtools [-h] -d DCC_DIR -s STAR_DIR -l CONDITION_LIST -g GROUPING
+    usage: circtools [-h] -d DETECT_DIR -s STAR_DIR -l CONDITION_LIST -g GROUPING
                      [-o OUTPUT_DIRECTORY] [-n OUTPUT_NAME] [-c {colour,bw}]
                      [-C CLEANUP] [-S STARFOLDER] [-L REMOVE_SUFFIX_CHARS]
                      [-F REMOVE_PREFIX_CHARS] [-R REMOVE_COLUMNS]
-    
+
     circular RNA sequencing library quality assessment
-    
+
     optional arguments:
       -h, --help            show this help message and exit
-    
+
     Required:
-      -d DCC_DIR, --DCC DCC_DIR
-                            Path to the detect/DCC data directory
+      -d DETECT_DIR, --detect DETECT_DIR
+                            Path to the circtools detect data directory
       -s STAR_DIR, --star STAR_DIR
                             Path to the base STAR data directory containing sub-
                             folders with per-sample mappings
@@ -43,13 +43,13 @@ A call to ``circtools quickcheck --help`` shows all available command line flags
                             columns specified via -c to the sample names specified
                             via -l; e.g. -g 1,2 and -r 3 would assign sample1 to
                             each even column and sample 2 to each odd column
-    
+
     Output options:
       -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
-                            The output directory for files created by circtest
+                            The output directory for files created by circtools
                             [Default: ./]
       -n OUTPUT_NAME, --output-name OUTPUT_NAME
-                            The output name for files created by circtest
+                            The output name for files created by circtools
                             [Default: quickcheck]
       -c {colour,bw}, --colour {colour,bw}
                             Can be set to bw to create grayscale graphs for
@@ -62,13 +62,14 @@ A call to ``circtools quickcheck --help`` shows all available command line flags
                             "_STARmapping"]
       -L REMOVE_SUFFIX_CHARS, --remove-last REMOVE_SUFFIX_CHARS
                             Remove last N characters from each column name of the
-                            DCC input data [Default: 0]
+                            circtools detect input data [Default: 0]
       -F REMOVE_PREFIX_CHARS, --remove-first REMOVE_PREFIX_CHARS
                             Remove first N characters from each column name of the
-                            DCC input data [Default: 0]
+                            circtools detect input data [Default: 0]
       -R REMOVE_COLUMNS, --remove-columns REMOVE_COLUMNS
-                            Comma-separated list of columns in the DCC data files
-                            to not includes in the check
+                            Comma-separated list of columns in the circtools
+                            detect data files to not includes in the check
+
 
 Sample call
 ^^^^^^^^^^^^
