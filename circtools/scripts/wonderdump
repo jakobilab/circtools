@@ -17,14 +17,11 @@ set -ue
 # This is where we will store the file.
 SRA_DIR=./
 
-# check if we have 6 arguments
-if [ ! $# == 1 ]; then
-  echo "Usage: $(basename -- $0) [SRR accession number]"
-  exit
-fi
+# All other parameters up to last.
+PARAMS=${@:1:$(($# - 1))}
 
 # The last parameter must be the SRR number.
-SRR=${1}
+SRR=${@:$#}
 
 if [ -z "$SRR" ]
 then
