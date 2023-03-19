@@ -42,7 +42,7 @@ then
     URL="https://sra-pub-run-odp.s3.amazonaws.com/sra/$CLEAN_SRR/$CLEAN_SRR"
     echo "*** Downloading: $URL"
     echo "*** Saving to: $SRA_FILE"
-    curl $URL > $TMP_FILE
+    curl -s $URL > $TMP_FILE
 
     # Move to local file only if successful.
     mv $TMP_FILE $SRA_FILE
