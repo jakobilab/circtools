@@ -214,8 +214,8 @@ class CircTools(object):
         group = parser.add_argument_group("Input")
 
         group.add_argument("-d",
-                           "--detect-file",
-                           dest="detect_file",
+                           "--detect-dir",
+                           dest="detect_dir",
                            help="CircCoordinates file from circtools detect module",
                            required=True
                            )
