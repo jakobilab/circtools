@@ -114,7 +114,7 @@ linear_counts_summed <- apply(LinearCount[, - c(1 : 3)], 2, sum)
 
 num_samples <- ncol(LinearCount[, - c(1 : 3)])
 
-message(paste("Found ", num_samples, " data columns in provided DCC data", sep=""))
+message(paste("Found ", num_samples, " data columns in provided data", sep=""))
 
 message(paste(group_length, " different groups provided", sep=""))
 
