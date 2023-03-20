@@ -5,7 +5,7 @@ suppressMessages(library(formattable))
 suppressMessages(library(kableExtra))
 suppressMessages(library(dplyr))
 suppressMessages(library(RColorBrewer))
-suppressMessages(library(colortools))
+# suppressMessages(library(colortools))
 
 # switch to red warning color if more blast hits are found
 high_count_number = 0
