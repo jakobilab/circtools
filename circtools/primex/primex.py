@@ -346,7 +346,7 @@ class Primex(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         # need to define path top R wrapper
-        primer_script = 'circtools_primex_wrapper.R'
+        primer_script = 'circtools_primex_wrapper'
 
         # ------------------------------------ run script and check output -----------------------
 
@@ -468,7 +468,7 @@ class Primex(circ_module.circ_template.CircTemplate):
             data_store.write(primex_data_with_blast_results)
 
         # need to define path top R wrapper
-        primer_script = 'circtools_primex_formatter.R'
+        primer_script = 'circtools_primex_formatter'
 
         # ------------------------------------ run script and check output -----------------------
 
