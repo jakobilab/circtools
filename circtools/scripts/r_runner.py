@@ -43,6 +43,10 @@ def circtools_primex_formatter():
     return _run("Rscript " + base_path + "/scripts/circtools_primex_formatter.R")
 
 
+def circtools_primex_wrapper():
+    return _run("Rscript " + base_path + "/scripts/circtools_primex_wrapper.R")
+
+
 def circtools_quickcheck_wrapper():
     return _run("Rscript " + base_path + "/scripts/circtools_quickcheck_wrapper.R")
 
