@@ -4,6 +4,7 @@
 # define functions
 
 import pysam
+import pybedtools
 
 def load_bamfile(bamfile, coordinates):
     reads = {}
