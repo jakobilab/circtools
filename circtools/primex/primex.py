@@ -524,23 +524,31 @@ class Primex(circ_module.circ_template.CircTemplate):
                 gdt_features = gdd.new_track(1, greytrack=True, name="", )
                 gds_features = gdt_features.new_set()
 
-                feature = SeqFeature(FeatureLocation(0, exon1_length), strand=+1)
+                feature = SeqFeature(FeatureLocation(0, exon1_length))
+                feature.location.strand = +1
                 gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
 
-                feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length), strand=+1)
+                feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length))
+                feature.location.strand = +1
+
                 gds_features.add_feature(feature, name="Exon 2", label=False, color=exon2_colour, label_size=22)
 
-                feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length), strand=-1)
+                feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
+                feature.location.strand = -1
+
                 gds_features.add_feature(feature, name="Product", label=False, color="#6881ff")
 
-                feature = SeqFeature(FeatureLocation(0, reverse_primer_start), strand=-1)
+                feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
+                feature.location.strand = -1
+
                 gds_features.add_feature(feature, name="Product: " + product_size + "bp", label=False, color="#6881ff",
                                          label_size=22, label_position="middle")
 
                 if self.junction == "f":
 
-                    feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start),
-                                         strand=-1)
+                    feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
+                    feature.location.strand = -1
+
                     gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
@@ -564,7 +572,9 @@ class Primex(circ_module.circ_template.CircTemplate):
                     # piece 2: remaining primer portion beginning from 0
 
                     # piece 1:
-                    feature = SeqFeature(FeatureLocation(circrna_length - reverse_primer_start, circrna_length), strand=-1)
+                    feature = SeqFeature(FeatureLocation(circrna_length - reverse_primer_start, circrna_length))
+                    feature.location.strand = -1
+
                     gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
@@ -580,8 +590,9 @@ class Primex(circ_module.circ_template.CircTemplate):
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
                 else:
                     feature = SeqFeature(
-                        FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start),
-                        strand=-1)
+                        FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
+                    feature.location.strand = -1
+
                     gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
@@ -600,7 +611,9 @@ class Primex(circ_module.circ_template.CircTemplate):
                         exon_start = int(exon_start) - int(entry[2])
                         exon_stop = int(exon_stop) - int(entry[2])
 
-                        feature = SeqFeature(FeatureLocation(exon_start, exon_stop), strand=+1)
+                        feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
+                        feature.location.strand = +1
+
                         gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
 
                 gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.6, track_size=0.3, tracklines=0, x=0.00,
