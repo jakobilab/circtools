@@ -95,7 +95,7 @@ def connect_introns(introns, circ_coordinates):
 
 
 def get_coverage_profile(bamfile, circ_coordinates, transcripts):
-    bam = pybedtools.bedtool(bamfile)
+    bam = pybedtools.BedTool(bamfile)
     coordinates = pybedtools.BedTool('%s %s %s' % (
         circ_coordinates[0], circ_coordinates[1], circ_coordinates[2]),
                                      from_string=True)
@@ -214,7 +214,7 @@ def collapse_transcripts(transcript_coverage):
 
 
 def infer_missing_structure(transcripts, coordinates, bedfile):
-    B = pybedtools.bedtool(bedfile)
+    B = pybedtools.BedTool(bedfile)
     # B = B.filter(lambda b: b.chrom == coordinates[0] and b.start >= coordinates[1] and b.end <= coordinates[2])
     for t in transcripts:
         if len(transcripts[t]['coverage_breaks']) > 0:
@@ -344,7 +344,7 @@ def write_bed6(transcript_coverage, outfile, circ_coordinates, coverage):
 
 
 def get_coverage(circ_coordinates, bamfile):
-    bam = pybedtools.bedtool(bamfile)
+    bam = pybedtools.BedTool(bamfile)
     coordinates = pybedtools.BedTool('%s %s %s' % (
         circ_coordinates[0], circ_coordinates[1], circ_coordinates[2]),
                                      from_string=True)
