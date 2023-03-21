@@ -3,6 +3,8 @@
 
 # define functions
 
+import pysam
+
 def load_bamfile(bamfile, coordinates):
     reads = {}
     B = pysam.AlignmentFile(bamfile, 'rb')
