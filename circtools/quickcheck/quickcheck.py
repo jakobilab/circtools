@@ -49,14 +49,14 @@ class QuickCheck(circ_module.circ_template.CircTemplate):
             # exit with -1 error if we can't use it
             exit(-1)
 
-        # check DCC directory
+        # check circtools detect directory
         if not (os.path.exists(self.cli_params.detect_dir)):
-            self.log_entry("DCC/detect data directory %s does not exist (or is not accessible)."
+            self.log_entry("circtools detect data directory %s does not exist (or is not accessible)."
                            % self.cli_params.detect_dir)
             # exit with -1 error if we can't use it
             exit(-1)
 
-        # check DCC files (only existence, not the content)
+        # check circtools detect files (only existence, not the content)
         self.check_input_files([
                                 self.cli_params.detect_dir+"CircRNACount",
                                 self.cli_params.detect_dir+"LinearCount",
