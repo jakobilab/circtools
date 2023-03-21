@@ -75,6 +75,17 @@ def circtools_sirna_formatter():
                 base_path + "/scripts/circtools_sirna_formatter.R " +
                 " ".join(sys.argv[1:]))
 
+def circtools_reconstruct_summarized_coverage_profiles():
+    return _run("Rscript " +
+                base_path +
+                "/scripts/circtools_reconstruct_summarized_coverage_profiles.R " +
+                " ".join(sys.argv[1:]))
+
+def circtools_reconstruct_coverage_graph():
+    return _run("Rscript " +
+                base_path + "/scripts/circtools_reconstruct_coverage_graph.R " +
+                " ".join(sys.argv[1:]))
+
 
 def install_R_dependencies():
     return _run("Rscript " + base_path
