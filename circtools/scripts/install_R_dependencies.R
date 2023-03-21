@@ -21,6 +21,7 @@ base_path <- args[1]
 # we need these packages
 pkgs <- c(
     "aod",
+    "amap",
     "ballgown",
     "biomaRt",
     "data.table",
@@ -30,10 +31,12 @@ pkgs <- c(
     "ggbio",
     "ggfortify",
     "ggplot2",
+    "gplots",
     "ggrepel",
     "gridExtra",
     "openxlsx",
     "plyr",
+    "Hmisc",
     "reshape2",
     "devtools",
     "kableExtra",
