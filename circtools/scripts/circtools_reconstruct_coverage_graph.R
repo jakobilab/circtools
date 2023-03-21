@@ -1,5 +1,8 @@
 #! /usr/bin/env Rscript
 
+library(amap)
+library(gplots)
+library(Hmisc)
 
 # script that loads the coverage profile and plots a pretty graph,
 # maybe some additional statistics would be nice
