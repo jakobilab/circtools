@@ -20,6 +20,7 @@ import circ_module.circ_template
 import os
 import datetime
 import time
+from pathos.multiprocessing import ProcessingPool as Pool
 
 
 class Reconstruct(circ_module.circ_template.CircTemplate):
@@ -320,7 +321,7 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                 if os.path.isdir(
                         '%s/%s.coverage_profiles/' % (outfolder, sample)):
                     os.system(
-                        'summarized_coverage_profiles.R %s/%s.coverage_profiles' % (
+                        'circtools_reconstruct_summarized_coverage_profiles %s/%s.coverage_profiles' % (
                         outfolder, sample))
                 else:
                     output_file = open('%s/%s.logfile.%s' % (
@@ -333,7 +334,7 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                 output_file = open('%s/%s.logfile.%s' % (
                 outfolder, sample, dt.replace(' ', '_')), 'a')
                 output_file.write(
-                    '\tskipping summarized_coverage_profiles.R because %s/%s.coverage_profiles/coverage_profiles.all_circles.pdf already exists\n' % (
+                    '\tskipping scirctools_reconstruct_summarized_coverage_profiles because %s/%s.coverage_profiles/coverage_profiles.all_circles.pdf already exists\n' % (
                         outfolder, sample))
                 output_file.close()
 
@@ -355,10 +356,9 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                 def run_r_parallel(f):
                     if f.endswith('.txt'):
                         os.system(
-                            'make_coverage_picture.R %s/%s.coverage_profiles/%s %s/%s.coverage_pictures/' %
+                            'circtools_reconstruct_coverage_graph %s/%s.coverage_profiles/%s %s/%s.coverage_pictures/' %
                             (outfolder, sample, f, outfolder, sample))
 
-                from pathos.multiprocessing import ProcessingPool as Pool
 
                 pool = Pool(num_cpus)
                 pool.map(run_r_parallel, files)
