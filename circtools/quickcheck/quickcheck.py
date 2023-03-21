@@ -109,7 +109,7 @@ class QuickCheck(circ_module.circ_template.CircTemplate):
         # ------------------------------------ need to call the correct R script here -----------------------
 
         # need to define path top R wrapper
-        quickcheck_script = 'circtools_quickcheck_wrapper.R'
+        quickcheck_script = 'circtools_quickcheck_wrapper'
 
         if self.cli_params.starfolder == "":
             self.cli_params.starfolder = 0
