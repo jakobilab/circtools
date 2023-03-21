@@ -132,7 +132,7 @@ class CircTest(circ_module.circ_template.CircTemplate):
         # ------------------------------------ need to call the correct R script here -----------------------
 
         # need to define path top R wrapper
-        primer_script = 'circtools_circtest_wrapper.R'
+        primer_script = 'circtools_circtest_wrapper'
 
         # Variable number of args in a list
         args = [
