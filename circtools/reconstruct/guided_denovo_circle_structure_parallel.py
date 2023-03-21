@@ -500,8 +500,7 @@ def run_denovo_exon_chain_reconstruction(f, folder, annotation, outfile):
 
 # Run script
 
-if __name__ == '__main__':
-    # Handle command line options
+def main():
 
     # required packages
     import pysam
