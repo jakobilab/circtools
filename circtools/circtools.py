@@ -20,7 +20,7 @@ import os.path
 import sys
 
 # global settings
-version = "1.3.0-dev"
+version = "1.3.0"
 program_name = "circtools"
 
 
