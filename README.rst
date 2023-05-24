@@ -158,10 +158,10 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml
 
-.. |zenodo| image:: https://zenodo.org/badge/83248654.svg
+.. |zenodo| image:: https://zenodo.org/badge/498448368.svg
     :alt: Zenodo DOI link
     :scale: 100%
-    :target: https://zenodo.org/badge/latestdoi/83248654
+    :target: https://zenodo.org/badge/latestdoi/498448368
 
 .. |downloads| image:: https://pepy.tech/badge/circtools
     :alt: Python Package Index Downloads
