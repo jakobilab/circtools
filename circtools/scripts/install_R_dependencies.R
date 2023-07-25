@@ -85,20 +85,6 @@ message("")
 
 countdown(10)
 
-message("")
-message("Now installing R CircTest and primex R packages.")
-message("")
-
-install.packages(paste0(base_path,"/contrib/primex"),
-                         repos = NULL,
-                          type = "source")
-
-
-install.packages(paste0(base_path,"/contrib/circtest"),
-                         repos = NULL,
-                          type = "source")
-
-q()
 
 if (
     majorVersion >= 4
