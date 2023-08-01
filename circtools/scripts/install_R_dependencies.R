@@ -84,6 +84,7 @@ message("Press ctrl+c to cancel.")
 message("")
 
 countdown(10)
+message("")
 
 
 if (
@@ -93,10 +94,6 @@ if (
     if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
 
-        local({r <- getOption("repos")
-             r["CRAN"] <- "https://cran.microsoft.com/"
-             options(repos=r)
-        })
 
         if (length(pkgs) > 0)
             BiocManager::install(pkgs)
@@ -105,10 +102,6 @@ if (
     source("https://bioconductor.org/biocLite.R")
     biocLite()
 
-    local({r <- getOption("repos")
-         r["CRAN"] <- "https://cran.microsoft.com/"
-         options(repos=r)
-    })
 
     if (length(pkgs) > 0)
         biocLite(pkgs)
@@ -131,8 +124,3 @@ install.packages(paste0(base_path,"/contrib/circtest"),
                           type = "source")
 
 
-# # install CircTest from the Dieterich Lab GitHub page from master branch
-# install_github("dieterich-lab/CircTest", ref = "master")
-#
-# # install primex from the Dieterich Lab GitHub page from master branch
-# install_github("dieterich-lab/primex", ref = "master")
