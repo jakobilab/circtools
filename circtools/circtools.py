@@ -602,8 +602,16 @@ class CircTools(object):
                                 "must have the same order as input chimeric junction files")
         group.add_argument("-A", "--refseq", dest="refseq",
                            help="Reference sequence FASTA file")
-
         parser.add_argument_group(group)
+
+        # ciriquant merging
+        group = parser.add_argument_group("CIRIquant Options", "Options for merging Circtools and CIRIquant matches")
+        group.add_argument("-cq", "--flag_ciriquant", action="store_true", dest="ciriquant", default=False,
+                           help="If specified, -cql must also be provided. [default: False]")
+        group.add_argument("-cql", "--list_ciriquant", action="store_true", dest="ciriquant", default=None,
+                           help="Two-column tab-separated text file with list of CIRIquant output files. First column is sample ID and second column is full path to .ciri output file")
+        parser.add_argument_group(group)
+        
 
         args = parser.parse_args(sys.argv[2:])
 
