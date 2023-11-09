@@ -30,6 +30,8 @@ class metatool():
         #self.tmp_dir = tmp_dir
         print("Merging counts from Circtools and CIRIquant\n")
 
+    '''
+    # Commenting because this part will be checked in the detect module class
     @staticmethod
     def parseoptions():
         # COMMAND LINE ARGUMENTS
@@ -49,7 +51,7 @@ class metatool():
         MIN_PYTHON = (3, 0)
         if sys.version_info < MIN_PYTHON:
             sys.exit("Python %s.%s or later is required.\n" % MIN_PYTHON)
-    
+
     def check_command_options(self, opts):
         # OPTIONS CHECK
         if (opts.circtools == None):
@@ -77,7 +79,7 @@ class metatool():
             else:
                 os.mkdir(opts.out_dir)
         return(opts)
-
+    '''
     ##########################################################################
     # INPUT FILE READING
     # Read and store circtools output
@@ -174,7 +176,8 @@ class metatool():
                         eachline = eachline.rstrip().split("\t")
                     key_string = eachline[1] + "_" + eachline[2] + "_" + eachline[3] + "_" + eachline[10]
                     dict_ciriquant[samplename][key_string] = [int(eachline[4])]
-                    dict_ciriquant_linear[samplename][key_string] = [int(eachline[6])]
+                    doptions.list_ciriquant, output_circ_counts, output_coordinates, output_linear, 
+                    options.cleanup, options.out_dirict_ciriquant_linear[samplename][key_string] = [int(eachline[6])]
 
                 cq_pd = pd.DataFrame.transpose(pd.DataFrame.from_dict(dict_ciriquant[samplename]))
                 cq_pd_linear = pd.DataFrame.transpose(pd.DataFrame.from_dict(dict_ciriquant_linear[samplename]))
@@ -188,24 +191,13 @@ class metatool():
 
     ############################################################################
     # MERGING AND WRITING OUTPUTS TO A FILE
-    def merging(self):
-        #self.options = options
+    def merging(self, ciriquant, circtools, circcoordinates, linear, string, out_dir):
 
-        # Check python version
-        self.check_python_version() 
-        # Parse command-line parameters
-        options = self.parseoptions() 
-        # Check command-line options
-        self.check_command_options(options)
+        # parse the outputs of both tools
+        out_ciriquant = self.parseCIRIquant(ciriquant)
+        out_circtools = self.parseCirctools(circtools, circcoordinates, linear, string)
 
-        # first parse the outputs of both tools
-        out_ciriquant = self.parseCIRIquant(options.ciriquant)
-        #print(out_ciriquant.keys())
-        out_circtools = self.parseCirctools(options.circtools, options.circcoordinates, options.linear, options.string)
-        #print(type(out_ciriquant[0]))
-        #print(type(out_ciriquant[2]))
-
-        # Now take all matches and create an empty dataframe which has rows=all matches and columns=samplenames. Later fill this dataframe
+        # Output dataframes
         temp_cq = [x.index.values for x in out_ciriquant[0].values()]
         all_matches = list(set(list(set(out_circtools[0].index.values)) + list(set([j for i in temp_cq for j in i]))))
 
@@ -214,10 +206,6 @@ class metatool():
         combined_circ_norm = pd.DataFrame(0.0, index=all_matches, columns=out_circtools[0].columns)
         combined_linear_norm = pd.DataFrame(0.0, index=all_matches, columns=out_circtools[0].columns)
 
-        #print(combined_circ_norm.dtypes)
-        #print(combined_circ.dtypes)
-
-        #print(combined_circ.columns.tolist())
         # Go over every element and fill in the values from circtools and CIRIquant. 
         for i in combined_circ.index.values:
             for j in combined_circ.columns.tolist():
@@ -238,8 +226,6 @@ class metatool():
 
                 # if the circle is predicted by both, print the details for later analysis
                 if ((present_ctools == 1) and (present_cquant == 1)):
-                    #print("Circtools-" + str(normalized_pd_circtools.at[i,j]) + ", CIRIquant-" + str(out_ciriquant[j].at[i,0]), "," + i + "," + j)
-                    #print(i, j, out_circtools[0].at[i,j])
                     combined_circ.at[i,j] = out_circtools[0].at[i,j]
                     combined_linear.at[i,j] = out_circtools[1].at[i,j]
                     combined_circ_norm.at[i,j] = out_circtools[2].at[i,j]
@@ -252,19 +238,14 @@ class metatool():
                 elif (present_cquant == 1):
                     combined_circ.at[i,j] = out_ciriquant[0][j].at[i,0]
                     combined_linear.at[i,j] = out_ciriquant[1][j].at[i,0]
-                    #combined_circ_norm.at[i,j] = out_ciriquant[2][j].at[i,0]
                     combined_circ_norm.at[i,j] = out_ciriquant[2][j].at[i,0]
                     combined_linear_norm.at[i,j] = out_ciriquant[3][j].at[i,0]
 
 
         # WRITING OUTPUTS TO A FILES
-        combined_circ.to_csv(options.out_dir + "/CircRNACount_Merged", sep = "\t")
-        combined_linear.to_csv(options.out_dir + "/LinearCount_Merged", sep = "\t")
-        combined_circ_norm.to_csv(options.out_dir + "/CircRNACount_Merged_Normalized", sep = "\t")
-        combined_linear_norm.to_csv(options.out_dir + "/LinearCount_Merged_Normalized", sep = "\t")
+        combined_circ.to_csv(out_dir + "/CircRNACount_Merged", sep = "\t")
+        combined_linear.to_csv(out_dir + "/LinearCount_Merged", sep = "\t")
+        combined_circ_norm.to_csv(out_dir + "/CircRNACount_Merged_Normalized", sep = "\t")
+        combined_linear_norm.to_csv(out_dir + "/LinearCount_Merged_Normalized", sep = "\t")
 
-#test = metatool()
-#print(dir(test))
-##options = test.parseoptions()
-##print(options)
-#test.merging()
+        print("Circtools and CIRIquant matches merged successfully")
