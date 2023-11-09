@@ -610,6 +610,7 @@ class CircTools(object):
                            help="If specified, -cql must also be provided. [default: False]")
         group.add_argument("-cql", "--list_ciriquant", action="store_true", dest="ciriquant", default=None,
                            help="Two-column tab-separated text file with list of CIRIquant output files. First column is sample ID and second column is full path to .ciri output file")
+        group.add_argument("-C", "--cleanup", dest="ciriquant", help="String to be removed from each sample name so that the names of Circtools and CIRIquant are the same [Default: \"_STARmapping.*Chimeric.out.junction\"]", default="*Chimeric.out.junction")
         parser.add_argument_group(group)
         
 
