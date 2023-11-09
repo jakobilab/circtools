@@ -32,6 +32,7 @@ from . import circFilter as Ft
 from . import findcircRNA as Fc
 from . import genecount as Gc
 from .fix2chimera import Fix2Chimera
+from . import CombineCirctoolsCiriquant as Ccc
 
 import circ_module.circ_template
 
@@ -559,6 +560,11 @@ class Detect(circ_module.circ_template.CircTemplate):
             print("Temporary files deleted")
 
         logging.info("circtools completed successfully")
+
+        ## Merging with CIRIquant if flag is provided to be True
+        if options.flag_ciriquant:
+            cq = Ccc.metatool()
+            cq.merging()
 
 
 def fixall(joinedfnames, mate1filenames, mate2filenames, out_dir, tmp_dir):

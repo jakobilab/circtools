@@ -263,8 +263,8 @@ class metatool():
         combined_circ_norm.to_csv(options.out_dir + "/CircRNACount_Merged_Normalized", sep = "\t")
         combined_linear_norm.to_csv(options.out_dir + "/LinearCount_Merged_Normalized", sep = "\t")
 
-test = metatool()
-print(dir(test))
-#options = test.parseoptions()
-#print(options)
-test.merging()
+#test = metatool()
+#print(dir(test))
+##options = test.parseoptions()
+##print(options)
+#test.merging()
