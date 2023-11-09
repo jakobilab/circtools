@@ -563,8 +563,24 @@ class Detect(circ_module.circ_template.CircTemplate):
 
         ## Merging with CIRIquant if flag is provided to be True
         if options.flag_ciriquant:
-            cq = Ccc.metatool()
-            cq.merging()
+            # check first the command-line options for ciriquant
+            if not options.list_ciriquant:
+                logging.error("Input error! A list of CIRIquant output files must be provided to use the metatool module")
+                sys.exit("Please provide the file with list of CIRIquant outputs per sample.")
+            elif not output_circ_counts:
+                logging.error("CircRNACount file not found: "+ output_circ_counts)
+                sys.exit("Please check if " + output_circ_counts + " exists")
+            elif not output_linear_counts:
+                logging.error("LinearCount file not found: "+ output_linear_counts)
+                sys.exit("Please check if " + output_linear_counts + " exists")
+            elif not output_coordinates:
+                logging.error("CircCoordinate file not found: "+ output_coordinates)
+                sys.exit("Please check if " + output_coordinates + " exists")
+            else:
+                logging.info("Merging the predictions from Circtools and CIRIquant")
+                cq = Ccc.metatool()
+                cq.merging(options.list_ciriquant, output_circ_counts, output_coordinates, output_linear, 
+                           options.cleanup, options.out_dir)
 
 
 def fixall(joinedfnames, mate1filenames, mate2filenames, out_dir, tmp_dir):
