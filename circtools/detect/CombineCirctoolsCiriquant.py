@@ -108,6 +108,8 @@ class metatool():
         header = inp[0].rstrip().split('\t')
         samplenames_circtools =  [s.replace(replace_string, "") for s in header[3:]]
         #print(samplenames_circtools)
+        print(inp[:15])
+        print(inp_l[:15])
         index = 1
         for line in inp[1:]:
             line = line.rstrip().split('\t')
@@ -176,8 +178,7 @@ class metatool():
                         eachline = eachline.rstrip().split("\t")
                     key_string = eachline[1] + "_" + eachline[2] + "_" + eachline[3] + "_" + eachline[10]
                     dict_ciriquant[samplename][key_string] = [int(eachline[4])]
-                    doptions.list_ciriquant, output_circ_counts, output_coordinates, output_linear, 
-                    options.cleanup, options.out_dirict_ciriquant_linear[samplename][key_string] = [int(eachline[6])]
+                    dict_ciriquant_linear[samplename][key_string] = [int(eachline[6])]
 
                 cq_pd = pd.DataFrame.transpose(pd.DataFrame.from_dict(dict_ciriquant[samplename]))
                 cq_pd_linear = pd.DataFrame.transpose(pd.DataFrame.from_dict(dict_ciriquant_linear[samplename]))
