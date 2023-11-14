@@ -606,10 +606,11 @@ class CircTools(object):
 
         # ciriquant merging
         group = parser.add_argument_group("CIRIquant Options", "Options for merging Circtools and CIRIquant matches")
-        group.add_argument("-cq", "--flag_ciriquant", action="store_true", dest="ciriquant", default=False,
+        group.add_argument("-cq", "--flag_ciriquant", action="store_true",
+                           dest="flag_ciriquant", default=False,
                            help="If specified, -cql must also be provided. [default: False]")
-        group.add_argument("-cql", "--list_ciriquant", nargs="+", dest="ciriquant", help="Two-column tab-separated text file with list of CIRIquant output files. First column is sample ID and second column is full path to .ciri output file")
-        group.add_argument("-S", "--cleanup", dest="ciriquant", help="String to be removed from each sample name so that the names of Circtools and CIRIquant are the same [Default: \"_STARmapping.*Chimeric.out.junction\"]", default="*Chimeric.out.junction")
+        group.add_argument("-cql", "--list_ciriquant", nargs="+", dest="list_ciriquant", help="Two-column tab-separated text file with list of CIRIquant output files. First column is sample ID and second column is full path to .ciri output file")
+        group.add_argument("-S", "--cleanup", dest="cleanup", help="String to be removed from each sample name so that the names of Circtools and CIRIquant are the same [Default: \"_STARmapping.*Chimeric.out.junction\"]", default="*Chimeric.out.junction")
         parser.add_argument_group(group)
         
 

@@ -176,7 +176,7 @@ class Detect(circ_module.circ_template.CircTemplate):
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
             print(
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
-            exit(-1)
+
 
         if options.bam and len(options.bam) == 1:
 
@@ -562,6 +562,7 @@ class Detect(circ_module.circ_template.CircTemplate):
         logging.info("circtools completed successfully")
 
         ## Merging with CIRIquant if flag is provided to be True
+        print(options)
         if options.flag_ciriquant:
             # check first the command-line options for ciriquant
             if not options.list_ciriquant:
@@ -579,7 +580,8 @@ class Detect(circ_module.circ_template.CircTemplate):
             else:
                 logging.info("Merging the predictions from Circtools and CIRIquant")
                 cq = Ccc.metatool()
-                cq.merging(options.list_ciriquant, output_circ_counts, output_coordinates, output_linear, 
+                cq.merging(options.list_ciriquant[0], output_circ_counts,
+                           output_coordinates, output_linear_counts, 
                            options.cleanup, options.out_dir)
 
 
