@@ -107,7 +107,6 @@ class metatool():
         header = inp[0].rstrip().split('\t')
         samplenames_circtools =  [s.replace(replace_string, "") for s in header[3:]]
         #print(samplenames_circtools)
-        print(len(inp), len(inp_l), len(inp_co))
         #print(inp[:15])
         #print(inp_l[:15])
         index = 1
@@ -191,6 +190,14 @@ class metatool():
         return (dict_ciriquant, dict_ciriquant_linear, dict_ciriquant_norm, dict_ciriquant_linear_norm)
 
     ############################################################################
+    # FUNCTION TO RESTRUCTURE PANDAS DATAFRAME TO WRITE INTO A FILE
+    def restructure(self, df):
+        new_df = df
+        new_df.insert(0, "End", [x.split("_")[2] for x in list(df.index.values)], True)
+        new_df.insert(0, "Start", [x.split("_")[1] for x in list(df.index.values)], True)
+        new_df.insert(0, "Chr", [x.split("_")[0] for x in list(df.index.values)], True)
+        return new_df
+    ############################################################################
     # MERGING AND WRITING OUTPUTS TO A FILE
     def merging(self, ciriquant, circtools, circcoordinates, linear, string, out_dir):
 
@@ -244,9 +251,17 @@ class metatool():
 
 
         # WRITING OUTPUTS TO A FILES
-        combined_circ.to_csv(out_dir + "/CircRNACount_Merged", sep = "\t")
-        combined_linear.to_csv(out_dir + "/LinearCount_Merged", sep = "\t")
-        combined_circ_norm.to_csv(out_dir + "/CircRNACount_Merged_Normalized", sep = "\t")
-        combined_linear_norm.to_csv(out_dir + "/LinearCount_Merged_Normalized", sep = "\t")
+        self.restructure(combined_circ).to_csv(out_dir
+                                               + "/CircRNACount_Merged", sep
+                                               = "\t", index=False)
+        self.restructure(combined_linear).to_csv(out_dir
+                                                 + "/LinearCount_Merged", sep
+                                                 = "\t", index=False)
+        self.restructure(combined_circ_norm).to_csv(out_dir
+                                                    + "/CircRNACount_Merged_Normalized",
+                                                    sep = "\t", index=False)
+        self.restructure(combined_linear_norm).to_csv(out_dir
+                                                      + "/LinearCount_Merged_Normalized",
+                                                      sep = "\t", index=False)
 
         print("Circtools and CIRIquant matches merged successfully")

@@ -8,7 +8,7 @@
 # (at your option) any later self.version.
 #
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -562,7 +562,6 @@ class Detect(circ_module.circ_template.CircTemplate):
         logging.info("circtools completed successfully")
 
         ## Merging with CIRIquant if flag is provided to be True
-        print(options)
         if options.flag_ciriquant:
             # check first the command-line options for ciriquant
             if not options.list_ciriquant:
