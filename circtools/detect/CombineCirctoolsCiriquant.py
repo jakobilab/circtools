@@ -90,7 +90,6 @@ class metatool():
         self.input_circcordinates = input_circcordinates
         self.input_linear = input_linear
         self.replace_string = replace_string
-
         dict_circtools = {}
         dict_circtools_linear = {}
         inp = open(input_circtools, mode='r').readlines()
@@ -108,8 +107,9 @@ class metatool():
         header = inp[0].rstrip().split('\t')
         samplenames_circtools =  [s.replace(replace_string, "") for s in header[3:]]
         #print(samplenames_circtools)
-        print(inp[:15])
-        print(inp_l[:15])
+        print(len(inp), len(inp_l), len(inp_co))
+        #print(inp[:15])
+        #print(inp_l[:15])
         index = 1
         for line in inp[1:]:
             line = line.rstrip().split('\t')
