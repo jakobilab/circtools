@@ -136,7 +136,7 @@ through the
 `ENCODE <https://www.encodeproject.org/search/?type=Experiment&assay_title=eCLIP>`__
 project.
 
-primer `(detailed documentation) <https://circtools.readthedocs.io/en/latest/primer.html>`__
+primer `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Primer.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``primer`` command is used to design and visualize primers required
