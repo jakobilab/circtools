@@ -10,6 +10,6 @@ build:
   tools:
     python: "3.11"
 
- python:
-   install:
-     - requirements: requirements.readthedocs.txt
+python:
+ install:
+   - requirements: requirements.readthedocs.txt
