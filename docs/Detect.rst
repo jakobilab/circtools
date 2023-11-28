@@ -402,6 +402,7 @@ The latest version of Circtools offers integration of circularRNA predictions fr
 To install CIRIquant, please follow these `installation instructions <https://ciri-cookbook.readthedocs.io/en/latest/CIRIquant_1_installation.html>`_. Use CIRIquant wrapper script to run CIRIquant.
 
 .. code-block:: bash
+
     mkdir ciri/
     ls -1 ALL_*.1.gz >input1
     ls -1 ALL_*.2.gz >input2
