@@ -207,7 +207,13 @@ class metatool():
 
         # Output dataframes
         temp_cq = [x.index.values for x in out_ciriquant[0].values()]
-        all_matches = list(set(list(set(out_circtools[0].index.values)) + list(set([j for i in temp_cq for j in i]))))
+        all_matches_nonsorted = list(set(list(set(out_circtools[0].index.values)) + list(set([j for i in temp_cq for j in i]))))
+        all_matches_nonsorted = [i.split('_') for i in all_matches_nonsorted]
+        all_matches_sorted = sorted(all_matches_nonsorted, key=lambda x: [x[0],
+                                                                          x[1],
+                                                                          x[2],
+                                                                          x[3]])
+        all_matches = ['_'.join(e) for e in all_matches_sorted]
 
         combined_circ = pd.DataFrame(0, index=all_matches, columns=out_circtools[0].columns)
         combined_linear = pd.DataFrame(0, index=all_matches, columns=out_circtools[0].columns)
