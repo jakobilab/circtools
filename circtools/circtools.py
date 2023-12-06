@@ -53,6 +53,7 @@ class CircTools(object):
                quickcheck:   circular RNA sequencing library quick checks
                circtest:     circular RNA statistical testing
                primex:       circular RNA primer design tool
+               padlock:      circular RNA padlock probe design tool
                sirna:        circular RNA sirna design tool
                reconstruct:  circular RNA reconstruction
                enrich:       circular RNA RBP enrichment scan
@@ -336,6 +337,142 @@ class CircTools(object):
         import primex.primex
         primex_instance = primex.primex.Primex(args, program_name, version)
         primex_instance.run_module()
+
+    ## padlock probe module added by Shubhada
+    @staticmethod
+    def padlock():
+        parser = argparse.ArgumentParser(
+            description="circular and linear RNA padlock probe design")
+        # NOT prefixing the argument with -- means it"s not optional
+
+        group = parser.add_argument_group("Input")
+
+        group.add_argument("-d",
+                           "--detect-dir",
+                           dest="detect_dir",
+                           help="CircCoordinates file from circtools detect module",
+                           required=True
+                           )
+
+        group.add_argument("-g",
+                           "--gtf-file",
+                           dest="gtf_file",
+                           help="GTF file of genome annotation e.g. ENSEMBL",
+                           required=True
+                           )
+
+        group.add_argument("-f",
+                           "--fasta",
+                           dest="fasta_file",
+                           help="FASTA file with genome sequence (must match annotation)",
+                           required=True
+                           )
+
+        group.add_argument("-O",
+                           "--organism",
+                           dest="organism",
+                           help="Organism of the study (used for primer BLASTing), "
+                                "rn = Rattus norvegicus, mm = Mus musculus, hs = Homo sapiens, ss = Sus scrofa",
+                           choices=("mm", "rn", "hs", "ss")
+                           )
+
+        group.add_argument("-s",
+                           "--sequence",
+                           dest="sequence_file",
+                           help="FASTA file containing the circRNA sequence (exons and introns)"
+                           )
+
+        group = parser.add_argument_group("Output options")
+
+        group.add_argument("-o",
+                           "--output",
+                           dest="output_dir",
+                           help="Output directory (must exist)",
+                           default="./"
+                           )
+
+        group.add_argument("-T",
+                           "--title",
+                           dest="experiment_title",
+                           help="Title of the experiment for HTML output and file name",
+                           default="circtools_primer_design"
+                           )
+
+        group = parser.add_argument_group("Additional options")
+
+        group.add_argument("-t",
+                           "--temp",
+                           dest="global_temp_dir",
+                           help="Temporary directory (must exist)",
+                           default="/tmp/"
+                           )
+
+        group.add_argument("-G",
+                           "--genes",
+                           dest="gene_list",
+                           help="Space-separated list of host gene names. Primers for CircRNAs of those genes will be "
+                                "designed."
+                                "E.g. -G \"CAMSAP1\" \"RYR2\"",
+                           required=False,
+                           nargs='+'
+                           )
+
+        group.add_argument("-p",
+                           "--product-size",
+                           dest="product_size",
+                           help="Space-separated range for the desired PCR product. E.g. -p 80 160 [default]",
+                           required=False,
+                           default=[80, 160],
+                           type=int,
+                           nargs='+'
+                           )
+
+        group.add_argument("-i",
+                           "--id-list",
+                           dest="id_list",
+                           help="Space-separated list of circRNA IDs."
+                                " E.g. -i \"CAMSAP1_9_135850137_135850461_-\" \"CAMSAP1_9_135881633_135883078_-\"",
+                           required=False,
+                           nargs='+'
+                           )
+
+        group.add_argument("-j",
+                           "--junction",
+                           dest="junction",
+                           help="Should the forward [f] or reverse [r] primer be located on the BSJ? [Default: n]",
+                           choices=("r", "n", "f"),
+                           default="n"
+                           )
+
+        group.add_argument("-b",
+                           "--no-blast",
+                           dest="blast",
+                           help="Should primers be BLASTED? Even if selected yes here, not more than 50 primers will"
+                                "be sent to BLAST in any case.",
+                           default=False,
+                           action='store_true'
+                           )
+        group.add_argument("-n",
+                           "--num-pairs",
+                           dest="num_pairs",
+                           help="Number of primer pairs to be designed",
+                           type=int,
+                           default=10
+                           )
+
+        args = parser.parse_args(sys.argv[2:])
+
+        # start the padlock module
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import padlock.padlock
+        padlock_instance = padlock.padlock.Padlock(args, program_name, version)
+        padlock_instance.run_module()
+
+
+
 
     @staticmethod
     def sirna():
