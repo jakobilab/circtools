@@ -29,6 +29,7 @@ from Bio.Blast import NCBIXML
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
+import primer3                  # for padlock probe designing
 
 class Padlock(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -339,13 +340,28 @@ class Padlock(circ_module.circ_template.CircTemplate):
             exit(-1)
         
         else:
-            # padlock probe design part starts here
-            #
+            ## padlock probe design part starts here
+            
+            # define primer design parameters
+            design_parameters = {
+                'PRIMER_OPT_SIZE': 20,
+                'PRIMER_MIN_SIZE': 20,
+                'PRIMER_MAX_SIZE': 20,
+                'PRIMER_MIN_TM': 50.0,
+                'PRIMER_MAX_TM': 70.0,
+                'PRIMER_MAX_NS_ACCEPTED': 0,
+                'PRIMER_PRODUCT_SIZE_RANGE': [[20,20]]}
+
+            # dictionary for ligation juntiond flag, taken from technical note Xenium
+            dict_ligation_junction = {"AT":'preferred', "TA":'preferred', "GA":'preferred', "AG":'preferred',
+                                      "TT":'neutral', "CT":'neutral', "CA":'neutral', "TC":'neutral', "AC":'neutral'
+                                      , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
+                                      , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
             for each_circle in exon_cache:
+                print(each_circle)
                 if (exon_cache[each_circle][2]) == "":
                     # this is a single exon circle so take first 25 and last 25
                     # bases from its sequence to create a scan sequence
-                    print(each_circle, exon_cache[each_circle][1])
                     scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
                     #print(exon_cache[each_circle][1][-25:], exon_cache[each_circle][1][:25], len(scan_sequence))
                 else:
@@ -354,13 +370,31 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
                     #print(exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25], len(scan_sequence))
 
-            # now scan a 40bp window over this scan_sequence and run primer3 on
-            # each 40bp sequence
-            for i in range(0,len(scan_sequence)):
-              scan_window = scan_sequence[i:i+40]
-              if (len(scan_window) < 40):
-                  break
-              print(i, scan_sequence[i:i+40], len(scan_sequence[i:i+40]))
+                # Scan a 40bp window over this scan_sequence and run primer3 on
+                # each 40bp sequence
+                for i in range(0,len(scan_sequence)):
+                    scan_window = scan_sequence[i:i+40]
+                    if (len(scan_window) < 40):
+                        break
+                    # print(i, scan_window, len(scan_window), scan_window[19:21], dict_ligation_junction[scan_window[19:21]])
+
+                    # filter criteria for padlock probes - accepted ligation junction preferences
+                    if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred"):
+                        print("Non-preffered Ligation junction found, skipping.")
+                        continue
+                    else:
+                        # send each of this to primer3
+                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
+                        rbd5 = scan_window[:20]
+                        rbd3 = scan_window[20:]
+                        #primer_rbd5 = primer3.bindings.designPrimers(seq_args = {'SEQUENCE_ID': str(each_circle + "-" + str(i) + "-RBD5"), 'SEQUENCE_TEMPLATE': rbd5}, global_args = design_parameters)
+                        #primer_rbd3 = primer3.bindings.designPrimers(seq_args = {'SEQUENCE_ID': str(each_circle + "-" + str(i) + "-RBD3"), 'SEQUENCE_TEMPLATE': rbd3}, global_args = design_parameters)
+                        melt_tmp_5 = primer3.calc_tm(rbd5)
+                        melt_tmp_3 = primer3.calc_tm(rbd3)
+                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
+                            print("Melting temperature outside range, skipping!")
+                            continue
+                        print(rbd5, rbd3, melt_tmp_5, melt_tmp_3)
 
         '''
         # need to define path top R wrapper
