@@ -380,7 +380,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     # filter criteria for padlock probes - accepted ligation junction preferences
                     if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred"):
-                        print("Non-preffered Ligation junction found, skipping.")
+                        #print("Non-preffered Ligation junction found, skipping.")
                         continue
                     else:
                         # send each of this to primer3
@@ -392,11 +392,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         melt_tmp_5 = primer3.calc_tm(rbd5)
                         melt_tmp_3 = primer3.calc_tm(rbd3)
                         if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
-                            print("Melting temperature outside range, skipping!")
+                            #print("Melting temperature outside range, skipping!")
                             continue
-                        print(rbd5, rbd3, melt_tmp_5, melt_tmp_3)
+                        #print(rbd5, rbd3, melt_tmp_5, melt_tmp_3)
 
-        '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
         primer_script = 'circtools_primex_wrapper'
@@ -416,7 +415,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_result_cache = {}
 
         blast_input_file = ""
-
+        '''
         if circ_rna_number < 50:
 
             for line in script_result.splitlines():
