@@ -103,6 +103,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                        gapcosts="5 2"
                                        )
         return return_handle
+    
 
     @staticmethod
     def read_annotation_file(annotation_file, entity="gene", string=False):
@@ -169,6 +170,25 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
     def run_module(self):
 
+        def calc_GC(seq):
+            # function to calculate GC content of a probe
+            c=0
+            g=0
+            t=0
+            a=0
+            for x in str(seq):
+                if x == "C":
+                    c+=1    
+                elif x == "G":
+                    g+=1
+                elif x == "A":
+                    a+=1    
+                elif x == "T":
+                    t+=1
+
+            gc_content=(g+c)*100/(a+t+g+c)
+            return(gc_content)
+        
         if self.id_list and os.access(self.id_list[0], os.R_OK):
             print("Detected supplied circRNA ID file.")
             with open(self.id_list[0]) as f:
@@ -405,9 +425,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
                             #print("Melting temperature outside range, skipping!")
                             continue
-                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]])
+                        gc_rbd5 = calc_GC(rbd5)
+                        gc_rbd3 = calc_GC(rbd3)
+                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]], gc_rbd5, gc_rbd3)
 
-                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]]])
+                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]], gc_rbd5, gc_rbd3])
         '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
