@@ -349,6 +349,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             exit(-1)
         
         else:
+            designed_probes_for_blast = []
             ## padlock probe design part starts here
             
             # define primer design parameters
@@ -406,10 +407,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]])
 
+                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]]])
         '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
-        primer_script = 'circtools_primex_wrapper'
         primer_script = '/prj/circtools2/installation/circtools/circtools/scripts/circtools_padlock_wrapper.R'
         primer_script = 'circtools_padlockprobe_wrapper.R'
 
@@ -418,21 +419,20 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                  exon_storage_tmp + " " +
                                  str(self.product_range[0]) + "," + str(self.product_range[1]) + " " +
                                  self.junction + " " + str(self.num_pairs)).read()
+        
         # this is the first time we look through the input file
         # we collect the primer sequences and unify everything in one blast query
-        print(script_result)
-
+        '''
         blast_object_cache = {}
         blast_result_cache = {}
 
         blast_input_file = ""
         if circ_rna_number < 50:
 
-            for line in script_result.splitlines():
-                entry = line.split('\t')
-                print("Enrty is: ", entry)
+            for entry in designed_probes_for_blast:
                 circular_rna_id = entry[0].split('_')
-
+                print("Entry is: ", entry, " and circular RNA id is ", circular_rna_id)
+                
                 if entry[1] == "NA":
                     continue
 
@@ -464,6 +464,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         if self.no_blast:
             print("User disabled BLAST search, skipping.")
+       
+        print(primer_to_circ_cache)
+        print(blast_object_cache)           
+        #print(blast_input_file)            # this is a fasta file with primer sequences to BLAST
+        '''
 
         run_blast = 0
 
