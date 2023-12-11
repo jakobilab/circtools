@@ -284,6 +284,7 @@ class CircTools(object):
                            nargs='+'
                            )
 
+        
         group.add_argument("-p",
                            "--product-size",
                            dest="product_size",
@@ -413,6 +414,14 @@ class CircTools(object):
                            help="Space-separated list of host gene names. Primers for CircRNAs of those genes will be "
                                 "designed."
                                 "E.g. -G \"CAMSAP1\" \"RYR2\"",
+                           required=False,
+                           nargs='+'
+                           )
+        
+        group.add_argument("-GL",
+                           "--genes-file",
+                           dest="gene_list_file",
+                           help="File containing gene names for which primers need to be designed. Need to provide this if -G option not provided"                          ,
                            required=False,
                            nargs='+'
                            )
