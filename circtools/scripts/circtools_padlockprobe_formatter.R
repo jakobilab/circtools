@@ -61,7 +61,7 @@ color_palette <- rev(brewer.pal(n = 5, name = 'RdBu'))
 
 #default TM value
 default_tm_value <- 50
-default_gc_value <- 50
+default_gc_value <- 60
 default_product_value <- 1
 
 construct_color_column <- function(column, default_value, palette)
@@ -118,7 +118,6 @@ colnames(data_table) <- c(  "Annotation",
 ## Ligation junction 1 if preferred or 0 if neutral
 data_table$Product_size <- ifelse(data_table$Product_size == "preferred", 1, 0)
 
-print(colnames(data_table))
 data_table$right_tm_color  = construct_color_column(data_table$TM_right,default_tm_value,color_palette)
 data_table$left_tm_color   = construct_color_column(data_table$TM_left,default_tm_value,color_palette)
 
@@ -133,14 +132,14 @@ colnames_final <- c(        "Annotation",
                             "Start",
                             "Stop",
                             "Strand",
-                            "TM forward",
-                            "TM reverse",
-                            "GC% forward",
-                            "GC% reverse",
-                            "Product size",
-                            "Forward",
+                            "TM RBD5",
+                            "TM RBD3",
+                            "GC% RBD5",
+                            "GC% RBD3",
+                            "Liagtion Junction",
+                            "RBD5",
                             "BLAST",
-                            "Reverse",
+                            "RBD3",
                             "BLAST"
                     )
 
