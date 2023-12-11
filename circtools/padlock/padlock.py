@@ -392,9 +392,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred" ):
                         #print("Non-preffered Ligation junction found, skipping.")
                         continue
-                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                        #print("Neutral Ligation junction found, skipping.")
-                        continue
+                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                    #    #print("Neutral Ligation junction found, skipping.")
+                    #    continue
                     else:
                         # send each of this to primer3
                         # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
@@ -468,7 +468,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         print(primer_to_circ_cache)
         print(blast_object_cache)           
         #print(blast_input_file)            # this is a fasta file with primer sequences to BLAST
-        '''
 
         run_blast = 0
 
@@ -511,12 +510,13 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         primex_data_with_blast_results = ""
 
-        for line in script_result.splitlines():
-            entry = line.split('\t')
+        for entry in designed_probes_for_blast:
+            #entry = line.split('\t')
 
             # split up the identifier for final plotting
-            line = line.replace("_", "\t")
-
+            #line = line.replace("_", "\t")
+            line = "\t".join(map(str, entry))
+            
             if run_blast == 1:
                 left_result = "No hits"
                 right_result = "No hits"
@@ -535,6 +535,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         with open(blast_storage_tmp, 'w') as data_store:
             data_store.write(primex_data_with_blast_results)
+        '''
 
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
