@@ -45,7 +45,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.detect_dir = self.cli_params.detect_dir
         self.output_dir = self.cli_params.output_dir
         self.organism = self.cli_params.organism
-        self.gene_list = self.cli_params.gene_list
         self.id_list = self.cli_params.id_list
         self.product_range = self.cli_params.product_size
         self.junction = self.cli_params.junction
@@ -53,6 +52,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.experiment_title = self.cli_params.experiment_title
         self.input_circRNA = self.cli_params.sequence_file
         self.num_pairs = self.cli_params.num_pairs
+        
+        if (self.cli_params.gene_list):
+            self.gene_list = self.cli_params.gene_list
+        elif (self.cli_params.gene_list_file):
+            gene_file = [line.rstrip() for line in open(self.cli_params.gene_list_file[0])]
+            self.gene_list = gene_file
+        else:
+            print("Need to provide gene list by either -G or -GL options!"
+                  )
+            exit(-1)
 
         if self.id_list and self.gene_list:
             print("Please specify either host genes via -G or circRNA IDs via -i.")
@@ -358,7 +367,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                       , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
                                       , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
             for each_circle in exon_cache:
-                print(each_circle)
+                #print(each_circle)
                 if (exon_cache[each_circle][2]) == "":
                     # this is a single exon circle so take first 25 and last 25
                     # bases from its sequence to create a scan sequence
@@ -379,23 +388,25 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     # print(i, scan_window, len(scan_window), scan_window[19:21], dict_ligation_junction[scan_window[19:21]])
 
                     # filter criteria for padlock probes - accepted ligation junction preferences
-                    if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred"):
+                    if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred" ):
                         #print("Non-preffered Ligation junction found, skipping.")
+                        continue
+                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                        #print("Neutral Ligation junction found, skipping.")
                         continue
                     else:
                         # send each of this to primer3
                         # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
                         rbd5 = scan_window[:20]
                         rbd3 = scan_window[20:]
-                        #primer_rbd5 = primer3.bindings.designPrimers(seq_args = {'SEQUENCE_ID': str(each_circle + "-" + str(i) + "-RBD5"), 'SEQUENCE_TEMPLATE': rbd5}, global_args = design_parameters)
-                        #primer_rbd3 = primer3.bindings.designPrimers(seq_args = {'SEQUENCE_ID': str(each_circle + "-" + str(i) + "-RBD3"), 'SEQUENCE_TEMPLATE': rbd3}, global_args = design_parameters)
                         melt_tmp_5 = primer3.calc_tm(rbd5)
                         melt_tmp_3 = primer3.calc_tm(rbd3)
                         if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
                             #print("Melting temperature outside range, skipping!")
                             continue
-                        #print(rbd5, rbd3, melt_tmp_5, melt_tmp_3)
+                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]])
 
+        '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
         primer_script = 'circtools_primex_wrapper'
@@ -415,7 +426,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_result_cache = {}
 
         blast_input_file = ""
-        '''
         if circ_rna_number < 50:
 
             for line in script_result.splitlines():
