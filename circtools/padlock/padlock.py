@@ -572,7 +572,21 @@ class Padlock(circ_module.circ_template.CircTemplate):
             data_store.write(primex_data_formatted)
 
         print("Writing results to "+output_html_file)
+
+        # writing output file to CSV -> the format recommended by Xenium technical note
+        print("Writing probe results to "+output_csv_file)
+        fout = open(output_csv_file, 'wb')
+        fout.write("CircRNAID,RBD5,RBD3\n".encode())
+        for eachline in primex_data_with_blast_results.split("\n"):
+            #print(eachline)
+            if (eachline == ""):    continue
+            eachline = eachline.split("\t")
+            tempstr = "_".join(eachline[:5])
+            #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
+            fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
+        fout.close()
         '''
+
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
