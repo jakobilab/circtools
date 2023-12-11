@@ -412,14 +412,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     if (junction == "nonpreferred" ):
                         #print("Non-preffered Ligation junction found, skipping.")
                         continue
-                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
                         #print("Neutral Ligation junction found, skipping.")
-                        continue
+                     #   continue
                     else:
                         # send each of this to primer3
                         # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
                         rbd5 = scan_window[:20]
                         rbd3 = scan_window[20:]
+                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
+                            continue
                         melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
                         melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
                         if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
@@ -449,9 +451,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_result_cache = {}
 
         blast_input_file = ""
-        if circ_rna_number < 50:
+        if circ_rna_number < 100:
 
-            for entry in designed_probes_for_blast[:5]:
+            for entry in designed_probes_for_blast:
                 circular_rna_id = entry[0].split('_')
                 
                 if entry[1] == "NA":
@@ -535,7 +537,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # split up the identifier for final plotting
             entry[0] = entry[0].replace("_", "\t")
             line = "\t".join(map(str, entry))
-            print(line)
+            #print(line)
 
             if run_blast == 1:
                 left_result = "No hits"
@@ -553,7 +555,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # update line
             primex_data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
 
-        print(primex_data_with_blast_results)
+        #print(primex_data_with_blast_results)
         with open(blast_storage_tmp, 'w') as data_store:
             data_store.write(primex_data_with_blast_results)
 
