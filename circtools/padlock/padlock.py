@@ -46,7 +46,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.output_dir = self.cli_params.output_dir
         self.organism = self.cli_params.organism
         self.id_list = self.cli_params.id_list
-        self.product_range = self.cli_params.product_size
+        self.product_range = self.cli_params.product_size   # not required for probe designing
         self.junction = self.cli_params.junction
         self.no_blast = self.cli_params.blast
         self.experiment_title = self.cli_params.experiment_title
@@ -64,7 +64,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         if self.id_list and self.gene_list:
-            print("Please specify either host genes via -G or circRNA IDs via -i.")
+            print("Please specify either host genes via -G/-GL or circRNA IDs via -i.")
             sys.exit(-1)
 
         self.homo_sapiens_blast_db = "GPIPE/9606/current/rna"
@@ -229,8 +229,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.tmp"
         blast_xml_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.xml"
 
-        output_html_file = self.output_dir + self.experiment_title.replace(" ", "_") + ".html"
-        output_csv_file = self.output_dir + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
+        output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
+        output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
         # erase old contents
         open(exon_storage_tmp, 'w').close()
 
@@ -406,30 +406,30 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     scan_window = scan_sequence[i:i+40]
                     if (len(scan_window) < 40):
                         break
-                    # print(i, scan_window, len(scan_window), scan_window[19:21], dict_ligation_junction[scan_window[19:21]])
 
+                    junction = dict_ligation_junction[scan_window[19:21]]
                     # filter criteria for padlock probes - accepted ligation junction preferences
-                    if (dict_ligation_junction[scan_window[19:21]] == "nonpreferred" ):
+                    if (junction == "nonpreferred" ):
                         #print("Non-preffered Ligation junction found, skipping.")
                         continue
-                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                    #    #print("Neutral Ligation junction found, skipping.")
-                    #    continue
+                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                        #print("Neutral Ligation junction found, skipping.")
+                        continue
                     else:
                         # send each of this to primer3
                         # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
                         rbd5 = scan_window[:20]
                         rbd3 = scan_window[20:]
-                        melt_tmp_5 = primer3.calc_tm(rbd5)
-                        melt_tmp_3 = primer3.calc_tm(rbd3)
+                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
+                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
                         if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
                             #print("Melting temperature outside range, skipping!")
                             continue
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
-                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]], gc_rbd5, gc_rbd3)
+                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
 
-                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, dict_ligation_junction[scan_window[19:21]], gc_rbd5, gc_rbd3])
+                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
         '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
@@ -451,9 +451,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_input_file = ""
         if circ_rna_number < 50:
 
-            for entry in designed_probes_for_blast:
+            for entry in designed_probes_for_blast[:5]:
                 circular_rna_id = entry[0].split('_')
-                print("Entry is: ", entry, " and circular RNA id is ", circular_rna_id)
                 
                 if entry[1] == "NA":
                     continue
@@ -487,8 +486,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         if self.no_blast:
             print("User disabled BLAST search, skipping.")
        
-        print(primer_to_circ_cache)
-        print(blast_object_cache)           
         #print(blast_input_file)            # this is a fasta file with primer sequences to BLAST
 
         run_blast = 0
@@ -536,9 +533,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #entry = line.split('\t')
 
             # split up the identifier for final plotting
-            #line = line.replace("_", "\t")
+            entry[0] = entry[0].replace("_", "\t")
             line = "\t".join(map(str, entry))
-            
+            print(line)
+
             if run_blast == 1:
                 left_result = "No hits"
                 right_result = "No hits"
@@ -555,12 +553,13 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # update line
             primex_data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
 
+        print(primex_data_with_blast_results)
         with open(blast_storage_tmp, 'w') as data_store:
             data_store.write(primex_data_with_blast_results)
-        '''
 
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
+        primer_script = 'circtools_padlockprobe_formatter.R'
 
         # ------------------------------------ run script and check output -----------------------
 
@@ -573,11 +572,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
             data_store.write(primex_data_formatted)
 
         print("Writing results to "+output_html_file)
-
+        '''
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
-            print(entry)
+            #print(entry)
             # no primers, no graphics
             if entry[6] == "NA":
                 continue
@@ -587,7 +586,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                         entry[2],
                                         entry[3],
                                         entry[4]])
-
+            print(entry)
             if circular_rna_id in exon_cache:
 
                 circular_rna_id_isoform = circular_rna_id + "_" + entry[5]
@@ -714,9 +713,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 gdd.write(self.output_dir + "/" + circular_rna_id_isoform + ".svg", "svg")
                 print(feature)
         print("Cleaning up")
-
+        '''
         ### cleanup / delete tmp files
         #os.remove(exon_storage_tmp)
         #os.remove(blast_storage_tmp)
         #os.remove(blast_xml_tmp)
-        '''
