@@ -426,16 +426,6 @@ class CircTools(object):
                            nargs='+'
                            )
 
-        group.add_argument("-p",
-                           "--product-size",
-                           dest="product_size",
-                           help="Space-separated range for the desired PCR product. E.g. -p 80 160 [default]",
-                           required=False,
-                           default=[80, 160],
-                           type=int,
-                           nargs='+'
-                           )
-
         group.add_argument("-i",
                            "--id-list",
                            dest="id_list",
@@ -443,14 +433,6 @@ class CircTools(object):
                                 " E.g. -i \"CAMSAP1_9_135850137_135850461_-\" \"CAMSAP1_9_135881633_135883078_-\"",
                            required=False,
                            nargs='+'
-                           )
-
-        group.add_argument("-j",
-                           "--junction",
-                           dest="junction",
-                           help="Should the forward [f] or reverse [r] primer be located on the BSJ? [Default: n]",
-                           choices=("r", "n", "f"),
-                           default="n"
                            )
 
         group.add_argument("-b",
