@@ -46,8 +46,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.output_dir = self.cli_params.output_dir
         self.organism = self.cli_params.organism
         self.id_list = self.cli_params.id_list
-        self.product_range = self.cli_params.product_size   # not required for probe designing
-        self.junction = self.cli_params.junction
+        #self.product_range = self.cli_params.product_size   # not required for probe designing
+        #self.junction = self.cli_params.junction
         self.no_blast = self.cli_params.blast
         self.experiment_title = self.cli_params.experiment_title
         self.input_circRNA = self.cli_params.sequence_file
@@ -207,6 +207,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # exit with -1 error if we can't use it
             exit(-1)
 
+        '''
+        ## this part is commented because product_range not required for padlock probe design
         # let's first check if the temporary directory exists
         if self.product_range and len(self.product_range) != 2:
             print("Please specify a qPCR product range as range, e.g. \"-p 140 150\".")
@@ -217,7 +219,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             print("qPCR product range has to be > 0.")
             # exit with -1 error if we can't use it
             exit(-1)
-
+        '''
         circ_rna_number = 0
 
         # define temporary files
@@ -270,7 +272,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     circrna_length = int(current_line[2]) - int(current_line[1])
 
-                    #if self.product_range[0] > circrna_length or self.product_range[1] > circrna_length:
                     if circrna_length < 50:
                         print("Padlock probe design length too large for circRNA \"%s\".\nCircRNA length:"
                               " %d, padlock probes are 40bp long." %
