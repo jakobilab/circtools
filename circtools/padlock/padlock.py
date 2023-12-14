@@ -52,7 +52,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.experiment_title = self.cli_params.experiment_title
         self.input_circRNA = self.cli_params.sequence_file
         self.num_pairs = self.cli_params.num_pairs
+        self.rna_type = self.cli_params.rna_type            # flag for type of RNA for which you want to generate probes
         
+        # gene_list file argument
         if (self.cli_params.gene_list):
             self.gene_list = self.cli_params.gene_list
         elif (self.cli_params.gene_list_file):
