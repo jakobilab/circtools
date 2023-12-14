@@ -451,6 +451,13 @@ class CircTools(object):
                            default=10
                            )
 
+        group.add_argument("-r",
+                           "--rna-type",
+                           dest="rna_type",
+                           help="Flag for RNA type for which you want to generated padlock probes\n. 0 for Circular RNAs only, 1 for Linear RNAs only and 2 for Both. DEFAULT 2",
+                           type=int,
+                           default=2
+                           )
         args = parser.parse_args(sys.argv[2:])
 
         # start the padlock module
