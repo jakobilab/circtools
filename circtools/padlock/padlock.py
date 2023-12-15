@@ -324,13 +324,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
                         melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
+                        melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
+                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
                             #print("Melting temperature outside range, skipping!")
                             continue
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
                         gc_total = calc_GC(scan_window)
-                        print(each_gene+"_"+str(i)+"_"+str(j), scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
+                        print(each_gene+"_"+str(i)+"_"+str(j), scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
 
         if self.detect_dir:
             with open(self.detect_dir) as fp:
@@ -500,29 +501,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
                         melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
+                        melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
+                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
                             #print("Melting temperature outside range, skipping!")
                             continue
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
-                        gc_total = calc_GC(scan_window)
-                        print(each_circle, scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
+                        print(each_circle, scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
 
-                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
+                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
 
-        '''
-        
-        # need to define path top R wrapper
-        print("Going to run R wrapper")
-        primer_script = '/prj/circtools2/installation/circtools/circtools/scripts/circtools_padlock_wrapper.R'
-        primer_script = 'circtools_padlockprobe_wrapper.R'
-
-        # ------------------------------------ run script and check output -----------------------
-        script_result = os.popen(primer_script + " " +
-                                 exon_storage_tmp + " " +
-                                 str(self.product_range[0]) + "," + str(self.product_range[1]) + " " +
-                                 self.junction + " " + str(self.num_pairs)).read()
-        '''
 
         # this is the first time we look through the input file
         # we collect the primer sequences and unify everything in one blast query
