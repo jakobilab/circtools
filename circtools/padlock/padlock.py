@@ -142,18 +142,27 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     # extract chromosome, start, stop, score(0), name and strand
                     # we hopefully have a gene name now and use this one for the entry
-
+                    
+                    # added by Shubhada (to fetch the gene names)
+                    s = str(columns[8])
+                    news = s.strip("\n")[:-1].replace("; ", ";")          # removing trailing ; to form dictionary in next step
+                    gene_dict = dict([x.split(" ") for x in news.replace("\"", "").split(";")])
+                    if ("gene_name" in gene_dict.keys()):
+                        gene_name = gene_dict["gene_name"]
+                    else:
+                        gene_name = "name"
                     entry = [
                         columns[0],
                         columns[3],
                         columns[4],
-                        "name",
+                        gene_name,
                         str(0),
                         columns[6],
                     ]
 
                     # concatenate lines to one string
                     bed_content += '\t'.join(entry) + "\n"
+                    print(bed_content)
 
             if not bed_content:
                 exit(-1)
@@ -230,21 +239,27 @@ class Padlock(circ_module.circ_template.CircTemplate):
         tmp_prefix =  ''.join(random.choice(letters) for i in range(10))
 
         exon_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_flanking_exons.tmp"
+        exon_storage_linear_tmp = self.temp_dir + tmp_prefix + "_circtools_linear_exons.tmp" # file that will store ALL exons; for forward splice junctions
         blast_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.tmp"
         blast_xml_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.xml"
 
         output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
         output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
+        output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "linear.csv" # padlock probe output csv file for linear RNA probes
         # erase old contents
         open(exon_storage_tmp, 'w').close()
+        open(exon_storage_linear_tmp, 'w').close()
 
         # define cache dicts
         exon_cache = {}
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
+        all_exon_cache = {}             # to store all exons for linear RNA splicing
 
         if self.detect_dir:
             exons = self.read_annotation_file(self.gtf_file, entity="exon")
+            print(exons[:10])
+            #cdss = self.read_annotation_file(self.gtf_file, entity="CDS")
             with open(self.detect_dir) as fp:
 
                 for line in fp:
@@ -289,6 +304,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                            current_line[5]])
                     virtual_bed_file = pybedtools.BedTool(bed_string, from_string=True)
                     result = exons.intersect(virtual_bed_file, s=True)
+                    #result_cds = cdss.intersect(virtual_bed_file, s=True)
                     fasta_bed_line_start = ""
                     fasta_bed_line_stop = ""
 
@@ -298,6 +314,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     # for every circular RNA, fetch the information about
                     # second and first exons
                     flanking_exon_cache[name] = {}
+                    print(str(result))
                     for result_line in str(result).splitlines():
                         bed_feature = result_line.split('\t')
 
@@ -319,14 +336,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         # not used for primer design
                         if bed_feature[1] > current_line[1] and bed_feature[2] < current_line[2]:
                             flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
-                    
+                   
+                    # first and last exons
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
                     virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
                     virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
                     
-                    
+                    #print("Virtual bed file start stop")
+                    #print(virtual_bed_file_start, virtual_bed_file_stop)
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
                         print("Will continue with non-annotated, manually extracted sequence.")
@@ -341,7 +360,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
                         virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
                         virtual_bed_file_stop = ""
-
                     exon1 = ""
                     exon2 = ""
 
@@ -367,12 +385,13 @@ class Padlock(circ_module.circ_template.CircTemplate):
             sys.exit(-1)
         
         if not exon_cache:
-            print("This weird condition matching and exiting")
             print("Could not find any circRNAs matching your criteria, exiting.")
             exit(-1)
         
         else:
+            ### add the part for primer designing here; first for circular RNAs and then linear RNAs
             designed_probes_for_blast = []
+            designed_probes_for_blast_linear = []
             ## padlock probe design part starts here
             
             # define primer design parameters
@@ -390,6 +409,51 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                       "TT":'neutral', "CT":'neutral', "CA":'neutral', "TC":'neutral', "AC":'neutral'
                                       , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
                                       , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
+            # circular RNA for loop
+            for each_circle in exon_cache:
+                #print(each_circle)
+                if (exon_cache[each_circle][2]) == "":
+                    # this is a single exon circle so take first 25 and last 25
+                    # bases from its sequence to create a scan sequence
+                    scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
+                else:
+                    # this is a multiple exon circular RNA. Take last 25 bases of
+                    # last exon and first 25 bases of first exon as a scan sequence
+                    scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
+
+                # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
+                for i in range(0,len(scan_sequence)):
+                    scan_window = scan_sequence[i:i+40]
+                    if (len(scan_window) < 40):
+                        break
+
+                    junction = dict_ligation_junction[scan_window[19:21]]
+                    # filter criteria for padlock probes - accepted ligation junction preferences
+                    if (junction == "nonpreferred" ):
+                        #print("Non-preffered Ligation junction found, skipping.")
+                        continue
+                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                        #print("Neutral Ligation junction found, skipping.")
+                        continue
+                    else:
+                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
+                        rbd5 = scan_window[:20]
+                        rbd3 = scan_window[20:]
+                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
+                            continue
+                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
+                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
+                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
+                            #print("Melting temperature outside range, skipping!")
+                            continue
+                        gc_rbd5 = calc_GC(rbd5)
+                        gc_rbd3 = calc_GC(rbd3)
+                        print(each_circle, scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
+
+                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
+
+
+            # linear RNA loop
             for each_circle in exon_cache:
                 #print(each_circle)
                 if (exon_cache[each_circle][2]) == "":
@@ -435,6 +499,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
+
+
         '''
         # need to define path top R wrapper
         print("Going to run R wrapper")
