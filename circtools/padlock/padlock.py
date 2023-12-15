@@ -252,7 +252,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
         all_exon_cache = {}             # to store all exons for linear RNA splicing
-            
         
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
@@ -266,15 +265,73 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                                  c="4,5,6",  # copy columns 5 & 6
                                                  o="distinct,distinct,distinct")  # group
         
+        # define primer design parameters
+        design_parameters = {
+                'PRIMER_OPT_SIZE': 20,
+                'PRIMER_MIN_SIZE': 20,
+                'PRIMER_MAX_SIZE': 20,
+                'PRIMER_MIN_TM': 50.0,
+                'PRIMER_MAX_TM': 70.0,
+                'PRIMER_MAX_NS_ACCEPTED': 0,
+                'PRIMER_PRODUCT_SIZE_RANGE': [[20,20]]}
+
+        # dictionary for ligation juntiond flag, taken from technical note Xenium
+        dict_ligation_junction = {"AT":'preferred', "TA":'preferred', "GA":'preferred', "AG":'preferred',
+                                      "TT":'neutral', "CT":'neutral', "CA":'neutral', "TC":'neutral', "AC":'neutral'
+                                      , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
+                                      , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
+        
         # First for linear RNAs, store the exons per gene in the gene-list
         for each_gene in self.gene_list:
-            print(each_gene)
+            list_exons_seq = []
             all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
-            print(len(all_exons))
             all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
             all_exons_unique.sort(key = lambda x: x[1])
-            print(all_exons_unique, len(all_exons_unique))
-        
+            fasta_bed_line = ""
+            for each_element in all_exons_unique:
+                each_line = "\t".join(each_element)
+                virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
+                virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
+                seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
+                list_exons_seq.append(seq)
+            
+            # for every gene, extract from every exon, the first and last 25bp 
+            for i in range(0, len(list_exons_seq)):
+                if (i == len(list_exons_seq)-1):
+                    break
+                scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
+                #print(i, scan_sequence, len(scan_sequence))
+
+                for j in range(0,len(scan_sequence)):
+                    scan_window = scan_sequence[j:j+40]
+                    if (len(scan_window) < 40):
+                        break
+
+                    junction = dict_ligation_junction[scan_window[19:21]]
+                    # filter criteria for padlock probes - accepted ligation junction preferences
+                    if (junction == "nonpreferred" ):
+                        continue
+                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                    #    continue
+                    else:
+                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
+                        rbd5 = scan_window[:20]
+                        rbd3 = scan_window[20:]
+                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
+                            continue
+                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
+                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
+                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
+                            #print("Melting temperature outside range, skipping!")
+                            continue
+                        gc_rbd5 = calc_GC(rbd5)
+                        gc_rbd3 = calc_GC(rbd3)
+                        gc_total = calc_GC(scan_window)
+                        print(each_gene+"_"+str(i)+"_"+str(j), scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
+
+
+
+        '''
         if self.detect_dir:
             with open(self.detect_dir) as fp:
 
@@ -410,21 +467,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             designed_probes_for_blast_linear = []
             ## padlock probe design part starts here
             
-            # define primer design parameters
-            design_parameters = {
-                'PRIMER_OPT_SIZE': 20,
-                'PRIMER_MIN_SIZE': 20,
-                'PRIMER_MAX_SIZE': 20,
-                'PRIMER_MIN_TM': 50.0,
-                'PRIMER_MAX_TM': 70.0,
-                'PRIMER_MAX_NS_ACCEPTED': 0,
-                'PRIMER_PRODUCT_SIZE_RANGE': [[20,20]]}
-
-            # dictionary for ligation juntiond flag, taken from technical note Xenium
-            dict_ligation_junction = {"AT":'preferred', "TA":'preferred', "GA":'preferred', "AG":'preferred',
-                                      "TT":'neutral', "CT":'neutral', "CA":'neutral', "TC":'neutral', "AC":'neutral'
-                                      , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
-                                      , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
             # circular RNA for loop
             for each_circle in exon_cache:
                 #print(each_circle)
@@ -464,12 +506,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
+                        gc_total = calc_GC(scan_window)
                         print(each_circle, scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
 
 
-        '''
             # linear RNA loop
             for each_circle in exon_cache:
                 #print(each_circle)
