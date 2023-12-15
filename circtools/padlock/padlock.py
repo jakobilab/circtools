@@ -21,6 +21,7 @@ import os
 import sys
 import string
 import random
+import itertools
 
 import pybedtools
 from Bio.Blast import NCBIWWW
@@ -146,7 +147,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     # added by Shubhada (to fetch the gene names)
                     s = str(columns[8])
                     news = s.strip("\n")[:-1].replace("; ", ";")          # removing trailing ; to form dictionary in next step
-                    #gene_dict = dict([x.split(" ") for x in news.replace("\"", "").split(";")])
                     temp = [x for x in news.replace("\"", "").split(";")]
                     temp_keys = [x.split(" ")[0] for x in temp]
                     temp_values = ["_".join(x.split(" ")[1:]) for x in temp]
@@ -162,6 +162,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gene_name,
                         str(0),
                         columns[6],
+                        columns[1]              # flag ensemble/havana
                     ]
 
                     # concatenate lines to one string
@@ -173,14 +174,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             if string:
                 return bed_content
             else:
-                # create a "virtual" BED file
-                virtual_bed_file = pybedtools.BedTool(bed_content, from_string=True)
-                print("Start merging GTF file")
-
-                # we trust that bedtools >= 2.27 is installed. Otherwise this merge will probably fail
-                return virtual_bed_file.sort().merge(s=True,  # strand specific
-                                                     c="4,5,6",  # copy columns 5 & 6
-                                                     o="distinct,distinct,distinct")  # group
+                return bed_content
 
     def run_module(self):
 
@@ -258,11 +252,30 @@ class Padlock(circ_module.circ_template.CircTemplate):
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
         all_exon_cache = {}             # to store all exons for linear RNA splicing
+            
+        
+        # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
+        exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
+        exons_bed_list = [x.split("\t") for x in exons_bed.strip().split("\n")]
+        # create a "virtual" BED file for circular RNA bedtools intersect
+        virtual_bed_file = pybedtools.BedTool(exons_bed, from_string=True)
+        print("Start merging GTF file outside the function")
 
+        # we trust that bedtools >= 2.27 is installed. Otherwise this merge will probably fail
+        exons = virtual_bed_file.sort().merge(s=True,  # strand specific
+                                                 c="4,5,6",  # copy columns 5 & 6
+                                                 o="distinct,distinct,distinct")  # group
+        
+        # First for linear RNAs, store the exons per gene in the gene-list
+        for each_gene in self.gene_list:
+            print(each_gene)
+            all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
+            print(len(all_exons))
+            all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
+            all_exons_unique.sort(key = lambda x: x[1])
+            print(all_exons_unique, len(all_exons_unique))
+        
         if self.detect_dir:
-            exons = self.read_annotation_file(self.gtf_file, entity="exon")
-            print(exons[:10])
-            #cdss = self.read_annotation_file(self.gtf_file, entity="CDS")
             with open(self.detect_dir) as fp:
 
                 for line in fp:
@@ -279,7 +292,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     if self.gene_list and not self.id_list and current_line[3] not in self.gene_list:
                         continue
-
+                        
                     sep = "_"
                     name = sep.join([current_line[3],
                                      current_line[0],
@@ -456,6 +469,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
 
 
+        '''
             # linear RNA loop
             for each_circle in exon_cache:
                 #print(each_circle)
@@ -504,7 +518,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
 
 
-        '''
+        
         # need to define path top R wrapper
         print("Going to run R wrapper")
         primer_script = '/prj/circtools2/installation/circtools/circtools/scripts/circtools_padlock_wrapper.R'
@@ -518,7 +532,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         
         # this is the first time we look through the input file
         # we collect the primer sequences and unify everything in one blast query
-        '''
+        
         blast_object_cache = {}
         blast_result_cache = {}
 
@@ -660,7 +674,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
         fout.close()
         '''
-
+        '''
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
@@ -806,3 +820,4 @@ class Padlock(circ_module.circ_template.CircTemplate):
         #os.remove(exon_storage_tmp)
         #os.remove(blast_storage_tmp)
         #os.remove(blast_xml_tmp)
+        
