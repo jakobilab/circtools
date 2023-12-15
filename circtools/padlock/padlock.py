@@ -146,7 +146,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     # added by Shubhada (to fetch the gene names)
                     s = str(columns[8])
                     news = s.strip("\n")[:-1].replace("; ", ";")          # removing trailing ; to form dictionary in next step
-                    gene_dict = dict([x.split(" ") for x in news.replace("\"", "").split(";")])
+                    #gene_dict = dict([x.split(" ") for x in news.replace("\"", "").split(";")])
+                    temp = [x for x in news.replace("\"", "").split(";")]
+                    temp_keys = [x.split(" ")[0] for x in temp]
+                    temp_values = ["_".join(x.split(" ")[1:]) for x in temp]
+                    gene_dict = dict(zip(temp_keys,temp_values))
                     if ("gene_name" in gene_dict.keys()):
                         gene_name = gene_dict["gene_name"]
                     else:
@@ -162,7 +166,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     # concatenate lines to one string
                     bed_content += '\t'.join(entry) + "\n"
-                    print(bed_content)
 
             if not bed_content:
                 exit(-1)
