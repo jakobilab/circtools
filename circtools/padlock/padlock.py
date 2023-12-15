@@ -331,7 +331,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
                         gc_total = calc_GC(scan_window)
-                        print(each_gene+"_"+str(i)+"_"+str(j), scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+                        print(each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
 
         if self.detect_dir:
             with open(self.detect_dir) as fp:
@@ -378,7 +378,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                            current_line[5]])
                     virtual_bed_file = pybedtools.BedTool(bed_string, from_string=True)
                     result = exons.intersect(virtual_bed_file, s=True)
-                    #result_cds = cdss.intersect(virtual_bed_file, s=True)
                     fasta_bed_line_start = ""
                     fasta_bed_line_stop = ""
 
@@ -417,8 +416,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
                     virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
                     
-                    #print("Virtual bed file start stop")
-                    #print(virtual_bed_file_start, virtual_bed_file_stop)
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
                         print("Will continue with non-annotated, manually extracted sequence.")
@@ -488,11 +485,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     junction = dict_ligation_junction[scan_window[19:21]]
                     # filter criteria for padlock probes - accepted ligation junction preferences
                     if (junction == "nonpreferred" ):
-                        #print("Non-preffered Ligation junction found, skipping.")
                         continue
-                    elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                        #print("Neutral Ligation junction found, skipping.")
-                        continue
+                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
+                    #    continue
                     else:
                         # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
                         rbd5 = scan_window[:20]
@@ -507,7 +502,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
-                        print(each_circle, scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
 
