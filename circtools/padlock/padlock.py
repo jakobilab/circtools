@@ -294,6 +294,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
                 seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
                 list_exons_seq.append(seq)
+                    
+            with open(exon_storage_linear_tmp, 'a') as data_store:
+                data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
             
             # for every gene, extract from every exon, the first and last 25bp 
             for i in range(0, len(list_exons_seq)):
@@ -329,9 +332,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gc_total = calc_GC(scan_window)
                         print(each_gene+"_"+str(i)+"_"+str(j), scan_window, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
 
-
-
-        '''
         if self.detect_dir:
             with open(self.detect_dir) as fp:
 
@@ -387,7 +387,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     # for every circular RNA, fetch the information about
                     # second and first exons
                     flanking_exon_cache[name] = {}
-                    print(str(result))
                     for result_line in str(result).splitlines():
                         bed_feature = result_line.split('\t')
 
@@ -511,55 +510,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
 
-
-            # linear RNA loop
-            for each_circle in exon_cache:
-                #print(each_circle)
-                if (exon_cache[each_circle][2]) == "":
-                    # this is a single exon circle so take first 25 and last 25
-                    # bases from its sequence to create a scan sequence
-                    scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
-                    #print(exon_cache[each_circle][1][-25:], exon_cache[each_circle][1][:25], len(scan_sequence))
-                else:
-                    # this is a multiple exon circular RNA. Take last 25 bases of
-                    # last exon and first 25 bases of first exon as a scan sequence
-                    scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
-                    #print(exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25], len(scan_sequence))
-
-                # Scan a 40bp window over this scan_sequence and run primer3 on
-                # each 40bp sequence
-                for i in range(0,len(scan_sequence)):
-                    scan_window = scan_sequence[i:i+40]
-                    if (len(scan_window) < 40):
-                        break
-
-                    junction = dict_ligation_junction[scan_window[19:21]]
-                    # filter criteria for padlock probes - accepted ligation junction preferences
-                    if (junction == "nonpreferred" ):
-                        #print("Non-preffered Ligation junction found, skipping.")
-                        continue
-                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                        #print("Neutral Ligation junction found, skipping.")
-                     #   continue
-                    else:
-                        # send each of this to primer3
-                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
-                        rbd5 = scan_window[:20]
-                        rbd3 = scan_window[20:]
-                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
-                            continue
-                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
-                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70)) :
-                            #print("Melting temperature outside range, skipping!")
-                            continue
-                        gc_rbd5 = calc_GC(rbd5)
-                        gc_rbd3 = calc_GC(rbd3)
-                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction)
-
-                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, gc_rbd5, gc_rbd3, junction])
-
-
+        '''
         
         # need to define path top R wrapper
         print("Going to run R wrapper")
@@ -571,7 +522,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                  exon_storage_tmp + " " +
                                  str(self.product_range[0]) + "," + str(self.product_range[1]) + " " +
                                  self.junction + " " + str(self.num_pairs)).read()
-        
+        '''
+
         # this is the first time we look through the input file
         # we collect the primer sequences and unify everything in one blast query
         
@@ -716,7 +668,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
         fout.close()
         '''
-        '''
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
@@ -858,6 +809,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 print(feature)
         print("Cleaning up")
         '''
+        
         ### cleanup / delete tmp files
         #os.remove(exon_storage_tmp)
         #os.remove(blast_storage_tmp)
