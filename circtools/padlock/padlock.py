@@ -362,7 +362,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
         output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
-        output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "linear.csv" # padlock probe output csv file for linear RNA probes
+        output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.csv" # padlock probe output csv file for linear RNA probes
         # erase old contents
         open(exon_storage_tmp, 'w').close()
         open(exon_storage_linear_tmp, 'w').close()
@@ -455,8 +455,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         print(each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
                         designed_probes_for_blast_linear.append([each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
-            print("Probes to BLAST linear")
-            print(primex_data_with_blast_results_linear[:5])
+            #print("Probes to BLAST linear")
+            #print(primex_data_with_blast_results_linear[:5])
 
             with open(blast_storage_tmp_linear, 'w') as data_store:
                 data_store.write(primex_data_with_blast_results_linear)
@@ -639,7 +639,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # this is the first time we look through the input file
             # we collect the primer sequences and unify everything in one blast query
             primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
-            print(primex_data_with_blast_results)
+            #print(primex_data_with_blast_results)
 
             with open(blast_storage_tmp, 'w') as data_store:
                 data_store.write(primex_data_with_blast_results)
@@ -681,9 +681,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #print(eachline)
             if (eachline == ""):    continue
             eachline = eachline.split("\t")
-            tempstr = "_".join(eachline[:5])
+            tempstr = "_".join(eachline[:3])
             #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
-            fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
+            fout.write((tempstr + "," + eachline[3] + "," + eachline[4] + "\n").encode())
         fout.close()
 
 
