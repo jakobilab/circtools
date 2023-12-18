@@ -106,7 +106,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                        gapcosts="5 2"
                                        )
         return return_handle
-    
+
+
 
     @staticmethod
     def read_annotation_file(annotation_file, entity="gene", string=False):
@@ -196,6 +197,123 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
             gc_content=(g+c)*100/(a+t+g+c)
             return(gc_content)
+
+
+        # function to run blast on every probe
+        def probes_blast(probes_for_blast, blast_xml_tmp_file):
+            # function that takes as an input the probes list 
+            # with first three entries as id, rbd5 sequnces and rbd3 sequence respectively
+
+            blast_object_cache = {}
+            blast_result_cache = {}
+            primer_to_circ_cache = {}
+
+            blast_input_file = ""
+            if circ_rna_number < 100:
+
+                for entry in probes_for_blast:
+                    circular_rna_id = entry[0].split('_')
+                    
+                    if entry[1] == "NA":
+                        continue
+
+                    # only blast 1
+                    elif entry[2] in blast_object_cache and not entry[1] in blast_object_cache:
+                        blast_input_file += "\n>" + entry[1] + "\n" + entry[1]
+                        blast_object_cache[entry[1]] = 1
+                        primer_to_circ_cache[entry[1]] = circular_rna_id[0]
+
+                    # only blast 2
+                    elif entry[1] in blast_object_cache and not entry[2] in blast_object_cache:
+                        blast_input_file += "\n>" + entry[2] + "\n" + entry[2]
+                        blast_object_cache[entry[2]] = 1
+                        primer_to_circ_cache[entry[2]] = circular_rna_id[0]
+
+                    # seen both already, skip
+                    elif entry[1] in blast_object_cache and entry[2] in blast_object_cache:
+                        continue
+
+                    # nothing seen yet, blast both
+                    else:
+                        blast_input_file += "\n>" + entry[1] + "\n" + entry[1] + "\n>" + entry[2] + "\n" + entry[2]
+                        blast_object_cache[entry[1]] = 1
+                        blast_object_cache[entry[2]] = 1
+                        primer_to_circ_cache[entry[1]] = circular_rna_id[0]
+                        primer_to_circ_cache[entry[2]] = circular_rna_id[0]
+            else:
+                print("Too many circRNAs selected, skipping BLAST step.")
+
+            if self.no_blast:
+                print("User disabled BLAST search, skipping.")
+           
+            #print(blast_input_file)            # this is a fasta file with primer sequences to BLAST
+
+            run_blast = 0
+
+            # check if we have to blast
+            if not self.no_blast and blast_input_file:
+
+                try:
+                    print("Sending " + str(len(blast_object_cache)) + " primers to BLAST")
+                    print("This may take a few minutes, please be patient.")
+                    result_handle = self.call_blast(blast_input_file, self.organism)
+                    run_blast = 1
+                except Exception as exc:
+                    print(exc)
+                    exit(-1)
+
+                with open(blast_xml_tmp_file, "w") as out_handle:
+                    out_handle.write(result_handle.read())
+
+                result_handle.close()
+                result_handle = open(blast_xml_tmp_file)
+
+                blast_records = NCBIXML.parse(result_handle)
+
+                for blast_record in blast_records:
+
+                    if blast_record.query not in blast_result_cache:
+                        blast_result_cache[blast_record.query] = []
+
+                    for description in blast_record.descriptions:
+
+                        # filter out the host gene we're in now
+                        # also filter out all "PREDICTED" stuff
+                        if description.title.find(primer_to_circ_cache[blast_record.query]) == -1 and\
+                                description.title.find("PREDICTED") == -1:
+                            blast_result_cache[blast_record.query].append(description.title)
+
+            # if we encounter NAs nothing has been blasted, we manually set the values now
+
+            blast_result_cache["NA"] = ["Not blasted, no primer pair found"]
+
+            data_with_blast_results = ""
+
+            for entry in probes_for_blast:
+                #entry = line.split('\t')
+
+                # split up the identifier for final plotting
+                entry[0] = entry[0].replace("_", "\t")
+                line = "\t".join(map(str, entry))
+                #print(line)
+
+                if run_blast == 1:
+                    left_result = "No hits"
+                    right_result = "No hits"
+                else:
+                    left_result = "Not blasted, no primer pair found"
+                    right_result = left_result
+
+                if entry[1] in blast_result_cache:
+                    left_result = ";".join(blast_result_cache[entry[1]])
+
+                if entry[2] in blast_result_cache:
+                    right_result = ";".join(blast_result_cache[entry[2]])
+
+                # update line
+                data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
+
+            return data_with_blast_results
         
         if self.id_list and os.access(self.id_list[0], os.R_OK):
             print("Detected supplied circRNA ID file.")
@@ -238,7 +356,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
         exon_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_flanking_exons.tmp"
         exon_storage_linear_tmp = self.temp_dir + tmp_prefix + "_circtools_linear_exons.tmp" # file that will store ALL exons; for forward splice junctions
         blast_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.tmp"
+        blast_storage_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_results_linear.tmp"
         blast_xml_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.xml"
+        blast_xml_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_results_linear.xml"
 
         output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
         output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
@@ -297,7 +417,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     
             with open(exon_storage_linear_tmp, 'a') as data_store:
                 data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
-            
+           
+            designed_probes_for_blast_linear = []
             # for every gene, extract from every exon, the first and last 25bp 
             for i in range(0, len(list_exons_seq)):
                 if (i == len(list_exons_seq)-1):
@@ -332,7 +453,15 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gc_rbd3 = calc_GC(rbd3)
                         gc_total = calc_GC(scan_window)
                         print(each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+                        designed_probes_for_blast_linear.append([each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+            primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
+            print("Probes to BLAST linear")
+            print(primex_data_with_blast_results_linear[:5])
 
+            with open(blast_storage_tmp_linear, 'w') as data_store:
+                data_store.write(primex_data_with_blast_results_linear)
+
+        ## part for circular RNAs
         if self.detect_dir:
             with open(self.detect_dir) as fp:
 
@@ -461,7 +590,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         else:
             ### add the part for primer designing here; first for circular RNAs and then linear RNAs
             designed_probes_for_blast = []
-            designed_probes_for_blast_linear = []
             ## padlock probe design part starts here
             
             # circular RNA for loop
@@ -506,121 +634,15 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
 
-
-        # this is the first time we look through the input file
-        # we collect the primer sequences and unify everything in one blast query
+            print(designed_probes_for_blast[:5])
         
-        blast_object_cache = {}
-        blast_result_cache = {}
+            # this is the first time we look through the input file
+            # we collect the primer sequences and unify everything in one blast query
+            primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
+            print(primex_data_with_blast_results)
 
-        blast_input_file = ""
-        if circ_rna_number < 100:
-
-            for entry in designed_probes_for_blast:
-                circular_rna_id = entry[0].split('_')
-                
-                if entry[1] == "NA":
-                    continue
-
-                # only blast 1
-                elif entry[2] in blast_object_cache and not entry[1] in blast_object_cache:
-                    blast_input_file += "\n>" + entry[1] + "\n" + entry[1]
-                    blast_object_cache[entry[1]] = 1
-                    primer_to_circ_cache[entry[1]] = circular_rna_id[0]
-
-                # only blast 2
-                elif entry[1] in blast_object_cache and not entry[2] in blast_object_cache:
-                    blast_input_file += "\n>" + entry[2] + "\n" + entry[2]
-                    blast_object_cache[entry[2]] = 1
-                    primer_to_circ_cache[entry[2]] = circular_rna_id[0]
-
-                # seen both already, skip
-                elif entry[1] in blast_object_cache and entry[2] in blast_object_cache:
-                    continue
-
-                # nothing seen yet, blast both
-                else:
-                    blast_input_file += "\n>" + entry[1] + "\n" + entry[1] + "\n>" + entry[2] + "\n" + entry[2]
-                    blast_object_cache[entry[1]] = 1
-                    blast_object_cache[entry[2]] = 1
-                    primer_to_circ_cache[entry[1]] = circular_rna_id[0]
-                    primer_to_circ_cache[entry[2]] = circular_rna_id[0]
-        else:
-            print("Too many circRNAs selected, skipping BLAST step.")
-
-        if self.no_blast:
-            print("User disabled BLAST search, skipping.")
-       
-        #print(blast_input_file)            # this is a fasta file with primer sequences to BLAST
-
-        run_blast = 0
-
-        # check if we have to blast
-        if not self.no_blast and blast_input_file:
-
-            try:
-                print("Sending " + str(len(blast_object_cache)) + " primers to BLAST")
-                print("This may take a few minutes, please be patient.")
-                result_handle = self.call_blast(blast_input_file, self.organism)
-                run_blast = 1
-            except Exception as exc:
-                print(exc)
-                exit(-1)
-
-            with open(blast_xml_tmp, "w") as out_handle:
-                out_handle.write(result_handle.read())
-
-            result_handle.close()
-            result_handle = open(blast_xml_tmp)
-
-            blast_records = NCBIXML.parse(result_handle)
-
-            for blast_record in blast_records:
-
-                if blast_record.query not in blast_result_cache:
-                    blast_result_cache[blast_record.query] = []
-
-                for description in blast_record.descriptions:
-
-                    # filter out the host gene we're in now
-                    # also filter out all "PREDICTED" stuff
-                    if description.title.find(primer_to_circ_cache[blast_record.query]) == -1 and\
-                            description.title.find("PREDICTED") == -1:
-                        blast_result_cache[blast_record.query].append(description.title)
-
-        # if we encounter NAs nothing has been blasted, we manually set the values now
-
-        blast_result_cache["NA"] = ["Not blasted, no primer pair found"]
-
-        primex_data_with_blast_results = ""
-
-        for entry in designed_probes_for_blast:
-            #entry = line.split('\t')
-
-            # split up the identifier for final plotting
-            entry[0] = entry[0].replace("_", "\t")
-            line = "\t".join(map(str, entry))
-            #print(line)
-
-            if run_blast == 1:
-                left_result = "No hits"
-                right_result = "No hits"
-            else:
-                left_result = "Not blasted, no primer pair found"
-                right_result = left_result
-
-            if entry[1] in blast_result_cache:
-                left_result = ";".join(blast_result_cache[entry[1]])
-
-            if entry[2] in blast_result_cache:
-                right_result = ";".join(blast_result_cache[entry[2]])
-
-            # update line
-            primex_data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
-
-        #print(primex_data_with_blast_results)
-        with open(blast_storage_tmp, 'w') as data_store:
-            data_store.write(primex_data_with_blast_results)
+            with open(blast_storage_tmp, 'w') as data_store:
+                data_store.write(primex_data_with_blast_results)
 
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
@@ -650,6 +672,21 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
             fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
         fout.close()
+
+        # writing output file to CSV for linear RNA probes
+        print("Writing linear probe results to "+output_csv_file_linear)
+        fout = open(output_csv_file_linear, 'wb')
+        fout.write("Gene,RBD5,RBD3\n".encode())
+        for eachline in primex_data_with_blast_results_linear.split("\n"):
+            #print(eachline)
+            if (eachline == ""):    continue
+            eachline = eachline.split("\t")
+            tempstr = "_".join(eachline[:5])
+            #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
+            fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
+        fout.close()
+
+
         '''
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
