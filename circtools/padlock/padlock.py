@@ -212,6 +212,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             if circ_rna_number < 100:
 
                 for entry in probes_for_blast:
+                    print(entry)
                     circular_rna_id = entry[0].split('_')
                     
                     if entry[1] == "NA":
@@ -271,6 +272,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 blast_records = NCBIXML.parse(result_handle)
 
                 for blast_record in blast_records:
+                    print(blast_record)
 
                     if blast_record.query not in blast_result_cache:
                         blast_result_cache[blast_record.query] = []
@@ -361,6 +363,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_xml_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_results_linear.xml"
 
         output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
+        output_html_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.html"
         output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
         output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.csv" # padlock probe output csv file for linear RNA probes
         # erase old contents
@@ -648,8 +651,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
         primer_script = 'circtools_primex_formatter'
         primer_script = 'circtools_padlockprobe_formatter.R'
 
-        # ------------------------------------ run script and check output -----------------------
-
+        # ------------------------------------ run formatter script and write output to various files -----------------------
+        # formatter script calling for circular RNA probes
         primex_data_formatted = os.popen(primer_script + " " +
                                          blast_storage_tmp + " "
                                          + "\"" + self.experiment_title + "\""
@@ -657,8 +660,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         with open(output_html_file, 'w') as data_store:
             data_store.write(primex_data_formatted)
+        print("Writing circular results to "+output_html_file)
 
-        print("Writing results to "+output_html_file)
+        primex_data_formatted_linear = os.popen(primer_script + " " +
+                                         blast_storage_tmp_linear + " "
+                                         + "\"" + self.experiment_title + "\""
+                                         ).read()
+
+        with open(output_html_file_linear, 'w') as data_store:
+            data_store.write(primex_data_formatted_linear)
+        print("Writing linear results to "+output_html_file_linear)
 
         # writing output file to CSV -> the format recommended by Xenium technical note
         print("Writing probe results to "+output_csv_file)
