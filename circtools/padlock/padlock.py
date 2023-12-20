@@ -272,7 +272,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 blast_records = NCBIXML.parse(result_handle)
 
                 for blast_record in blast_records:
-                    print(blast_record)
+                    #print(blast_record)
 
                     if blast_record.query not in blast_result_cache:
                         blast_result_cache[blast_record.query] = []
@@ -405,6 +405,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                       , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
         
         # First for linear RNAs, store the exons per gene in the gene-list
+        primex_data_with_blast_results_linear = []
+        designed_probes_for_blast_linear = []
         for each_gene in self.gene_list:
             list_exons_seq = []
             all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
@@ -421,13 +423,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
             with open(exon_storage_linear_tmp, 'a') as data_store:
                 data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
            
-            designed_probes_for_blast_linear = []
             # for every gene, extract from every exon, the first and last 25bp 
             for i in range(0, len(list_exons_seq)):
                 if (i == len(list_exons_seq)-1):
                     break
                 scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
-                #print(i, scan_sequence, len(scan_sequence))
 
                 for j in range(0,len(scan_sequence)):
                     scan_window = scan_sequence[j:j+40]
@@ -457,12 +457,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gc_total = calc_GC(scan_window)
                         print(each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
                         designed_probes_for_blast_linear.append([each_gene+"_"+str(i)+"_"+str(j), rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
-            primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
-            #print("Probes to BLAST linear")
-            #print(primex_data_with_blast_results_linear[:5])
+        primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
+        #print("Probes to BLAST linear")
+        #print(primex_data_with_blast_results_linear[:5])
 
-            with open(blast_storage_tmp_linear, 'w') as data_store:
-                data_store.write(primex_data_with_blast_results_linear)
+        with open(blast_storage_tmp_linear, 'w') as data_store:
+            data_store.write(primex_data_with_blast_results_linear)
 
         ## part for circular RNAs
         if self.detect_dir:
