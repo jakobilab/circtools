@@ -22,6 +22,7 @@ import sys
 import string
 import random
 import itertools
+import subprocess
 
 import pybedtools
 from Bio.Blast import NCBIWWW
@@ -31,6 +32,11 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
 import primer3                  # for padlock probe designing
+
+var = os.system('module load blast/2.3.0+')       # for running blastn command-line
+print(var)
+#cmd = subprocess.Popen('module load blast/2.3.0+', shell = True)
+#exec(cmd)
 
 class Padlock(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -212,7 +218,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             if circ_rna_number < 100:
 
                 for entry in probes_for_blast:
-                    print(entry)
+                    #print(entry)
                     circular_rna_id = entry[0].split('_')
                     
                     if entry[1] == "NA":
@@ -253,7 +259,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
             # check if we have to blast
             if not self.no_blast and blast_input_file:
-
+                
+                '''
+                # this part has been commented because could not sent BLAST querries to NCBI
+                # Thus, run the local installation of BLAST and write output in an XML file
                 try:
                     print("Sending " + str(len(blast_object_cache)) + " primers to BLAST")
                     print("This may take a few minutes, please be patient.")
@@ -262,11 +271,29 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 except Exception as exc:
                     print(exc)
                     exit(-1)
-
                 with open(blast_xml_tmp_file, "w") as out_handle:
                     out_handle.write(result_handle.read())
 
                 result_handle.close()
+                '''
+                # save the blast input fasta file into a temp file
+                blast_fasta_file = blast_xml_tmp_file.replace("results.xml", "input.fa")
+                with open(blast_fasta_file, "w") as out_handle:
+                    out_handle.write(blast_input_file.strip())
+
+                try:
+                    print("Running BLAST command line")
+                    if (self.organism == "mm"):
+                        blastdb = "/beegfs/biodb/genomes/mus_musculus/GRCm38_102/GRCm38.cdna.all.fa"
+                    else:
+                        blastdb = "/beegfs/biodb/genomes/homo_sapiens/GRCh38_102/cDNA_slim.fa"
+                    cmd = "blastn -db " + blastdb + " -query " + blast_fasta_file + " -out " + blast_xml_tmp_file + " -task blastn -outfmt 5"
+                    cmd_out = os.system(cmd)
+
+                except Exception as exc:
+                    print(exc)
+                    print(-1)
+
                 result_handle = open(blast_xml_tmp_file)
 
                 blast_records = NCBIXML.parse(result_handle)
@@ -360,7 +387,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_storage_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.tmp"
         blast_storage_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_results_linear.tmp"
         blast_xml_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.xml"
-        blast_xml_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_results_linear.xml"
+        blast_xml_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_linear_results.xml"
 
         output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
         output_html_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.html"
@@ -653,6 +680,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         # ------------------------------------ run formatter script and write output to various files -----------------------
         # formatter script calling for circular RNA probes
+        print("Formatting circular RNA probe outputs")
         primex_data_formatted = os.popen(primer_script + " " +
                                          blast_storage_tmp + " "
                                          + "\"" + self.experiment_title + "\""
@@ -662,6 +690,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             data_store.write(primex_data_formatted)
         print("Writing circular results to "+output_html_file)
 
+        print("Formatting linear RNA probe outputs")
         primex_data_formatted_linear = os.popen(primer_script + " " +
                                          blast_storage_tmp_linear + " "
                                          + "\"" + self.experiment_title + "\""
@@ -681,7 +710,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
             eachline = eachline.split("\t")
             tempstr = "_".join(eachline[:5])
             #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
-            fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())
+            #fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())   # uncomment later
+            fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
         fout.close()
 
         # writing output file to CSV for linear RNA probes
@@ -694,7 +724,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
             eachline = eachline.split("\t")
             tempstr = "_".join(eachline[:3])
             #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
-            fout.write((tempstr + "," + eachline[3] + "," + eachline[4] + "\n").encode())
+            #fout.write((tempstr + "," + eachline[3] + "," + eachline[4] + "\n").encode())  # uncomment later
+            fout.write((tempstr + "," + ",".join(eachline[3:11]) + "\n").encode())
         fout.close()
 
 
