@@ -63,6 +63,7 @@ color_palette <- rev(brewer.pal(n = 5, name = 'RdBu'))
 default_tm_value <- 50
 default_gc_value <- 60
 default_product_value <- 1
+#default_product_value <- "preferred"
 
 construct_color_column <- function(column, default_value, palette)
 {
@@ -117,7 +118,7 @@ colnames(data_table) <- c(  "Annotation",
 
 ## for padlock probe designing, product_size is not really needed column. So replaced this with ligation junction preference column. 
 ## Ligation junction 1 if preferred or 0 if neutral
-data_table$Product_size <- ifelse(data_table$Product_size == "preferred", 1, 0)
+#data_table$Product_size <- ifelse(data_table$Product_size == "preferred", 1, 0)
 
 data_table$right_tm_color  = construct_color_column(data_table$TM_right,default_tm_value,color_palette)
 data_table$left_tm_color   = construct_color_column(data_table$TM_left,default_tm_value,color_palette)
@@ -126,8 +127,8 @@ data_table$full_tm_color   = construct_color_column(data_table$TM_Full,default_t
 data_table$left_gc_color   = construct_color_column(data_table$GC_left,default_gc_value,color_palette)
 data_table$right_gc_color  = construct_color_column(data_table$GC_right,default_gc_value,color_palette)
 
-
-data_table$product_color  = construct_color_column(data_table$Product_size,default_product_value,color_palette)
+#data_table$product_color  = construct_color_column(data_table$Product_size,default_product_value,color_palette)
+data_table$product_color <- ifelse(data_table$Product_size == "preferred", "#99d594", "#ffffbf")  # manually adding colors for ligation junction as this is a character value
 
 colnames_final <- c(        "Annotation",
                             "Chr",
@@ -171,7 +172,7 @@ rownames(data_table) <- c()
 # main output table generation
 output_table <- data_table %>%
     mutate(
-    Product_size = color_bar(product_color)(Product_size),
+    #Product_size = color_bar(product_color)(Product_size),
 
     Forward = cell_spec(escape = F, Left_, popover = spec_popover( title = "Graphical represensation of designed primers and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
