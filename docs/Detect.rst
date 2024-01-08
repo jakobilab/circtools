@@ -33,7 +33,7 @@ The detection of circRNAs from RNA-seq data through the detection module can be 
 Step by step tutorial
 ---------------------
 
-In this tutorial, we use the data set from  `Jakobi et al. 2016 <https://www.sciencedirect.com/science/article/pii/S167202291630033X>`_  as an example. The data are paired-end, stranded RiboMinus RNAseq data from *Mus musculus*, consisting of samples of four ages (2, 3, 6, and 12 month) collected from the whole hearts. Data can be downloaded from the NCBI SRA (accession number `SRP071584 <https://trace.ncbi.nlm.nih.gov/Traces/study/?acc=SRP071584>`_). While the circtools suite does not offer specific module for the initial data processing, this short tutorial should give the user an idea on how to get the sequencing data in shape for the main circtools pipeline.
+In this tutorial, we use the data set from  `Jakobi et al. 2016 <https://doi.org/10.1016/j.gpb.2016.02.003>`_  as an example. The data are paired-end, stranded RiboMinus RNAseq data from *Mus musculus*, consisting of samples of four ages (2, 3, 6, and 12 month) collected from the whole hearts. Data can be downloaded from the NCBI SRA (accession number `SRP071584 <https://trace.ncbi.nlm.nih.gov/Traces/study/?acc=SRP071584>`_). While the circtools suite does not offer specific module for the initial data processing, this short tutorial should give the user an idea on how to get the sequencing data in shape for the main circtools pipeline.
 
 Throughout this tutorial, we will employ Bash wrapper scripts that automate the analysis for multiple samples. While these scripts have been designed to be used with the `SLURM <https://slurm.schedmd.com/man_index.html>`_ workload manager, it is also possible to use them in conjunction with `GNU parallel <https://www.gnu.org/software/parallel/>`_ without SLURM.
 
@@ -41,7 +41,7 @@ Throughout this tutorial, we will employ Bash wrapper scripts that automate the 
 Download of raw data files from the NCBI SRA
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The raw data of the `Jakobi et al. 2016 <https://www.sciencedirect.com/science/article/pii/S167202291630033X>`_ study was uploaded to the NCBI short read archive (SRA) and converted to the NCBI SRA format. Before we can start processing the data, the `sra-toolkit <https://github.com/ncbi/sra-tools/wiki/Downloads>`_ needs to be installed. In order to simplify the download process, the `wonderdump <http://data.biostarhandbook.com/scripts/README.html>`_ script is used.
+The raw data of the `Jakobi et al. 2016 <https://doi.org/10.1016/j.gpb.2016.02.003>`_ study was uploaded to the NCBI short read archive (SRA) and converted to the NCBI SRA format. Before we can start processing the data, the `sra-toolkit <https://github.com/ncbi/sra-tools/wiki/Downloads>`_ needs to be installed. In order to simplify the download process, the `wonderdump <http://data.biostarhandbook.com/scripts/README.html>`_ script is used.
 
 .. code-block:: bash
 
