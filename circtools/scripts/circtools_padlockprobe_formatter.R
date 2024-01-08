@@ -89,7 +89,7 @@ data_file_name <- args[1]
 # read whole file into data table
 data_table <- read.csv(data_file_name, header = FALSE, sep = "\t")
 data_table$circid <- paste(data_table$V1,data_table$V2,data_table$V3,data_table$V4,data_table$V5,data_table$V6,sep="_")
-
+#print(paste(data_table$V1,data_table$V2,data_table$V3, data_table$V4, data_table$V5,data_table$V6))
 data_table$circid <- paste(sep="","<img src=",data_table$circid,".svg>")
 
 ## remove unused columns
@@ -106,6 +106,7 @@ colnames(data_table) <- c(  "Annotation",
                             "Right_",
                             "TM_left",
                             "TM_right",
+                            "TM_Full",
                             "GC_left",
                             "GC_right",
                             "Product_size",
@@ -120,6 +121,7 @@ data_table$Product_size <- ifelse(data_table$Product_size == "preferred", 1, 0)
 
 data_table$right_tm_color  = construct_color_column(data_table$TM_right,default_tm_value,color_palette)
 data_table$left_tm_color   = construct_color_column(data_table$TM_left,default_tm_value,color_palette)
+data_table$full_tm_color   = construct_color_column(data_table$TM_Full,default_tm_value,color_palette)
 
 data_table$left_gc_color   = construct_color_column(data_table$GC_left,default_gc_value,color_palette)
 data_table$right_gc_color  = construct_color_column(data_table$GC_right,default_gc_value,color_palette)
@@ -134,6 +136,7 @@ colnames_final <- c(        "Annotation",
                             "Strand",
                             "TM RBD5",
                             "TM RBD3",
+                            "TM Full",
                             "GC% RBD5",
                             "GC% RBD3",
                             "Liagtion Junction",
@@ -181,6 +184,7 @@ output_table <- data_table %>%
     Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed primers and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_right_count > high_count_number, "white", "white")),
 
+
     R = cell_spec(paste(BLAST_right_count),
     popover = spec_popover(content = BLAST_right, title = "Blast Hits\"data-html=\"True\"", position = "left"),
     background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
@@ -188,6 +192,7 @@ output_table <- data_table %>%
 
     TM_left = color_bar(left_tm_color)(TM_left),
     TM_right = color_bar(left_tm_color)(TM_right),
+    TM_Full = color_bar(full_tm_color)(TM_Full),
 
 
     GC_left = color_bar(left_gc_color)(GC_left),
@@ -205,6 +210,7 @@ output_table <- data_table %>%
     select(- ID) %>%
     select(- right_tm_color) %>%
     select(- left_tm_color) %>%
+    select(- full_tm_color) %>%
     select(- right_gc_color) %>%
     select(- left_gc_color) %>%
     select(- product_color) %>%
@@ -212,9 +218,8 @@ output_table <- data_table %>%
     kable("html", escape = F, col.names=colnames_final) %>%
     kable_styling(bootstrap_options = c("striped", "hover", "responsive"), full_width = T) %>%
     # column_spec(5, width = "3cm")
-    add_header_above(c("Input circRNAs" = 5, "Designed Primers" = 9)) # %>%
+    add_header_above(c("Input IDs" = 5, "Designed Probes" = 10)) # %>%
     # group_rows("Group 1", 4, 7) %>%
     # group_rows("Group 1", 8, 10)
     # collapse_rows(columns = 1)
-
 write(paste(html_header, output_table, sep=""), file = "")
