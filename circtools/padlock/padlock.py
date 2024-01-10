@@ -453,223 +453,218 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                       , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
                                       , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
         
-        # First for linear RNAs, store the exons per gene in the gene-list
-        primex_data_with_blast_results_linear = []
-        designed_probes_for_blast_linear = []
-        for each_gene in self.gene_list:
-            list_exons_seq = []
-            list_exons_pos = []
-            all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
-            all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
-            all_exons_unique.sort(key = lambda x: x[1])
-            fasta_bed_line = ""
-            for each_element in all_exons_unique:
-                each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
-                virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
-                virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
-                seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
-                list_exons_seq.append(seq)
-                list_exons_pos.append(each_line)
+        if (self.rna_type == 1 or self.rna_type == 2):
+            print("Finding probes for linear RNAs")
+            # First for linear RNAs, store the exons per gene in the gene-list
+            primex_data_with_blast_results_linear = []
+            designed_probes_for_blast_linear = []
+            for each_gene in self.gene_list:
+                list_exons_seq = []
+                list_exons_pos = []
+                all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
+                all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
+                all_exons_unique.sort(key = lambda x: x[1])
+                fasta_bed_line = ""
+                for each_element in all_exons_unique:
+                    each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
+                    virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
+                    virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
+                    seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
+                    list_exons_seq.append(seq)
+                    list_exons_pos.append(each_line)
 
-            with open(exon_storage_linear_tmp, 'a') as data_store:
-                data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
-           
-            # for every gene, extract from every exon, the first and last 25bp 
-            for i in range(0, len(list_exons_seq)):
-                if (i == len(list_exons_seq)-1):
-                    break
-                pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
-                scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
-
-                for j in range(0,len(scan_sequence)):
-                    scan_window = scan_sequence[j:j+40]
-                    if (len(scan_window) < 40):
+                with open(exon_storage_linear_tmp, 'a') as data_store:
+                    data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
+               
+                # for every gene, extract from every exon, the first and last 25bp 
+                for i in range(0, len(list_exons_seq)):
+                    if (i == len(list_exons_seq)-1):
                         break
+                    pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
+                    scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
 
-                    junction = dict_ligation_junction[scan_window[19:21]]
-                    # filter criteria for padlock probes - accepted ligation junction preferences
-                    if (junction == "nonpreferred" ):
-                        continue
-                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                    #    continue
-                    else:
-                        primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
-        
-        primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
-        #print("Probes to BLAST linear")
-        #print(primex_data_with_blast_results_linear[:5])
+                    for j in range(0,len(scan_sequence)):
+                        scan_window = scan_sequence[j:j+40]
+                        if (len(scan_window) < 40):
+                            break
 
-        with open(blast_storage_tmp_linear, 'w') as data_store:
-            data_store.write(primex_data_with_blast_results_linear)
+                        junction = dict_ligation_junction[scan_window[19:21]]
+                        # filter criteria for padlock probes - accepted ligation junction preferences
+                        if (junction == "nonpreferred" ):
+                            continue
+                        else:
+                            primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
+            
+            primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
 
-        ## part for circular RNAs
-        if self.detect_dir:
-            with open(self.detect_dir) as fp:
+            with open(blast_storage_tmp_linear, 'w') as data_store:
+                data_store.write(primex_data_with_blast_results_linear)
 
-                for line in fp:
+        if (self.rna_type == 0 or self.rna_type == 2):
+            ## part for circular RNAs
+            print("Finding probes for circular RNAs")
+            if self.detect_dir:
+                with open(self.detect_dir) as fp:
 
-                    # make sure we remove the header
-                    if line.startswith('Chr\t'):
-                        continue
+                    for line in fp:
 
-                    line = line.rstrip()
-                    current_line = line.split('\t')
+                        # make sure we remove the header
+                        if line.startswith('Chr\t'):
+                            continue
 
-                    if current_line[3] == "not_annotated":
-                        continue
+                        line = line.rstrip()
+                        current_line = line.split('\t')
 
-                    if self.gene_list and not self.id_list and current_line[3] not in self.gene_list:
-                        continue
+                        if current_line[3] == "not_annotated":
+                            continue
+
+                        if self.gene_list and not self.id_list and current_line[3] not in self.gene_list:
+                            continue
+                            
+                        sep = "_"
+                        name = sep.join([current_line[3],
+                                         current_line[0],
+                                         current_line[1],
+                                         current_line[2],
+                                         current_line[5]])
+
+                        if self.id_list and not self.gene_list and name not in self.id_list:
+                            continue
+
+                        circrna_length = int(current_line[2]) - int(current_line[1])
+
+                        if circrna_length < 50:
+                            print("Padlock probe design length too large for circRNA \"%s\".\nCircRNA length:"
+                                  " %d, padlock probes are 40bp long." %
+                                  (name, circrna_length))
+                            exit(-1)
+
+                        sep = "\t"
+                        bed_string = sep.join([current_line[0],
+                                               current_line[1],
+                                               current_line[2],
+                                               current_line[3],
+                                               str(0),
+                                               current_line[5]])
+                        virtual_bed_file = pybedtools.BedTool(bed_string, from_string=True)
+                        result = exons.intersect(virtual_bed_file, s=True)
+                        fasta_bed_line_start = ""
+                        fasta_bed_line_stop = ""
+
+                        start = 0
+                        stop = 0
                         
-                    sep = "_"
-                    name = sep.join([current_line[3],
-                                     current_line[0],
-                                     current_line[1],
-                                     current_line[2],
-                                     current_line[5]])
+                        # for every circular RNA, fetch the information about
+                        # second and first exons
+                        flanking_exon_cache[name] = {}
+                        for result_line in str(result).splitlines():
+                            bed_feature = result_line.split('\t')
 
-                    if self.id_list and not self.gene_list and name not in self.id_list:
-                        continue
+                            # this is a single-exon circRNA
+                            if bed_feature[1] == current_line[1] and bed_feature[2] == current_line[2]:
+                                fasta_bed_line_start += result_line + "\n"
+                                start = 1
+                                stop = 1
 
-                    circrna_length = int(current_line[2]) - int(current_line[1])
+                            if bed_feature[1] == current_line[1] and start == 0:
+                                fasta_bed_line_start += result_line + "\n"
+                                start = 1
 
-                    if circrna_length < 50:
-                        print("Padlock probe design length too large for circRNA \"%s\".\nCircRNA length:"
-                              " %d, padlock probes are 40bp long." %
-                              (name, circrna_length))
-                        exit(-1)
+                            if bed_feature[2] == current_line[2] and stop == 0:
+                                fasta_bed_line_stop += result_line + "\n"
+                                stop = 1
 
-                    sep = "\t"
-                    bed_string = sep.join([current_line[0],
-                                           current_line[1],
-                                           current_line[2],
-                                           current_line[3],
-                                           str(0),
-                                           current_line[5]])
-                    virtual_bed_file = pybedtools.BedTool(bed_string, from_string=True)
-                    result = exons.intersect(virtual_bed_file, s=True)
-                    fasta_bed_line_start = ""
-                    fasta_bed_line_stop = ""
+                            # these exons are kept for correctly drawing the circRNAs later
+                            # not used for primer design
+                            if bed_feature[1] > current_line[1] and bed_feature[2] < current_line[2]:
+                                flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
+                       
+                        # first and last exons
+                        virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
+                        virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                    start = 0
-                    stop = 0
-                    
-                    # for every circular RNA, fetch the information about
-                    # second and first exons
-                    flanking_exon_cache[name] = {}
-                    for result_line in str(result).splitlines():
-                        bed_feature = result_line.split('\t')
-
-                        # this is a single-exon circRNA
-                        if bed_feature[1] == current_line[1] and bed_feature[2] == current_line[2]:
-                            fasta_bed_line_start += result_line + "\n"
-                            start = 1
-                            stop = 1
-
-                        if bed_feature[1] == current_line[1] and start == 0:
-                            fasta_bed_line_start += result_line + "\n"
-                            start = 1
-
-                        if bed_feature[2] == current_line[2] and stop == 0:
-                            fasta_bed_line_stop += result_line + "\n"
-                            stop = 1
-
-                        # these exons are kept for correctly drawing the circRNAs later
-                        # not used for primer design
-                        if bed_feature[1] > current_line[1] and bed_feature[2] < current_line[2]:
-                            flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
-                   
-                    # first and last exons
-                    virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
-                    virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
-
-                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
-                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
-                    
-                    if stop == 0 or start == 0:
-                        print("Could not identify the exact exon-border of the circRNA.")
-                        print("Will continue with non-annotated, manually extracted sequence.")
-
-                        # we have to manually reset the start position
-
-                        fasta_bed_line = "\t".join([current_line[0],
-                                                    current_line[1],
-                                                    current_line[2],
-                                                    current_line[5]])
-
-                        virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
                         virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
-                        virtual_bed_file_stop = ""
-                    exon1 = ""
-                    exon2 = ""
+                        virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
+                        
+                        if stop == 0 or start == 0:
+                            print("Could not identify the exact exon-border of the circRNA.")
+                            print("Will continue with non-annotated, manually extracted sequence.")
 
-                    if virtual_bed_file_start:
-                        exon1 = open(virtual_bed_file_start.seqfn).read().split("\n", 1)[1].rstrip()
+                            # we have to manually reset the start position
 
-                    if virtual_bed_file_stop:
-                        exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
+                            fasta_bed_line = "\t".join([current_line[0],
+                                                        current_line[1],
+                                                        current_line[2],
+                                                        current_line[5]])
 
-                    circ_rna_number += 1
-                    print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
-
-                    if exon2 and not exon1:
-                        exon1 = exon2
+                            virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
+                            virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
+                            virtual_bed_file_stop = ""
+                        exon1 = ""
                         exon2 = ""
 
-                    exon_cache[name] = {1: exon1, 2: exon2}
-                    with open(exon_storage_tmp, 'a') as data_store:
-                        data_store.write("\t".join([name, exon1, exon2, "\n"]))
-        
-        else:
-            print("Please provide Circtools detect output Coordinate file via option -d.")
-            sys.exit(-1)
-        
-        if not exon_cache:
-            print("Could not find any circRNAs matching your criteria, exiting.")
-            exit(-1)
-        
-        else:
-            ### add the part for primer designing here; first for circular RNAs and then linear RNAs
-            designed_probes_for_blast = []
-            ## padlock probe design part starts here
+                        if virtual_bed_file_start:
+                            exon1 = open(virtual_bed_file_start.seqfn).read().split("\n", 1)[1].rstrip()
+
+                        if virtual_bed_file_stop:
+                            exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
+
+                        circ_rna_number += 1
+                        print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
+
+                        if exon2 and not exon1:
+                            exon1 = exon2
+                            exon2 = ""
+
+                        exon_cache[name] = {1: exon1, 2: exon2}
+                        with open(exon_storage_tmp, 'a') as data_store:
+                            data_store.write("\t".join([name, exon1, exon2, "\n"]))
             
-            # circular RNA for loop
-            for each_circle in exon_cache:
-                #print(each_circle)
-                if (exon_cache[each_circle][2]) == "":
-                    # this is a single exon circle so take first 25 and last 25
-                    # bases from its sequence to create a scan sequence
-                    scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
-                else:
-                    # this is a multiple exon circular RNA. Take last 25 bases of
-                    # last exon and first 25 bases of first exon as a scan sequence
-                    scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
-
-                # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
-                for i in range(0,len(scan_sequence)):
-                    scan_window = scan_sequence[i:i+40]
-                    if (len(scan_window) < 40):
-                        break
-
-                    junction = dict_ligation_junction[scan_window[19:21]]
-                    # filter criteria for padlock probes - accepted ligation junction preferences
-                    if (junction == "nonpreferred" ):
-                        continue
-                    #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
-                    #    continue
+            else:
+                print("Please provide Circtools detect output Coordinate file via option -d.")
+                sys.exit(-1)
+            
+            if not exon_cache:
+                print("Could not find any circRNAs matching your criteria, exiting.")
+                exit(-1)
+            
+            else:
+                designed_probes_for_blast = []
+                ## padlock probe design part starts here
+                
+                # circular RNA for loop
+                for each_circle in exon_cache:
+                    #print(each_circle)
+                    if (exon_cache[each_circle][2]) == "":
+                        # this is a single exon circle so take first 25 and last 25
+                        # bases from its sequence to create a scan sequence
+                        scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
                     else:
+                        # this is a multiple exon circular RNA. Take last 25 bases of
+                        # last exon and first 25 bases of first exon as a scan sequence
+                        scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
 
-                        primer3_calling(scan_window, each_circle, junction, designed_probes_for_blast)
+                    # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
+                    for i in range(0,len(scan_sequence)):
+                        scan_window = scan_sequence[i:i+40]
+                        if (len(scan_window) < 40):
+                            break
 
-            #print(designed_probes_for_blast[:5])
-        
-            # this is the first time we look through the input file
-            # we collect the primer sequences and unify everything in one blast query
-            primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
-            #print(primex_data_with_blast_results)
+                        junction = dict_ligation_junction[scan_window[19:21]]
+                        # filter criteria for padlock probes - accepted ligation junction preferences
+                        if (junction == "nonpreferred" ):
+                            continue
+                        else:
 
-            with open(blast_storage_tmp, 'w') as data_store:
-                data_store.write(primex_data_with_blast_results)
+                            primer3_calling(scan_window, each_circle, junction, designed_probes_for_blast)
+
+                # this is the first time we look through the input file
+                # we collect the primer sequences and unify everything in one blast query
+                primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
+                #print(primex_data_with_blast_results)
+
+                with open(blast_storage_tmp, 'w') as data_store:
+                    data_store.write(primex_data_with_blast_results)
 
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
@@ -677,53 +672,51 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         # ------------------------------------ run formatter script and write output to various files -----------------------
         # formatter script calling for circular RNA probes
-        print("Formatting circular RNA probe outputs")
-        primex_data_formatted = os.popen(primer_script + " " +
-                                         blast_storage_tmp + " "
-                                         + "\"" + self.experiment_title + "\""
-                                         ).read()
+        if (self.rna_type == 0 or self.rna_type == 2):    
+            print("Formatting circular RNA probe outputs")
+            primex_data_formatted = os.popen(primer_script + " " +
+                                             blast_storage_tmp + " "
+                                             + "\"" + self.experiment_title + "\""
+                                             ).read()
 
-        with open(output_html_file, 'w') as data_store:
-            data_store.write(primex_data_formatted)
-        print("Writing circular results to "+output_html_file)
+            with open(output_html_file, 'w') as data_store:
+                data_store.write(primex_data_formatted)
+            print("Writing circular results to "+output_html_file)
 
-        print("Formatting linear RNA probe outputs")
-        primex_data_formatted_linear = os.popen(primer_script + " " +
-                                         blast_storage_tmp_linear + " "
-                                         + "\"" + self.experiment_title + "\""
-                                         ).read()
+            # writing output file to CSV -> the format recommended by Xenium technical note
+            print("Writing probe results to "+output_csv_file)
+            fout = open(output_csv_file, 'wb')
+            fout.write("CircRNAID,RBD5,RBD3\n".encode())
+            for eachline in primex_data_with_blast_results.split("\n"):
+                if (eachline == ""):    continue
+                eachline = eachline.split("\t")
+                tempstr = "_".join(eachline[:5])
+                fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
+            fout.close()
 
-        with open(output_html_file_linear, 'w') as data_store:
-            data_store.write(primex_data_formatted_linear)
-        print("Writing linear results to "+output_html_file_linear)
+        if (self.rna_type == 1 or self.rna_type == 2):
+            print("Formatting linear RNA probe outputs")
+            primex_data_formatted_linear = os.popen(primer_script + " " +
+                                             blast_storage_tmp_linear + " "
+                                             + "\"" + self.experiment_title + "\""
+                                             ).read()
 
-        # writing output file to CSV -> the format recommended by Xenium technical note
-        print("Writing probe results to "+output_csv_file)
-        fout = open(output_csv_file, 'wb')
-        fout.write("CircRNAID,RBD5,RBD3\n".encode())
-        for eachline in primex_data_with_blast_results.split("\n"):
-            #print(eachline)
-            if (eachline == ""):    continue
-            eachline = eachline.split("\t")
-            tempstr = "_".join(eachline[:5])
-            #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
-            #fout.write((tempstr + "," + eachline[5] + "," + eachline[6] + "\n").encode())   # uncomment later
-            fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
-        fout.close()
+            with open(output_html_file_linear, 'w') as data_store:
+                data_store.write(primex_data_formatted_linear)
+            print("Writing linear results to "+output_html_file_linear)
 
-        # writing output file to CSV for linear RNA probes
-        print("Writing linear probe results to "+output_csv_file_linear)
-        fout = open(output_csv_file_linear, 'wb')
-        fout.write("Gene,RBD5,RBD3\n".encode())
-        for eachline in primex_data_with_blast_results_linear.split("\n"):
-            #print(eachline)
-            if (eachline == ""):    continue
-            eachline = eachline.split("\t")
-            tempstr = "_".join(eachline[:3])
-            #print(tempstr + "\t" + eachline[5] + "\t" + eachline[6] + "\n")
-            #fout.write((tempstr + "," + eachline[3] + "," + eachline[4] + "\n").encode())  # uncomment later
-            fout.write((tempstr + "," + ",".join(eachline[3:11]) + "\n").encode())
-        fout.close()
+            # writing output file to CSV for linear RNA probes
+            print("Writing linear probe results to "+output_csv_file_linear)
+            fout = open(output_csv_file_linear, 'wb')
+            fout.write("Gene,RBD5,RBD3\n".encode())
+            for eachline in primex_data_with_blast_results_linear.split("\n"):
+                if (eachline == ""):    continue
+                eachline = eachline.split("\t")
+                tempstr = "_".join(eachline[:3])
+                fout.write((tempstr + "," + ",".join(eachline[3:11]) + "\n").encode())
+            fout.close()
+
+
 
         '''
         # here we create the circular graphics for primer visualisation
