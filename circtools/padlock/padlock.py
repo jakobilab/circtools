@@ -204,6 +204,28 @@ class Padlock(circ_module.circ_template.CircTemplate):
             gc_content=(g+c)*100/(a+t+g+c)
             return(gc_content)
 
+        # function to call primer3 on given 40bp sequence
+        def primer3_calling(scan_window, gene_string, junction, output_list):
+            # argument 1 is 40bp sequence
+            # argument 2 is the name with coordinate details to be printed in the output
+            # argument 3 is junction type i.e. preferred or neutral
+            # argument 4 is list to which the output line should be appended for BLAST
+            rbd5 = scan_window[:20]
+            rbd3 = scan_window[20:]
+            if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
+                return None
+            melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
+            melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
+            melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
+            if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
+                #print("Melting temperature outside range, skipping!")
+                return None
+            gc_rbd5 = calc_GC(rbd5)
+            gc_rbd3 = calc_GC(rbd3)
+            gc_total = calc_GC(scan_window)
+            print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+            return(output_list)
 
         # function to run blast on every probe
         def probes_blast(probes_for_blast, blast_xml_tmp_file):
@@ -442,7 +464,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             all_exons_unique.sort(key = lambda x: x[1])
             fasta_bed_line = ""
             for each_element in all_exons_unique:
-                each_line = "\t".join(each_element)
                 each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
                 virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
                 virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
@@ -472,22 +493,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
                     #    continue
                     else:
-                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
-                        rbd5 = scan_window[:20]
-                        rbd3 = scan_window[20:]
-                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
-                            continue
-                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
-                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-                        melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
-                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
-                            #print("Melting temperature outside range, skipping!")
-                            continue
-                        gc_rbd5 = calc_GC(rbd5)
-                        gc_rbd3 = calc_GC(rbd3)
-                        gc_total = calc_GC(scan_window)
-                        print(each_gene + "_" + pos,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
-                        designed_probes_for_blast_linear.append([each_gene + "_" + pos, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+                        primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
+        
         primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
         #print("Probes to BLAST linear")
         #print(primex_data_with_blast_results_linear[:5])
@@ -651,22 +658,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     #elif (dict_ligation_junction[scan_window[19:21]] == "neutral" ):        #comment later
                     #    continue
                     else:
-                        # primer3 only takes PRIMER_MAX_SIZE up to 35bp. So divide the two arms and then send to primer3
-                        rbd5 = scan_window[:20]
-                        rbd3 = scan_window[20:]
-                        if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
-                            continue
-                        melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
-                        melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-                        melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
-                        if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
-                            #print("Melting temperature outside range, skipping!")
-                            continue
-                        gc_rbd5 = calc_GC(rbd5)
-                        gc_rbd3 = calc_GC(rbd3)
-                        print(each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
 
-                        designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+                        primer3_calling(scan_window, each_circle, junction, designed_probes_for_blast)
 
             #print(designed_probes_for_blast[:5])
         
