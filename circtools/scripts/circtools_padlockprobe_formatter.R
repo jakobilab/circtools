@@ -52,7 +52,7 @@ $(document).ready(function(){
 </head>
 <body>"
 
-html_header <- paste(html_header,"<h1>circtools primer design results for experiment ", experiment_name , "</h1>", sep="")
+html_header <- paste(html_header,"<h1>Circtools padlock probe design results for experiment ", experiment_name , "</h1>", sep="")
 
 #############################################################################################################
 
@@ -61,7 +61,7 @@ color_palette <- rev(brewer.pal(n = 5, name = 'RdBu'))
 
 #default TM value
 default_tm_value <- 50
-default_gc_value <- 60
+default_gc_value <- 50
 default_product_value <- 1
 #default_product_value <- "preferred"
 
@@ -174,7 +174,7 @@ output_table <- data_table %>%
     mutate(
     #Product_size = color_bar(product_color)(Product_size),
 
-    Forward = cell_spec(escape = F, Left_, popover = spec_popover( title = "Graphical represensation of designed primers and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
+    Forward = cell_spec(escape = F, Left_, popover = spec_popover( title = "Graphical represensation of designed probes and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
 
     L = cell_spec(paste(BLAST_left_count),
@@ -182,7 +182,7 @@ output_table <- data_table %>%
     background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_left_count > high_count_number, "white", "white"), bold = "true"),
 
-    Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed primers and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
+    Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed probes and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_right_count > high_count_number, "white", "white")),
 
 
