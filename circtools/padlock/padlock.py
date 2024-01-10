@@ -436,17 +436,20 @@ class Padlock(circ_module.circ_template.CircTemplate):
         designed_probes_for_blast_linear = []
         for each_gene in self.gene_list:
             list_exons_seq = []
+            list_exons_pos = []
             all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
             all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
             all_exons_unique.sort(key = lambda x: x[1])
             fasta_bed_line = ""
             for each_element in all_exons_unique:
                 each_line = "\t".join(each_element)
+                each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
                 virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
                 virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
                 seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
                 list_exons_seq.append(seq)
-                    
+                list_exons_pos.append(each_line)
+
             with open(exon_storage_linear_tmp, 'a') as data_store:
                 data_store.write(each_gene + "\t" + "\t".join(list_exons_seq) + "\n")
            
@@ -454,6 +457,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             for i in range(0, len(list_exons_seq)):
                 if (i == len(list_exons_seq)-1):
                     break
+                pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
                 scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
 
                 for j in range(0,len(scan_sequence)):
@@ -482,8 +486,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gc_rbd5 = calc_GC(rbd5)
                         gc_rbd3 = calc_GC(rbd3)
                         gc_total = calc_GC(scan_window)
-                        print(each_gene+"_"+str(i)+"_"+str(j)+"_"+str(j+1)+"_+", rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
-                        designed_probes_for_blast_linear.append([each_gene+"_"+str(i)+"_"+str(j)+"_"+str(j+1)+"_+", rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+                        print(each_gene + "_" + pos,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+                        designed_probes_for_blast_linear.append([each_gene + "_" + pos, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
         primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
         #print("Probes to BLAST linear")
         #print(primex_data_with_blast_results_linear[:5])
@@ -664,7 +668,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                         designed_probes_for_blast.append([each_circle, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
 
-            print(designed_probes_for_blast[:5])
+            #print(designed_probes_for_blast[:5])
         
             # this is the first time we look through the input file
             # we collect the primer sequences and unify everything in one blast query
@@ -727,7 +731,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #fout.write((tempstr + "," + eachline[3] + "," + eachline[4] + "\n").encode())  # uncomment later
             fout.write((tempstr + "," + ",".join(eachline[3:11]) + "\n").encode())
         fout.close()
-
 
         '''
         # here we create the circular graphics for primer visualisation
@@ -876,4 +879,3 @@ class Padlock(circ_module.circ_template.CircTemplate):
         #os.remove(exon_storage_tmp)
         #os.remove(blast_storage_tmp)
         #os.remove(blast_xml_tmp)
-        
