@@ -2,3 +2,4 @@ sphinx-material
 sphinxawesome-theme
 karma-sphinx-theme
 sphinx-book-theme
+recommonmark
