@@ -327,7 +327,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         blast_result_cache[blast_record.query] = []
 
                     for description in blast_record.descriptions:
-
                         # filter out the host gene we're in now
                         # also filter out all "PREDICTED" stuff
                         if description.title.find(primer_to_circ_cache[blast_record.query]) == -1 and\

@@ -351,9 +351,7 @@ class CircTools(object):
         group.add_argument("-d",
                            "--detect-dir",
                            dest="detect_dir",
-                           help="CircCoordinates file from circtools detect module",
-                           required=True
-                           )
+                           help="CircCoordinates file from circtools detect module")
 
         group.add_argument("-g",
                            "--gtf-file",
