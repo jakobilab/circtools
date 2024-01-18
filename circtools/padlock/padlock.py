@@ -309,7 +309,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         blastdb = "/beegfs/biodb/genomes/mus_musculus/GRCm38_102/GRCm38.cdna.all.fa"
                     else:
                         blastdb = "/beegfs/biodb/genomes/homo_sapiens/GRCh38_102/cDNA_slim.fa"
-                    cmd = "blastn -db " + blastdb + " -query " + blast_fasta_file + " -out " + blast_xml_tmp_file + " -task blastn -outfmt 5"
+                    #cmd = "blastn -db " + blastdb + " -query " + blast_fasta_file + " -out " + blast_xml_tmp_file + " -task blastn -outfmt 5"
+                    cmd = "blastn -word_size 7 -gapopen 5 -gapextend 2 -evalue 1000 -max_target_seqs 10 -db " + blastdb + " -query " + blast_fasta_file + " -out " + blast_xml_tmp_file + " -task blastn -outfmt 5"
                     cmd_out = os.system(cmd)
 
                 except Exception as exc:
