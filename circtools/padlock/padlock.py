@@ -282,7 +282,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # check if we have to blast
             if not self.no_blast and blast_input_file:
                 
-                '''
                 # this part has been commented because could not sent BLAST querries to NCBI
                 # Thus, run the local installation of BLAST and write output in an XML file
                 try:
@@ -317,6 +316,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     print(exc)
                     print(-1)
 
+                '''
                 result_handle = open(blast_xml_tmp_file)
 
                 blast_records = NCBIXML.parse(result_handle)
