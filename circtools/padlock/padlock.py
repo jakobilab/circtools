@@ -411,10 +411,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
         blast_xml_tmp = self.temp_dir + tmp_prefix + "_circtools_blast_results.xml"
         blast_xml_tmp_linear = self.temp_dir + tmp_prefix + "_circtools_blast_linear_results.xml"
 
-        output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".html"
-        output_html_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.html"
-        output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + ".csv" # padlock probe output csv file 
-        output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear.csv" # padlock probe output csv file for linear RNA probes
+        output_html_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_circles_BSJ.html"
+        output_html_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear_FSJ.html"
+        output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_circles_BSJ.csv" # padlock probe output csv file 
+        output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear_FSJ.csv" # padlock probe output csv file for linear RNA probes
         # erase old contents
         open(exon_storage_tmp, 'w').close()
         open(exon_storage_linear_tmp, 'w').close()
@@ -686,7 +686,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # writing output file to CSV -> the format recommended by Xenium technical note
             print("Writing probe results to "+output_csv_file)
             fout = open(output_csv_file, 'wb')
-            fout.write("CircRNAID,RBD5,RBD3\n".encode())
+            fout.write("CircRNAID,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
             for eachline in primex_data_with_blast_results.split("\n"):
                 if (eachline == ""):    continue
                 eachline = eachline.split("\t")
@@ -708,7 +708,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # writing output file to CSV for linear RNA probes
             print("Writing linear probe results to "+output_csv_file_linear)
             fout = open(output_csv_file_linear, 'wb')
-            fout.write("Gene,RBD5,RBD3\n".encode())
+            fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
             for eachline in primex_data_with_blast_results_linear.split("\n"):
                 if (eachline == ""):    continue
                 eachline = eachline.split("\t")
