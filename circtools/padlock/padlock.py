@@ -214,16 +214,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
             rbd3 = scan_window[20:]
             if (('GGGGG' in rbd5) or ('GGGGG' in rbd3)):
                 return None
-            melt_tmp_5 = round(primer3.calc_tm(rbd5), 3)
-            melt_tmp_3 = round(primer3.calc_tm(rbd3), 3)
-            melt_tmp_full = round(primer3.calc_tm(scan_window), 3)
+            melt_tmp_5 = round(primer3.calc_tm(rbd5))
+            melt_tmp_3 = round(primer3.calc_tm(rbd3))
+            melt_tmp_full = round(primer3.calc_tm(scan_window))
             if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
                 #print("Melting temperature outside range, skipping!")
                 return None
-            gc_rbd5 = calc_GC(rbd5)
-            gc_rbd3 = calc_GC(rbd3)
+            gc_rbd5 = round(calc_GC(rbd5))
+            gc_rbd3 = round(calc_GC(rbd3))
             gc_total = calc_GC(scan_window)
-            #print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
             return(output_list)
@@ -509,7 +509,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             primer_start = int(scan_coord_start) + j
                             primer_end = int(scan_coord_start) + j + 40
                             probe_bed_linear.append([scan_coord_chr, primer_start, primer_end, each_gene+"_"+scan_window])
-                            print(each_gene+"_"+pos, [scan_coord_chr, scan_coord_start, scan_coord_end, j], primer_start, primer_end, scan_window)
+                            #print(each_gene+"_"+pos, [scan_coord_chr, scan_coord_start, scan_coord_end, j], primer_start, primer_end, scan_window)
             
             primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
 
