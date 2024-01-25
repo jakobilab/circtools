@@ -223,8 +223,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
             gc_rbd5 = calc_GC(rbd5)
             gc_rbd3 = calc_GC(rbd3)
             gc_total = calc_GC(scan_window)
-            print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            #print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
+            
             return(output_list)
 
         # function to run blast on every probe
@@ -415,6 +416,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
         output_html_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear_FSJ.html"
         output_csv_file = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_circles_BSJ.csv" # padlock probe output csv file 
         output_csv_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_linear_FSJ.csv" # padlock probe output csv file for linear RNA probes
+        
+        bed_probes_circles = self.temp_dir + tmp_prefix + "_probes_circles.bed"
+        bed_probes_linear = self.temp_dir + tmp_prefix + "_probes_linear.bed"
         # erase old contents
         open(exon_storage_tmp, 'w').close()
         open(exon_storage_linear_tmp, 'w').close()
@@ -458,6 +462,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # First for linear RNAs, store the exons per gene in the gene-list
             primex_data_with_blast_results_linear = []
             designed_probes_for_blast_linear = []
+            probe_bed_linear = []
             for each_gene in self.gene_list:
                 list_exons_seq = []
                 list_exons_pos = []
@@ -466,6 +471,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 all_exons_unique.sort(key = lambda x: x[1])
                 fasta_bed_line = ""
                 for each_element in all_exons_unique:
+                    each_element[1] = str(int(each_element[1]) - 1)
                     each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
                     virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
                     virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
@@ -481,6 +487,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     if (i == len(list_exons_seq)-1):
                         break
                     pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
+                    temp_split = list_exons_pos[i].split("\t")
+                    scan_coord_chr = temp_split[0]
+                    scan_coord_start = int(temp_split[2]) - 25          # end of exon for FSJ - 25 is the start for the scanning sequence
+                    scan_coord_end = int(temp_split[2]) + 25
+                    #print(list_exons_seq[i][-25:], list_exons_seq[i+1][:25])
                     scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
 
                     for j in range(0,len(scan_sequence)):
@@ -494,11 +505,21 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         else:
                             primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
+
+                            primer_start = int(scan_coord_start) + j
+                            primer_end = int(scan_coord_start) + j + 40
+                            probe_bed_linear.append([scan_coord_chr, primer_start, primer_end, each_gene+"_"+scan_window])
+                            print(each_gene+"_"+pos, [scan_coord_chr, scan_coord_start, scan_coord_end, j], primer_start, primer_end, scan_window)
             
             primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
 
             with open(blast_storage_tmp_linear, 'w') as data_store:
                 data_store.write(primex_data_with_blast_results_linear)
+
+            with open(bed_probes_linear, 'w') as f:
+                for line in probe_bed_linear:
+                    f.write("\t".join(map(str, line)))
+                    f.write("\n")
 
         if (self.rna_type == 0 or self.rna_type == 2):
             ## part for circular RNAs
@@ -634,7 +655,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 
                 # circular RNA for loop
                 for each_circle in exon_cache:
-                    #print(each_circle)
                     if (exon_cache[each_circle][2]) == "":
                         # this is a single exon circle so take first 25 and last 25
                         # bases from its sequence to create a scan sequence
@@ -657,7 +677,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         else:
 
                             primer3_calling(scan_window, each_circle, junction, designed_probes_for_blast)
-
                 # this is the first time we look through the input file
                 # we collect the primer sequences and unify everything in one blast query
                 primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
