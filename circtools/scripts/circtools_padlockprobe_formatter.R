@@ -57,11 +57,11 @@ html_header <- paste(html_header,"<h1>Circtools padlock probe design results for
 #############################################################################################################
 
 # generate a divergent color scale with 11 shades
-color_palette <- rev(brewer.pal(n = 8, name = 'RdYlBu'))
+color_palette <- rev(brewer.pal(n = 11, name = 'RdYlBu'))
 
 #default TM value
 default_tm_value <- 50
-default_gc_value <- 50
+default_gc_value <- 35
 default_product_value <- 1
 #default_product_value <- "preferred"
 
@@ -167,6 +167,7 @@ data_table$Stop  <- ifelse( data_table$Start == "" , "", data_table$Stop )
 
 data_table$Strand<- gsub("\\b0\\b", "", data_table$Strand )
 
+
 # clean up rownames to hide them lateron
 rownames(data_table) <- c()
 
@@ -193,7 +194,7 @@ output_table <- data_table %>%
     color = ifelse(BLAST_right_count > high_count_number, "white", "white"), bold = "true"),
 
     TM_left = color_bar(left_tm_color)(TM_left),
-    TM_right = color_bar(left_tm_color)(TM_right),
+    TM_right = color_bar(right_tm_color)(TM_right),
     TM_Full = color_bar(full_tm_color)(TM_Full),
 
 
