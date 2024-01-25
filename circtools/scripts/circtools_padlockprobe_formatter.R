@@ -57,11 +57,11 @@ html_header <- paste(html_header,"<h1>Circtools padlock probe design results for
 #############################################################################################################
 
 # generate a divergent color scale with 11 shades
-color_palette <- rev(brewer.pal(n = 11, name = 'RdYlBu'))
+color_palette <- rev(brewer.pal(n = 8, name = 'RdYlBu'))
 
 #default TM value
 default_tm_value <- 50
-default_gc_value <- 35
+default_gc_value <- 40
 default_product_value <- 1
 #default_product_value <- "preferred"
 
