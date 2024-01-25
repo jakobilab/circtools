@@ -65,10 +65,11 @@ default_gc_value <- 50
 default_product_value <- 1
 #default_product_value <- "preferred"
 
-construct_color_column <- function(column, default_value, palette)
+construct_color_column <- function(column, default_value, palette, top_val, bottom_val)
 {
-    top_val <- (max(column, na.rm=T) - default_value)
-    bottom_val <- (default_value - min(column, na.rm=T))
+    ## give different min and max values for Tm and GC content per column
+    #top_val <- (max(column, na.rm=T) - default_value)
+    #bottom_val <- (default_value - min(column, na.rm=T))
 
     if (top_val > bottom_val){
         from <- default_value - top_val
@@ -120,12 +121,12 @@ colnames(data_table) <- c(  "Annotation",
 ## Ligation junction 1 if preferred or 0 if neutral
 #data_table$Product_size <- ifelse(data_table$Product_size == "preferred", 1, 0)
 
-data_table$right_tm_color  = construct_color_column(data_table$TM_right,default_tm_value,color_palette)
-data_table$left_tm_color   = construct_color_column(data_table$TM_left,default_tm_value,color_palette)
-data_table$full_tm_color   = construct_color_column(data_table$TM_Full,default_tm_value,color_palette)
+data_table$right_tm_color  = construct_color_column(data_table$TM_right,default_tm_value,color_palette, 70, 50)
+data_table$left_tm_color   = construct_color_column(data_table$TM_left,default_tm_value,color_palette, 70, 50)
+data_table$full_tm_color   = construct_color_column(data_table$TM_Full,default_tm_value,color_palette, 82, 68)
 
-data_table$left_gc_color   = construct_color_column(data_table$GC_left,default_gc_value,color_palette)
-data_table$right_gc_color  = construct_color_column(data_table$GC_right,default_gc_value,color_palette)
+data_table$left_gc_color   = construct_color_column(data_table$GC_left,default_gc_value,color_palette, 60, 35)
+data_table$right_gc_color  = construct_color_column(data_table$GC_right,default_gc_value,color_palette, 60, 35)
 
 #data_table$product_color  = construct_color_column(data_table$Product_size,default_product_value,color_palette)
 data_table$product_color <- ifelse(data_table$Product_size == "preferred", "#99d594", "#ffffbf")  # manually adding colors for ligation junction as this is a character value
