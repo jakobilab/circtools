@@ -54,6 +54,7 @@ $(document).ready(function(){
 
 html_header <- paste(html_header,"<h1>Circtools padlock probe design results for experiment ", experiment_name , "</h1>", sep="")
 
+
 #############################################################################################################
 
 # generate a divergent color scale with 11 shades
@@ -186,7 +187,7 @@ output_table <- data_table %>%
     color = ifelse(BLAST_left_count > high_count_number, "white", "white"), bold = "true"),
 
     #Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed probes and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
-    Reverse = cell_spec(escape = F, background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
+    Reverse = cell_spec(escape = F, Right_, background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
     color = ifelse(BLAST_right_count > high_count_number, "white", "white")),
 
 
