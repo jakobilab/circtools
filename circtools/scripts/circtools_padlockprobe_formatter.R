@@ -52,8 +52,59 @@ $(document).ready(function(){
 </head>
 <body>"
 
-html_header <- paste(html_header,"<h1>Circtools padlock probe design results for experiment ", experiment_name , "</h1>", sep="")
+html_header <- paste(html_header,"<h1>Circtools padlock probe design results for experiment ", experiment_name , "</h1>" , sep="")
 
+html_header <- paste(html_header, "
+<div class='my-legend'>
+  <div class='legend-title'>Colour legends for TM and GC columns </div>
+  <div class='legend-scale'>
+    <ul class='legend-labels'>
+      <li><span style='background:#4575B4;'></span>Low</li>
+      <li><span style='background:#ABD9E9;'></span></li>
+      <li><span style='background:#FEE090;'></span>Medium</li>
+      <li><span style='background:#F46D43;'></span></li>
+      <li><span style='background:#D73027;'></span>High</li>
+    </ul>
+  </div>
+  </div>
+  
+    <style type='text/css'>
+    .my-legend .legend-title {
+      text-align: right;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 90%;
+      }
+    .my-legend .legend-scale ul {
+      margin: 0;
+      padding: 0;
+      float: right;
+      list-style: none;
+      }
+    .my-legend .legend-scale ul li {
+      display: block;
+      float: left;
+      width: 50px;
+      margin-bottom: 6px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend ul.legend-labels li span {
+      display: block;
+      float: right;
+      height: 15px;
+      width: 50px;
+      }
+    .my-legend .legend-source {
+      font-size: 70%;
+      color: #999;
+      clear: both;
+      }
+    .my-legend a {
+      color: #777;
+      }
+  </style>", sep="\n")
 
 #############################################################################################################
 
