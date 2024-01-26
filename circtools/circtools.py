@@ -394,7 +394,7 @@ class CircTools(object):
                            "--title",
                            dest="experiment_title",
                            help="Title of the experiment for HTML output and file name",
-                           default="circtools_primer_design"
+                           default="circtools_padlock_probe_design"
                            )
 
         group = parser.add_argument_group("Additional options")
