@@ -676,14 +676,27 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         else:
 
-                            primer3_calling(scan_window, each_circle, junction, designed_probes_for_blast)
+                            primer3_calling(scan_window, each_circle+"_"+str(i), junction, designed_probes_for_blast)
                 # this is the first time we look through the input file
                 # we collect the primer sequences and unify everything in one blast query
+                # create a list for mapping that contains names with and without index (with index doesnt work with formatter script)
+                #designed_probes_for_blast = [["_".join(i[0].split("_")[:5])]+i[1:] for i in designed_probes_for_blast]
                 primex_data_with_blast_results = probes_blast(designed_probes_for_blast, blast_xml_tmp)
                 #print(primex_data_with_blast_results)
+
+                # modify primex_data_with_blast_results for formatter script
+                temp = primex_data_with_blast_results.strip().split("\n")
+                #print(temp)
+                primex_data_with_blast_results_storage = ""
+                for each_element in temp:
+                    print(each_element)
+                    each_element = each_element.split("\t")
+                    print(each_element)
+                    each_element.pop(5)
+                    primex_data_with_blast_results_storage = "\t".join(each_element) + "\n"
                 
                 with open(blast_storage_tmp, 'w') as data_store:
-                    data_store.write(primex_data_with_blast_results)
+                    data_store.write(primex_data_with_blast_results_storage)
 
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
@@ -706,7 +719,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             print("Writing probe results to "+output_csv_file)
             fout = open(output_csv_file, 'wb')
             fout.write("CircRNAID,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
-            for eachline in primex_data_with_blast_results.split("\n"):
+            for eachline in primex_data_with_blast_results_storage.split("\n"):
                 if (eachline == ""):    continue
                 eachline = eachline.split("\t")
                 tempstr = "_".join(eachline[:5])
@@ -736,8 +749,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             fout.close()
 
 
-
-        '''
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
@@ -751,10 +762,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                         entry[2],
                                         entry[3],
                                         entry[4]])
-            print(entry)
+            circular_rna_id_isoform = "_".join([entry[0],
+                                        entry[1],
+                                        entry[2],
+                                        entry[3],
+                                        entry[4],
+                                        entry[5]])       # entry[5] is the index for scanning sequence, saved to calculate forward/reverse primer start
+            #print(entry, circular_rna_id, circular_rna_id_isoform)
             if circular_rna_id in exon_cache:
-
-                circular_rna_id_isoform = circular_rna_id + "_" + entry[5]
 
                 circrna_length = int(entry[3]) - int(entry[2])
 
@@ -768,15 +783,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     exon2_length = int(len(exon_cache[circular_rna_id][1])/2)
                     exon2_colour = "#ff6877"
 
-                forward_primer_start = int(entry[8].split(',')[0]) + circrna_length - exon2_length
-                forward_primer_length = int(entry[8].split(',')[1])
+                #index = 
+                forward_primer_start = circrna_length - 25 + int(entry[5])
+                forward_primer_length = 20
 
-                reverse_primer_start = int(entry[9].split(',')[0]) - exon2_length
-                reverse_primer_length = int(entry[9].split(',')[1])
+                reverse_primer_start = circrna_length - 25 + int(entry[5]) + 21
+                reverse_primer_length = 20
 
-                product_size = entry[14]
-
-                gdd = GenomeDiagram.Diagram('circRNA primer diagram')
+                product_size = 40
+                #print(entry, forward_primer_start, circrna_length, reverse_primer_start)
+                gdd = GenomeDiagram.Diagram('circRNA probe diagram')
                 gdt_features = gdd.new_track(1, greytrack=True, name="", )
                 gds_features = gdt_features.new_set()
 
@@ -797,10 +813,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
                 feature.location.strand = -1
 
-                gds_features.add_feature(feature, name="Product: " + product_size + "bp", label=False, color="#6881ff",
+                gds_features.add_feature(feature, name="Product: " + str(product_size) + "bp", label=False, color="#6881ff",
                                          label_size=22, label_position="middle")
+                junction = "NA"
 
-                if self.junction == "f":
+                if junction == "f":
 
                     feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
                     feature.location.strand = -1
@@ -822,7 +839,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         FeatureLocation(0, forward_primer_length - (circrna_length - forward_primer_start)))
                     gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                elif self.junction == "r":
+                elif junction == "r":
                     # the primer spans the BSJ, therefore we have to draw it in two pieces:
                     # piece 1: primer start of circRNA to circRNA end
                     # piece 2: remaining primer portion beginning from 0
@@ -878,7 +895,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 gdd.write(self.output_dir + "/" + circular_rna_id_isoform + ".svg", "svg")
                 print(feature)
         print("Cleaning up")
-        '''
+
         
         ### cleanup / delete tmp files
         #os.remove(exon_storage_tmp)
