@@ -693,7 +693,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     each_element = each_element.split("\t")
                     print(each_element)
                     each_element.pop(5)
-                    primex_data_with_blast_results_storage = "\t".join(each_element) + "\n"
+                    primex_data_with_blast_results_storage = primex_data_with_blast_results_storage + "\t".join(each_element) + "\n"
                 
                 with open(blast_storage_tmp, 'w') as data_store:
                     data_store.write(primex_data_with_blast_results_storage)
