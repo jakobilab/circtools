@@ -892,7 +892,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.6, track_size=0.3, tracklines=0, x=0.00,
                          y=0.00, start=0, end=circrna_length-1)
 
-                gdd.write(self.output_dir + "/" + circular_rna_id_isoform + ".svg", "svg")
+                gdd.write(self.output_dir + "/" + circular_rna_id + "_" + entry[6] + ".svg", "svg")
                 print(feature)
         print("Cleaning up")
 
