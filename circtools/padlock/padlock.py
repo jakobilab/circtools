@@ -689,9 +689,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 #print(temp)
                 primex_data_with_blast_results_storage = ""
                 for each_element in temp:
-                    print(each_element)
                     each_element = each_element.split("\t")
-                    print(each_element)
                     each_element.pop(5)
                     primex_data_with_blast_results_storage = primex_data_with_blast_results_storage + "\t".join(each_element) + "\n"
                 
@@ -742,13 +740,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
             fout = open(output_csv_file_linear, 'wb')
             fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
             for eachline in primex_data_with_blast_results_linear.split("\n"):
+                print(eachline)
                 if (eachline == ""):    continue
                 eachline = eachline.split("\t")
-                tempstr = "_".join(eachline[:3])
-                fout.write((tempstr + "," + ",".join(eachline[3:11]) + "\n").encode())
+                tempstr = "_".join(eachline[:5])
+                fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
             fout.close()
 
-
+        
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
@@ -815,28 +814,30 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                 gds_features.add_feature(feature, name="Product: " + str(product_size) + "bp", label=False, color="#6881ff",
                                          label_size=22, label_position="middle")
-                junction = "NA"
+                
+                junction = "f"                 # in case of probes, always "f" is going to cover the BSJ
 
                 if junction == "f":
 
-                    feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
-                    feature.location.strand = -1
+                    #feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
+                    #feature.location.strand = -1
 
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+                    #gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
+                    #                         arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
                     # the primer spans the BSJ, therefore we have to draw it in two pieces:
                     # piece 1: primer start to circRNA end
                     # piece 2: remaining primer portion beginning from 0
 
                     # piece 1:
-                    feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
+                    print("Forward", forward_primer_start, circrna_length)
+                    feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + 20))
                     gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
                     # piece 2:
-                    feature = SeqFeature(
-                        FeatureLocation(0, forward_primer_length - (circrna_length - forward_primer_start)))
+                    print("Reverse", reverse_primer_start)
+                    feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
                     gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
                 elif junction == "r":
@@ -852,15 +853,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
                     # piece 2:
-                    feature = SeqFeature(
-                        FeatureLocation(0, reverse_primer_start), strand=-1)
+                    feature = SeqFeature(FeatureLocation(0, reverse_primer_start), strand=-1)
                     gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
-                    feature = SeqFeature(
-                        FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
+                    feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
                     gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+                '''
                 else:
                     feature = SeqFeature(
                         FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
@@ -873,6 +873,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
                     gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+                '''  
 
                 feature = SeqFeature(FeatureLocation(0, 1))
                 gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
@@ -895,7 +896,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 gdd.write(self.output_dir + "/" + circular_rna_id + "_" + entry[6] + ".svg", "svg")
                 print(feature)
         print("Cleaning up")
-
+        
         
         ### cleanup / delete tmp files
         #os.remove(exon_storage_tmp)
