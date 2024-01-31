@@ -217,12 +217,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
             melt_tmp_5 = int(round(primer3.calc_tm(rbd5)))
             melt_tmp_3 = int(round(primer3.calc_tm(rbd3)))
             melt_tmp_full = int(round(primer3.calc_tm(scan_window)))
-            if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
-                #print("Melting temperature outside range, skipping!")
-                return None
             gc_rbd5 = int(round(calc_GC(rbd5)))
             gc_rbd3 = int(round(calc_GC(rbd3)))
             gc_total = int(round(calc_GC(scan_window)))
+            ## following part of code is commented for now so that all probes are present in the output. Some imp genes were getting missed because of this.
+            #if ((melt_tmp_5 < 50) or (melt_tmp_3 < 50) or (melt_tmp_5 > 70) or (melt_tmp_3 > 70) or (melt_tmp_full < 68) or (melt_tmp_full > 82)) :
+            #    print("Melting temperature outside range!", gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, junction)
+            #    return None
+
             print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
@@ -654,6 +656,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 ## padlock probe design part starts here
                 
                 # circular RNA for loop
+                #print(exon_cache)
                 for each_circle in exon_cache:
                     if (exon_cache[each_circle][2]) == "":
                         # this is a single exon circle so take first 25 and last 25
@@ -673,6 +676,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         junction = dict_ligation_junction[scan_window[19:21]]
                         # filter criteria for padlock probes - accepted ligation junction preferences
                         if (junction == "nonpreferred" ):
+                            #print("NON_PREFERRED JUNCTIONS", each_circle)
                             continue
                         else:
 
@@ -690,6 +694,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 primex_data_with_blast_results_storage = ""
                 for each_element in temp:
                     each_element = each_element.split("\t")
+                    #print(each_element)
                     each_element.pop(5)
                     primex_data_with_blast_results_storage = primex_data_with_blast_results_storage + "\t".join(each_element) + "\n"
                 
