@@ -168,8 +168,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         columns[4],
                         gene_name,
                         str(0),
-                        columns[6],
-                        columns[1]              # flag ensemble/havana
+                        columns[6]
+                        #columns[1]              # flag ensemble/havana
                     ]
 
                     # concatenate lines to one string
@@ -468,9 +468,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
             for each_gene in self.gene_list:
                 list_exons_seq = []
                 list_exons_pos = []
-                all_exons = [x for x in exons_bed_list if x[3] == each_gene and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
+                all_exons = [x for x in exons_bed_list if x[3] == each_gene] # and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
+                print(all_exons)
                 all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
                 all_exons_unique.sort(key = lambda x: x[1])
+                print(all_exons_unique)
                 fasta_bed_line = ""
                 for each_element in all_exons_unique:
                     each_element[1] = str(int(each_element[1]) - 1)
@@ -504,6 +506,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         junction = dict_ligation_junction[scan_window[19:21]]
                         # filter criteria for padlock probes - accepted ligation junction preferences
                         if (junction == "nonpreferred" ):
+                            print("NONPREFERRED JUNCTION FOUND")
                             continue
                         else:
                             primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
