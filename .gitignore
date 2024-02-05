@@ -129,3 +129,4 @@ ENV/
 .ropeproject
 
 .Rproj.user
+circtools/padlock/test.py
