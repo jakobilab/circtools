@@ -437,12 +437,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
         # create a "virtual" BED file for circular RNA bedtools intersect
         virtual_bed_file = pybedtools.BedTool(exons_bed, from_string=True)
         print("Start merging GTF file outside the function")
-
+        #virtual_bed_file.saveas('exons_hs.bed')
         # we trust that bedtools >= 2.27 is installed. Otherwise this merge will probably fail
         exons = virtual_bed_file.sort().merge(s=True,  # strand specific
                                                  c="4,5,6",  # copy columns 5 & 6
                                                  o="distinct,distinct,distinct")  # group
-        
+        #exons.saveas('exons_hs_merged.bed') 
         # define primer design parameters
         design_parameters = {
                 'PRIMER_OPT_SIZE': 20,
@@ -582,21 +582,37 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         
                         # for every circular RNA, fetch the information about
                         # second and first exons
+                        print("Current line", current_line)
                         flanking_exon_cache[name] = {}
                         for result_line in str(result).splitlines():
                             bed_feature = result_line.split('\t')
-
                             # this is a single-exon circRNA
+                            print("bed feature", bed_feature)
                             if bed_feature[1] == current_line[1] and bed_feature[2] == current_line[2]:
+                                print("Single exon condition")
+                                # remove 1 bp from start and end to correct for the gap 
+                                temp_bed_feature = bed_feature 
+                                temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
+                                #temp_bed_feature[2] = str(int(temp_bed_feature[2]) + 1)
+                                result_line = "\t".join(temp_bed_feature)
+                                #print("Updated result line", result_line)
                                 fasta_bed_line_start += result_line + "\n"
                                 start = 1
                                 stop = 1
 
                             if bed_feature[1] == current_line[1] and start == 0:
+                                print("Start zero condition")
+                                temp_bed_feature = bed_feature
+                                temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
+                                result_line = "\t".join(temp_bed_feature) 
                                 fasta_bed_line_start += result_line + "\n"
                                 start = 1
 
                             if bed_feature[2] == current_line[2] and stop == 0:
+                                print("Stop zero condition")
+                                temp_bed_feature = bed_feature
+                                temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
+                                result_line = "\t".join(temp_bed_feature) 
                                 fasta_bed_line_stop += result_line + "\n"
                                 stop = 1
 
@@ -611,7 +627,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                         virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
                         virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
-                        
+                        print(fasta_bed_line_start, fasta_bed_line_stop)
                         if stop == 0 or start == 0:
                             print("Could not identify the exact exon-border of the circRNA.")
                             print("Will continue with non-annotated, manually extracted sequence.")
@@ -635,6 +651,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         if virtual_bed_file_stop:
                             exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
 
+                        #print("Exon2", exon2)
+                        #print("Exon1", exon1)
                         circ_rna_number += 1
                         print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
 
@@ -665,10 +683,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         # this is a single exon circle so take first 25 and last 25
                         # bases from its sequence to create a scan sequence
                         scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
+                        print(each_circle, exon_cache[each_circle][1][-25:], exon_cache[each_circle][1][:25])
                     else:
                         # this is a multiple exon circular RNA. Take last 25 bases of
                         # last exon and first 25 bases of first exon as a scan sequence
                         scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
+                        print(each_circle, exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25])
 
                     # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
                     for i in range(0,len(scan_sequence)):
@@ -703,7 +723,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 
                 with open(blast_storage_tmp, 'w') as data_store:
                     data_store.write(primex_data_with_blast_results_storage)
-
+        """
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
         primer_script = 'circtools_padlockprobe_formatter.R'
@@ -904,7 +924,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 gdd.write(self.output_dir + "/" + circular_rna_id + "_" + entry[6] + ".svg", "svg")
                 print(feature)
         print("Cleaning up")
-        
+        """
         
         ### cleanup / delete tmp files
         #os.remove(exon_storage_tmp)
