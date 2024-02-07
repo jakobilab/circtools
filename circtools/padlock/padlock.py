@@ -434,6 +434,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
         exons_bed_list = [x.split("\t") for x in exons_bed.strip().split("\n")]
+        #print(exons_bed_list)
         # create a "virtual" BED file for circular RNA bedtools intersect
         virtual_bed_file = pybedtools.BedTool(exons_bed, from_string=True)
         print("Start merging GTF file outside the function")
@@ -442,6 +443,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
         exons = virtual_bed_file.sort().merge(s=True,  # strand specific
                                                  c="4,5,6",  # copy columns 5 & 6
                                                  o="distinct,distinct,distinct")  # group
+        #print(exons_bed_list[:5])
+        exons_bed_list = [x.split("\t") for x in str(exons).splitlines()]
+        #print(exons_bed_list[:5])
         #exons.saveas('exons_hs_merged.bed') 
         # define primer design parameters
         design_parameters = {
@@ -490,6 +494,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 for i in range(0, len(list_exons_seq)):
                     if (i == len(list_exons_seq)-1):
                         break
+                    print(list_exons_pos[i], list_exons_pos[i+1])
                     pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
                     temp_split = list_exons_pos[i].split("\t")
                     scan_coord_chr = temp_split[0]
@@ -723,7 +728,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 
                 with open(blast_storage_tmp, 'w') as data_store:
                     data_store.write(primex_data_with_blast_results_storage)
-        """
+        
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
         primer_script = 'circtools_padlockprobe_formatter.R'
@@ -775,7 +780,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
             fout.close()
 
-        
+        """
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
