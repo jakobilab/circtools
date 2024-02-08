@@ -462,7 +462,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                       "TT":'neutral', "CT":'neutral', "CA":'neutral', "TC":'neutral', "AC":'neutral'
                                       , "CC":'neutral', "TG":'neutral', "AA":'neutral', "CG":'nonpreferred'
                                       , "GT":'nonpreferred', "GG":'nonpreferred', "GC":'nonpreferred'}
-        
+        # dictionary for RGB color values for BED tracks. One color per j index of scanning sequence (need 11 in total)
+        track_color_dict = {0: "166,206,227", 1:"31,120,180", 2:"128,0,0", 3:"51,160,44", 4:"251,154,153", 5:"227,26,28",
+                            6:"253,191,111", 7:"255,127,0", 8:"202,178,214", 9:"106,61,154", 10:"240,50,230"}
         if (self.rna_type == 1 or self.rna_type == 2):
             print("Finding probes for linear RNAs")
             # First for linear RNAs, store the exons per gene in the gene-list
@@ -473,10 +475,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 list_exons_seq = []
                 list_exons_pos = []
                 all_exons = [x for x in exons_bed_list if x[3] == each_gene] # and x[6] == "ensembl_havana"]   # only take exons annotated by ensemble and havana both as these are confirmed both manually and automatically
-                print(all_exons)
+                #print(all_exons)
                 all_exons_unique = (list(map(list,set(map(tuple, all_exons)))))
                 all_exons_unique.sort(key = lambda x: x[1])
-                print(all_exons_unique)
+                #print(all_exons_unique)
                 fasta_bed_line = ""
                 for each_element in all_exons_unique:
                     each_element[1] = str(int(each_element[1]) - 1)
@@ -494,12 +496,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 for i in range(0, len(list_exons_seq)):
                     if (i == len(list_exons_seq)-1):
                         break
-                    print(list_exons_pos[i], list_exons_pos[i+1])
+                    # find out start and end of probes
                     pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
-                    temp_split = list_exons_pos[i].split("\t")
+                    temp_split = list_exons_pos[i].split("\t")      # exon1 coord
+                    temp_split_2 = list_exons_pos[i+1].split("\t") # exon2 coord
+                    print("Exon and exon+1 positions:", temp_split, temp_split_2)
                     scan_coord_chr = temp_split[0]
+                    scan_coord_strand = temp_split[3]
                     scan_coord_start = int(temp_split[2]) - 25          # end of exon for FSJ - 25 is the start for the scanning sequence
-                    scan_coord_end = int(temp_split[2]) + 25
+                    #scan_coord_end = int(temp_split[2]) + 25
+
                     #print(list_exons_seq[i][-25:], list_exons_seq[i+1][:25])
                     scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
 
@@ -507,7 +513,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         scan_window = scan_sequence[j:j+40]
                         if (len(scan_window) < 40):
                             break
-
                         junction = dict_ligation_junction[scan_window[19:21]]
                         # filter criteria for padlock probes - accepted ligation junction preferences
                         if (junction == "nonpreferred" ):
@@ -515,10 +520,17 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             continue
                         else:
                             primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
-
-                            primer_start = int(scan_coord_start) + j
-                            primer_end = int(scan_coord_start) + j + 40
-                            probe_bed_linear.append([scan_coord_chr, primer_start, primer_end, each_gene+"_"+scan_window])
+                            # coordinates for BED12 file and graphical visualisation
+                            distance = int(temp_split_2[1]) - int(temp_split[2])  # distance between two exons i.e. length of intron 
+                            primer_start = (int(temp_split[2]) - 25) + j
+                            size1 = int(temp_split[2]) - primer_start
+                            size2 = 15 + j
+                            primer_end = primer_start + 40 + distance
+                            block_start_2 = size1 + distance 
+                            thick_start = primer_start
+                            thick_end = primer_end
+                            probe_bed_linear.append([scan_coord_chr, primer_start, primer_end, each_gene+"_"+scan_window, "0", scan_coord_strand, thick_start, thick_end,
+                                                     track_color_dict[j], "2", str(size1)+","+str(size2), "0,"+str(block_start_2)])
                             #print(each_gene+"_"+pos, [scan_coord_chr, scan_coord_start, scan_coord_end, j], primer_start, primer_end, scan_window)
             
             primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
@@ -729,6 +741,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 with open(blast_storage_tmp, 'w') as data_store:
                     data_store.write(primex_data_with_blast_results_storage)
         
+        """
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
         primer_script = 'circtools_padlockprobe_formatter.R'
@@ -780,7 +793,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
             fout.close()
 
-        """
+        
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
             entry = line.split('\t')
