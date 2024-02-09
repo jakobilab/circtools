@@ -430,6 +430,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
         all_exon_cache = {}             # to store all exons for linear RNA splicing
+        exon_dict_circle_bed12 = {}            # dictionary start stores first and last exons for every circle (needed for IGV bed file)
         
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
@@ -601,6 +602,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         # second and first exons
                         print("Current line", current_line)
                         flanking_exon_cache[name] = {}
+                        exon_dict_circle_bed12[name] = []
                         for result_line in str(result).splitlines():
                             bed_feature = result_line.split('\t')
                             # this is a single-exon circRNA
@@ -616,6 +618,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                 fasta_bed_line_start += result_line + "\n"
                                 start = 1
                                 stop = 1
+                                exon_dict_circle_bed12[name].append(bed_feature)
 
                             if bed_feature[1] == current_line[1] and start == 0:
                                 print("Start zero condition")
@@ -624,6 +627,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                 result_line = "\t".join(temp_bed_feature) 
                                 fasta_bed_line_start += result_line + "\n"
                                 start = 1
+                                exon_dict_circle_bed12[name].append(bed_feature)
 
                             if bed_feature[2] == current_line[2] and stop == 0:
                                 print("Stop zero condition")
@@ -632,12 +636,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                 result_line = "\t".join(temp_bed_feature) 
                                 fasta_bed_line_stop += result_line + "\n"
                                 stop = 1
+                                exon_dict_circle_bed12[name].append(bed_feature)
 
                             # these exons are kept for correctly drawing the circRNAs later
                             # not used for primer design
                             if bed_feature[1] > current_line[1] and bed_feature[2] < current_line[2]:
                                 flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
-                       
+
+                        print("Exon dict for BED12 file:", exon_dict_circle_bed12[name], len(exon_dict_circle_bed12[name]))
                         # first and last exons
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                         virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
@@ -696,6 +702,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 # circular RNA for loop
                 #print(exon_cache)
                 for each_circle in exon_cache:
+                    print("Flanking exons:", flanking_exon_cache[each_circle])
                     if (exon_cache[each_circle][2]) == "":
                         # this is a single exon circle so take first 25 and last 25
                         # bases from its sequence to create a scan sequence
