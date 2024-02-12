@@ -225,7 +225,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #    print("Melting temperature outside range!", gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, junction)
             #    return None
 
-            #print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
             return(output_list)
@@ -424,8 +424,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
         output_fasta_file_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_FSJ.fa"
         
         # BED fole for genome browser
-        bed_probes_circles = self.temp_dir + tmp_prefix + "_probes_circles.bed"
-        bed_probes_linear = self.temp_dir + tmp_prefix + "_probes_linear.bed"
+        bed_probes_circles = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_probes_circles.bed"
+        bed_probes_linear = self.output_dir + "/" + self.experiment_title.replace(" ", "_") + "_probes_linear.bed"
         # erase old contents
         open(exon_storage_tmp, 'w').close()
         open(exon_storage_linear_tmp, 'w').close()
@@ -704,6 +704,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             
             else:
                 designed_probes_for_blast = []
+                probe_bed = []
                 ## padlock probe design part starts here
                 
                 # circular RNA for loop
@@ -722,14 +723,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     print("##################", each_circle, exon_dict_circle_bed12[each_circle])
                     if (len(exon_dict_circle_bed12[each_circle]) == 1):
-                        print("CHECK if SINGLE-EXON or SOMETHING ELSE", each_circle, exon_dict_circle_bed12[each_circle])
+                        #print("CHECK if SINGLE-EXON or SOMETHING ELSE", each_circle, exon_dict_circle_bed12[each_circle])
                         circle_exon = exon_dict_circle_bed12[each_circle][0]
                     else:
                         circle_exon = exon_dict_circle_bed12[each_circle][1]
                     circle_exon = "_".join([circle_exon[x] for x in [3,0,1,2,5]])
-                    print("ID for matching junctions: ", circle_exon)
+                    #print("ID for matching junctions: ", circle_exon)
                     if ( circle_exon in fasta_xenium_linear_dict.keys()):
-                        print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
+                        #print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
                         fasta_xenium += ">" + circle_exon + "\n" + scan_sequence + "\n" 
                         fasta_xenium_linear += ">" + circle_exon + "\n" + fasta_xenium_linear_dict[circle_exon] + "\n"
 
@@ -748,6 +749,24 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         else:
                             primer3_calling(scan_window, each_circle+"_"+str(i), junction, designed_probes_for_blast)
                             # coordinates for BED file generation for IGV browser
+                            #print(each_circle, exon_dict_circle_bed12[each_circle])
+                            scan_coord_chr = each_circle.split("_")[1]
+                            scan_coord_strand = each_circle.split("_")[4]
+                            if (len(exon_dict_circle_bed12[each_circle]) == 1):
+                                start = int(exon_dict_circle_bed12[each_circle][0][1])
+                                end = int(exon_dict_circle_bed12[each_circle][0][2])                                
+                            else:
+                                start = int(exon_dict_circle_bed12[each_circle][1][1])
+                                end = int(exon_dict_circle_bed12[each_circle][1][2])
+                            
+                            thick_start = start
+                            thick_end = end
+                            distance = end - start
+                            block_start_2 = (distance - 25) + i
+                            size2 = 25 - i
+                            size1 = 40 - size2
+                            probe_bed.append([scan_coord_chr, thick_start, thick_end, each_circle+"_"+scan_window, "0", scan_coord_strand, thick_start, thick_end, 
+                                              track_color_dict[i], "2", str(size1)+","+str(size2), "0,"+str(block_start_2)])
 
                 # this is the first time we look through the input file
                 # we collect the primer sequences and unify everything in one blast query
@@ -768,17 +787,18 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 
                 with open(blast_storage_tmp, 'w') as data_store:
                     data_store.write(primex_data_with_blast_results_storage)
+                with open(bed_probes_circles, 'w') as f:
+                    for line in probe_bed:
+                        f.write("\t".join(map(str, line)))
+                        f.write("\n")
         
-        #print(fasta_xenium)
-        #print(fasta_xenium_linear) 
-        # Writing fasta files with 50bp
-        #print(fasta_xenium_linear_dict)
+        """
         with open(output_fasta_file_linear, 'w') as data_store:
             data_store.write(fasta_xenium_linear)
         with open(output_fasta_file, 'w') as data_store:
             data_store.write(fasta_xenium)
 
-        """
+        
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
         primer_script = 'circtools_padlockprobe_formatter.R'
