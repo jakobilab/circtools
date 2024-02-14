@@ -229,7 +229,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #    print("Melting temperature outside range!", gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, junction)
             #    return None
 
-            print(gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
             return(output_list)
@@ -349,9 +349,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
             for entry in probes_for_blast:
                 #entry = line.split('\t')
-
+                #print("BLAST CHECK", entry, len(entry))
                 # split up the identifier for final plotting
+                #entry[0] = "\t".join(entry[0].split("_")[:5])
                 entry[0] = entry[0].replace("_", "\t")
+                #print(entry)
                 line = "\t".join(map(str, entry))
                 #print(line)
 
@@ -359,7 +361,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     left_result = "No hits"
                     right_result = "No hits"
                 else:
-                    left_result = "Not blasted, no primer pair found"
+                    left_result = "Not blasted, no off-targets found"
                     right_result = left_result
 
                 if entry[1] in blast_result_cache:
@@ -374,10 +376,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
             return data_with_blast_results
         
         # function to create graphical representation of circular/linear RNAs
-        def graphical_visualisation(blast_results, exon_cache_dict, flanking_exon_dict, output_dir):
+        def graphical_visualisation(blast_results, exon_cache_dict, flanking_exon_dict, output_dir, rna_type):
             for line in blast_results.splitlines():
                 entry = line.split('\t')
-                print(entry)
+                #print(entry)
                 if entry[6] == "NA":            # no primers, no graphics
                     continue
                 circular_rna_id = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4]])
@@ -397,7 +399,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     index = int(entry[5])
 
                     # graphical design
-                    gdd = GenomeDiagram.Diagram('circRNA probe diagram')
+                    gdd = GenomeDiagram.Diagram('Probe diagram')
                     gdt_features = gdd.new_track(1, greytrack=True, name="", )
                     gds_features = gdt_features.new_set()
                     # adding first exon
@@ -413,7 +415,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     flag = 0            # flag to keep track if start of RBD3 is before BSJ
                     rbd5_start = circrna_length-25+index 
                     rbd5_end = circrna_length-25+index+20
-                    if (rbd5_end > circrna_length):
+                    if (rbd5_end >= circrna_length):
                         feature = SeqFeature(FeatureLocation(rbd5_start, circrna_length)) 
                         gds_features.add_feature(feature, name="RBD5", label=False, color="red", label_size=22)
                         feature = SeqFeature(FeatureLocation(0, rbd5_end - circrna_length))
@@ -424,7 +426,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         gds_features.add_feature(feature, name="RBD5", label=False, color="red", label_size=22)
                         flag = 1
                     rbd3_start = rbd5_end + 1
-                    print(circular_rna_id_isoform, rbd5_end, rbd3_start, circrna_length, flag)
+                    #print(circular_rna_id_isoform, rbd5_end, rbd3_start, circrna_length, flag)
                     if (flag == 1):
                         feature = SeqFeature(FeatureLocation(rbd3_start, circrna_length)) 
                         gds_features.add_feature(feature, name="RBD3", label=False, color="green", label_size=22)
@@ -435,23 +437,31 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         feature = SeqFeature(FeatureLocation(rbd3_start, rbd3_end))
                         gds_features.add_feature(feature, name="RBD3", label=False, color="green", label_size=22)
 
-                    feature = SeqFeature(FeatureLocation(0, 1))
-                    gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
-                    # adding flanking exons
-                    if circular_rna_id in flanking_exon_dict:
-                        for exon in flanking_exon_dict[circular_rna_id]:
-                            exon_start, exon_stop = exon.split('_')
+                    # making graph circular/linear
+                    if (rna_type == "circle"):
+                        feature = SeqFeature(FeatureLocation(0, 1))
+                        gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
+                        # adding flanking exons
+                        if circular_rna_id in flanking_exon_dict:
+                            for exon in flanking_exon_dict[circular_rna_id]:
+                                exon_start, exon_stop = exon.split('_')
 
-                            exon_start = int(exon_start) - int(entry[2])
-                            exon_stop = int(exon_stop) - int(entry[2])
+                                exon_start = int(exon_start) - int(entry[2])
+                                exon_stop = int(exon_stop) - int(entry[2])
 
-                            feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
-                            feature.location.strand = +1
+                                feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
+                                feature.location.strand = +1
 
-                            gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
-                    # making graph circular
-                    gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
-                    gdd.write(output_dir + "/" + circular_rna_id_isoform + ".svg", "SVG")
+                                gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
+                        
+                        gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
+                        gdd.write(output_dir + "/" + circular_rna_id_isoform + "_BSJ.svg", "SVG")
+
+                    if (rna_type == "linear"):
+                        feature = SeqFeature(FeatureLocation(0, 1))
+                        gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
+                        gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
+                        gdd.write(output_dir + "/" + circular_rna_id_isoform + "_FSJ.svg", "SVG") 
 
             return None
         
@@ -520,7 +530,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         exon_cache = {}
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
-        all_exon_cache = {}             # to store all exons for linear RNA splicing
         exon_dict_circle_bed12 = {}            # dictionary start stores first and last exons for every circle (needed for IGV bed file)
         
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
@@ -557,12 +566,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
         # dictionary for RGB color values for BED tracks. One color per j index of scanning sequence (need 11 in total)
         track_color_dict = {0: "166,206,227", 1:"31,120,180", 2:"128,0,0", 3:"51,160,44", 4:"251,154,153", 5:"227,26,28",
                             6:"253,191,111", 7:"255,127,0", 8:"202,178,214", 9:"106,61,154", 10:"240,50,230"}
+        
         if (self.rna_type == 1 or self.rna_type == 2):
             print("Finding probes for linear RNAs")
             # First for linear RNAs, store the exons per gene in the gene-list
             primex_data_with_blast_results_linear = []
             designed_probes_for_blast_linear = []
             #fasta_xenium_linear_dict = {}
+            all_exon_cache = {}             # to store all exons for linear RNA splicing
             probe_bed_linear = []
             for each_gene in self.gene_list:
                 list_exons_seq = []
@@ -593,11 +604,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
                     temp_split = list_exons_pos[i].split("\t")      # exon1 coord
                     temp_split_2 = list_exons_pos[i+1].split("\t") # exon2 coord
+                    #print(temp_split, [each_gene + "_" + "_".join(temp_split)])
+                    all_exon_cache[each_gene + "_" + "_".join(temp_split)] = {1:list_exons_seq[i], 2:list_exons_seq[i+1]}
                     #print("Exon and exon+1 positions:", pos, temp_split, temp_split_2)
                     scan_coord_chr = temp_split[0]
                     scan_coord_strand = temp_split[3]
-                    #scan_coord_start = int(temp_split[2]) - 25          # end of exon for FSJ - 25 is the start for the scanning sequence
-                    #scan_coord_end = int(temp_split[2]) + 25
 
                     #print(list_exons_seq[i][-25:], list_exons_seq[i+1][:25])
                     scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
@@ -612,7 +623,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             #print("NONPREFERRED JUNCTION FOUND")
                             continue
                         else:
-                            primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
+                            #primer3_calling(scan_window, each_gene+"_"+pos, junction, designed_probes_for_blast_linear)
+                            primer3_calling(scan_window, each_gene+"_"+pos.replace("\t","_")+"_"+str(j), junction, designed_probes_for_blast_linear)
                             # coordinates for BED12 file and graphical visualisation
                             distance = int(temp_split_2[1]) - int(temp_split[2])  # distance between two exons i.e. length of intron 
                             primer_start = (int(temp_split[2]) - 25) + j
@@ -627,15 +639,26 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             #print(each_gene+"_"+pos, [scan_coord_chr, scan_coord_start, scan_coord_end, j], primer_start, primer_end, scan_window)
             
             primex_data_with_blast_results_linear = probes_blast(designed_probes_for_blast_linear, blast_xml_tmp_linear)
+
+            # modify primex_data_with_blast_results for formatter script
+            temp = primex_data_with_blast_results_linear.strip().split("\n")
+            primex_data_with_blast_results_linear_storage = ""
+            for each_element in temp:
+                each_element = each_element.split("\t")
+                each_element.pop(5)
+                primex_data_with_blast_results_linear_storage = primex_data_with_blast_results_linear_storage + "\t".join(each_element) + "\n"
+
             #print(fasta_xenium_linear_dict.keys())
             with open(blast_storage_tmp_linear, 'w') as data_store:
-                data_store.write(primex_data_with_blast_results_linear)
+                data_store.write(primex_data_with_blast_results_linear_storage)
 
             with open(bed_probes_linear, 'w') as f:
                 for line in probe_bed_linear:
                     f.write("\t".join(map(str, line)))
                     f.write("\n")
 
+            # visualisation
+            graphical_visualisation(primex_data_with_blast_results_linear, all_exon_cache, {}, self.svg_dir, "linear")
 
         if (self.rna_type == 0 or self.rna_type == 2):
             ## part for circular RNAs
@@ -814,12 +837,13 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     else:
                         circle_exon = exon_dict_circle_bed12[each_circle][1]
                     circle_exon = "_".join([circle_exon[x] for x in [3,0,1,2,5]])
-                    #print("ID for matching junctions: ", circle_exon)
-                    #if ( circle_exon in fasta_xenium_linear_dict.keys()):
-                    #    #print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
-                    #    fasta_xenium += ">" + circle_exon + "\n" + scan_sequence + "\n" 
-                    #    fasta_xenium_linear += ">" + circle_exon + "\n" + fasta_xenium_linear_dict[circle_exon] + "\n"
-
+                    """
+                    print("ID for matching junctions: ", circle_exon)
+                    if ( circle_exon in fasta_xenium_linear_dict.keys()):
+                       #print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
+                       fasta_xenium += ">" + circle_exon + "\n" + scan_sequence + "\n" 
+                       fasta_xenium_linear += ">" + circle_exon + "\n" + fasta_xenium_linear_dict[circle_exon] + "\n"
+                    """
                     
                     # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
                     for i in range(0,len(scan_sequence)):
@@ -863,11 +887,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                 # modify primex_data_with_blast_results for formatter script
                 temp = primex_data_with_blast_results.strip().split("\n")
-                #print(temp)
                 primex_data_with_blast_results_storage = ""
                 for each_element in temp:
                     each_element = each_element.split("\t")
-                    #print(each_element)
                     each_element.pop(5)
                     primex_data_with_blast_results_storage = primex_data_with_blast_results_storage + "\t".join(each_element) + "\n"
                 
@@ -878,10 +900,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         f.write("\t".join(map(str, line)))
                         f.write("\n")
         
-        print(exon_cache)
-        graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.svg_dir)
+                #print(flanking_exon_cache)
+                graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.svg_dir, "circle")
         
-        """
         with open(output_fasta_file_linear, 'w') as data_store:
             data_store.write(fasta_xenium_linear)
         with open(output_fasta_file, 'w') as data_store:
@@ -931,166 +952,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
             print("Writing linear probe results to "+output_csv_file_linear)
             fout = open(output_csv_file_linear, 'wb')
             fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
-            for eachline in primex_data_with_blast_results_linear.split("\n"):
-                print(eachline)
+            for eachline in primex_data_with_blast_results_linear_storage.split("\n"):
                 if (eachline == ""):    continue
                 eachline = eachline.split("\t")
                 tempstr = "_".join(eachline[:5])
                 fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
             fout.close()
-
-        
-        # here we create the circular graphics for primer visualisation
-        for line in primex_data_with_blast_results.splitlines():
-            entry = line.split('\t')
-            #print(entry)
-            # no primers, no graphics
-            if entry[6] == "NA":
-                continue
-
-            circular_rna_id = "_".join([entry[0],
-                                        entry[1],
-                                        entry[2],
-                                        entry[3],
-                                        entry[4]])
-            circular_rna_id_isoform = "_".join([entry[0],
-                                        entry[1],
-                                        entry[2],
-                                        entry[3],
-                                        entry[4],
-                                        entry[5]])       # entry[5] is the index for scanning sequence, saved to calculate forward/reverse primer start
-            #print(entry, circular_rna_id, circular_rna_id_isoform)
-            if circular_rna_id in exon_cache:
-
-                circrna_length = int(entry[3]) - int(entry[2])
-
-                exon1_length = len(exon_cache[circular_rna_id][1])
-                exon2_length = len(exon_cache[circular_rna_id][2])
-
-                exon2_colour = "#ffac68"
-
-                if exon2_length == 0:
-                    exon1_length = int(len(exon_cache[circular_rna_id][1])/2)+1
-                    exon2_length = int(len(exon_cache[circular_rna_id][1])/2)
-                    exon2_colour = "#ff6877"
-
-                #index = 
-                forward_primer_start = circrna_length - 25 + int(entry[5])
-                forward_primer_length = 20
-
-                reverse_primer_start = circrna_length - 25 + int(entry[5]) + 21
-                reverse_primer_length = 20
-
-                product_size = 40
-                #print(entry, forward_primer_start, circrna_length, reverse_primer_start)
-                gdd = GenomeDiagram.Diagram('circRNA probe diagram')
-                gdt_features = gdd.new_track(1, greytrack=True, name="", )
-                gds_features = gdt_features.new_set()
-
-                feature = SeqFeature(FeatureLocation(0, exon1_length))
-                feature.location.strand = +1
-                gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
-
-                feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length))
-                feature.location.strand = +1
-
-                gds_features.add_feature(feature, name="Exon 2", label=False, color=exon2_colour, label_size=22)
-
-                feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
-                feature.location.strand = -1
-
-                gds_features.add_feature(feature, name="Product", label=False, color="#6881ff")
-
-                feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
-                feature.location.strand = -1
-
-                gds_features.add_feature(feature, name="Product: " + str(product_size) + "bp", label=False, color="#6881ff",
-                                         label_size=22, label_position="middle")
-                
-                junction = "f"                 # in case of probes, always "f" is going to cover the BSJ
-
-                if junction == "f":
-
-                    #feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
-                    #feature.location.strand = -1
-
-                    #gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                    #                         arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # the primer spans the BSJ, therefore we have to draw it in two pieces:
-                    # piece 1: primer start to circRNA end
-                    # piece 2: remaining primer portion beginning from 0
-
-                    # piece 1:
-                    print("Forward", forward_primer_start, circrna_length)
-                    feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + 20))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # piece 2:
-                    print("Reverse", reverse_primer_start)
-                    feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                elif junction == "r":
-                    # the primer spans the BSJ, therefore we have to draw it in two pieces:
-                    # piece 1: primer start of circRNA to circRNA end
-                    # piece 2: remaining primer portion beginning from 0
-
-                    # piece 1:
-                    feature = SeqFeature(FeatureLocation(circrna_length - reverse_primer_start, circrna_length))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # piece 2:
-                    feature = SeqFeature(FeatureLocation(0, reverse_primer_start), strand=-1)
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                '''
-                else:
-                    feature = SeqFeature(
-                        FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    feature = SeqFeature(
-                        FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                '''  
-
-                feature = SeqFeature(FeatureLocation(0, 1))
-                gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
-
-                if circular_rna_id in flanking_exon_cache:
-                    for exon in flanking_exon_cache[circular_rna_id]:
-                        exon_start, exon_stop = exon.split('_')
-
-                        exon_start = int(exon_start) - int(entry[2])
-                        exon_stop = int(exon_stop) - int(entry[2])
-
-                        feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
-                        feature.location.strand = +1
-
-                        gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
-
-                gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.6, track_size=0.3, tracklines=0, x=0.00,
-                         y=0.00, start=0, end=circrna_length-1)
-
-                gdd.write(self.output_dir + "/" + circular_rna_id + "_" + entry[6] + ".svg", "svg")
-                print(feature)
         print("Cleaning up")
+        """      
+        ## cleanup / delete tmp files
+        os.remove(exon_storage_tmp)
+        os.remove(blast_storage_tmp)
+        os.remove(blast_xml_tmp)
         """
-        
-        ### cleanup / delete tmp files
-        #os.remove(exon_storage_tmp)
-        #os.remove(blast_storage_tmp)
-        #os.remove(blast_xml_tmp)
