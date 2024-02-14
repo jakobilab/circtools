@@ -460,7 +460,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     if (rna_type == "linear"):
                         feature = SeqFeature(FeatureLocation(0, 1))
                         gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
-                        gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
+                        gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, 
+                                 start=0, end=circrna_length-1, fragments = 1)
                         gdd.write(output_dir + "/" + circular_rna_id_isoform + "_FSJ.svg", "SVG") 
 
             return None
@@ -903,11 +904,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 #print(flanking_exon_cache)
                 graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.svg_dir, "circle")
         
+        """
         with open(output_fasta_file_linear, 'w') as data_store:
             data_store.write(fasta_xenium_linear)
         with open(output_fasta_file, 'w') as data_store:
             data_store.write(fasta_xenium)
-
+        """
         
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
