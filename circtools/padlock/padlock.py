@@ -867,7 +867,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                                 start = int(exon_dict_circle_bed12[each_circle][0][1])
                                 end = int(exon_dict_circle_bed12[each_circle][0][2])                                
                             else:
-                                start = int(exon_dict_circle_bed12[each_circle][1][1])
+                                start = int(exon_dict_circle_bed12[each_circle][0][1])
                                 end = int(exon_dict_circle_bed12[each_circle][1][2])
                             
                             thick_start = start
