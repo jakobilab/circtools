@@ -384,8 +384,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     continue
                 circular_rna_id = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4]])
                 circular_rna_id_isoform = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4], entry[5]])       # entry[5] is the index for scanning sequence, saved to calculate forward/reverse primer start
+                index = int(entry[5])
                 #print(entry, circular_rna_id, circular_rna_id_isoform)
-                if circular_rna_id in exon_cache_dict:
+                if (rna_type == "circle"):
                     circrna_length = int(entry[3]) - int(entry[2])
 
                     exon1_length = len(exon_cache_dict[circular_rna_id][1])
@@ -396,8 +397,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         exon1_length = int(len(exon_cache_dict[circular_rna_id][1])/2)+1
                         exon2_length = int(len(exon_cache_dict[circular_rna_id][1])/2)
                         exon2_colour = "#ff6877"
-                    index = int(entry[5])
-
+                    
                     # graphical design
                     gdd = GenomeDiagram.Diagram('Probe diagram')
                     gdt_features = gdd.new_track(1, greytrack=True, name="", )
@@ -437,32 +437,54 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         feature = SeqFeature(FeatureLocation(rbd3_start, rbd3_end))
                         gds_features.add_feature(feature, name="RBD3", label=False, color="green", label_size=22)
 
-                    # making graph circular/linear
-                    if (rna_type == "circle"):
-                        feature = SeqFeature(FeatureLocation(0, 1))
-                        gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
-                        # adding flanking exons
-                        if circular_rna_id in flanking_exon_dict:
-                            for exon in flanking_exon_dict[circular_rna_id]:
-                                exon_start, exon_stop = exon.split('_')
+                    feature = SeqFeature(FeatureLocation(0, 1))
+                    gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
+                    # adding flanking exons
+                    if circular_rna_id in flanking_exon_dict:
+                        for exon in flanking_exon_dict[circular_rna_id]:
+                            exon_start, exon_stop = exon.split('_')
 
-                                exon_start = int(exon_start) - int(entry[2])
-                                exon_stop = int(exon_stop) - int(entry[2])
+                            exon_start = int(exon_start) - int(entry[2])
+                            exon_stop = int(exon_stop) - int(entry[2])
 
-                                feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
-                                feature.location.strand = +1
+                            feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
+                            feature.location.strand = +1
 
-                                gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
+                            gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
                         
-                        gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
-                        gdd.write(output_dir + "/" + circular_rna_id_isoform + "_BSJ.svg", "SVG")
+                    gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
+                    gdd.write(output_dir + "/" + circular_rna_id_isoform + "_BSJ.svg", "SVG")
 
-                    if (rna_type == "linear"):
-                        feature = SeqFeature(FeatureLocation(0, 1))
-                        gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
-                        gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, 
+                if (rna_type == "linear"):
+                    exon1_length = len(exon_cache_dict[circular_rna_id][1])
+                    exon2_length = len(exon_cache_dict[circular_rna_id][2])
+                    circrna_length = exon1_length + exon2_length
+
+                    # graphical design
+                    gdd = GenomeDiagram.Diagram('Probe diagram')
+                    gdt_features = gdd.new_track(1, greytrack=True, name="", )
+                    gds_features = gdt_features.new_set()
+                    # adding first exon
+                    feature = SeqFeature(FeatureLocation(0, exon1_length))
+                    feature.location.strand = +1
+                    gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
+                    # adding second exon
+                    feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length))
+                    feature.location.strand = +1
+                    gds_features.add_feature(feature, name="Exon 2", label=False, color="#ffac68", label_size=22)
+
+                    # rbd5 
+                    feature = SeqFeature(FeatureLocation(exon1_length-25+index+1, exon1_length-25+index+20+1))
+                    gds_features.add_feature(feature, name="RBD5", label=False, color="red", label_size=22)
+                    # rbd3
+                    feature = SeqFeature(FeatureLocation(exon1_length-25+index+20+1, exon1_length-25+index+40)) 
+                    gds_features.add_feature(feature, name="RBD3", label=False, color="green", label_size=22) 
+                        
+                    feature = SeqFeature(FeatureLocation(exon1_length, exon1_length))
+                    gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
+                    gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, 
                                  start=0, end=circrna_length-1, fragments = 1)
-                        gdd.write(output_dir + "/" + circular_rna_id_isoform + "_FSJ.svg", "SVG") 
+                    gdd.write(output_dir + "/" + circular_rna_id_isoform + "_FSJ.svg", "SVG") 
 
             return None
         
