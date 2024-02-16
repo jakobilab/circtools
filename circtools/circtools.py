@@ -441,6 +441,7 @@ class CircTools(object):
                            default=False,
                            action='store_true'
                            )
+        
         group.add_argument("-n",
                            "--num-pairs",
                            dest="num_pairs",
@@ -456,6 +457,15 @@ class CircTools(object):
                            type=int,
                            default=2
                            )
+        
+        group.add_argument("-svg",
+                           "--no-svg",
+                           dest="svg",
+                           help="Should the SVG files for graphical representation be generated?",
+                           default=True,
+                           action='store_true'
+                           )
+
         args = parser.parse_args(sys.argv[2:])
 
         # start the padlock module
