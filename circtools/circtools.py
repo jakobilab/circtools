@@ -462,7 +462,7 @@ class CircTools(object):
                            "--no-svg",
                            dest="svg",
                            help="Should the SVG files for graphical representation be generated?",
-                           default=True,
+                           default=False,
                            action='store_true'
                            )
 
