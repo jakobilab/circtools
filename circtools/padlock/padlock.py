@@ -60,6 +60,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         self.input_circRNA = self.cli_params.sequence_file
         self.num_pairs = self.cli_params.num_pairs
         self.rna_type = self.cli_params.rna_type            # flag for type of RNA for which you want to generate probes
+        self.no_svg = self.cli_params.svg
         
         # gene_list file argument
         if (self.cli_params.gene_list):
@@ -76,9 +77,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
             sys.exit(-1)
 
         # create a sub-directory for SVG files inside the self.output_dir directory
-        self.svg_dir = self.output_dir + "/SVG/" 
-        if not os.path.isdir(self.svg_dir):
-            os.mkdir(self.svg_dir)
+        # self.svg_dir = os.getcwd() + "/" + self.output_dir + "SVG/" 
+        # if not os.path.isdir(self.svg_dir):
+        #     os.mkdir(self.svg_dir)
 
         self.homo_sapiens_blast_db = "GPIPE/9606/current/rna"
         self.mus_musculus_blast_db = "GPIPE/10090/current/rna"
@@ -87,8 +88,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
         self.other_blast_db = "nt"
 
+
     def module_name(self):
-        """"Return a string representing the name of the module."""
+        """Return a string representing the name of the module."""
         return self.program_name
 
     # Register an handler for the timeout
@@ -383,7 +385,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 if entry[6] == "NA":            # no primers, no graphics
                     continue
                 circular_rna_id = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4]])
-                circular_rna_id_isoform = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4], entry[5]])       # entry[5] is the index for scanning sequence, saved to calculate forward/reverse primer start
+                circular_rna_id_isoform = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4], entry[6]])       # entry[6] is the scanning sequence, saved to calculate forward/reverse primer start
                 index = int(entry[5])
                 #print(entry, circular_rna_id, circular_rna_id_isoform)
                 if (rna_type == "circle"):
@@ -453,7 +455,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
                         
                     gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
-                    gdd.write(output_dir + "/" + circular_rna_id_isoform + "_BSJ.svg", "SVG")
+                    gdd.write(output_dir + "/" + circular_rna_id_isoform + ".svg", "SVG")
 
                 if (rna_type == "linear"):
                     exon1_length = len(exon_cache_dict[circular_rna_id][1])
@@ -484,7 +486,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
                     gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, 
                                  start=0, end=circrna_length-1, fragments = 1)
-                    gdd.write(output_dir + "/" + circular_rna_id_isoform + "_FSJ.svg", "SVG") 
+                    gdd.write(output_dir + "/" + circular_rna_id_isoform + ".svg", "SVG")
 
             return None
         
@@ -681,7 +683,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     f.write("\n")
 
             # visualisation
-            graphical_visualisation(primex_data_with_blast_results_linear, all_exon_cache, {}, self.svg_dir, "linear")
+            if (self.no_svg):
+                print("No graphical representations SVG will be generated")
+            else:
+                graphical_visualisation(primex_data_with_blast_results_linear, all_exon_cache, {}, self.output_dir, "linear")
 
         if (self.rna_type == 0 or self.rna_type == 2):
             ## part for circular RNAs
@@ -924,7 +929,10 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         f.write("\n")
         
                 #print(flanking_exon_cache)
-                graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.svg_dir, "circle")
+                if (self.no_svg):
+                    print("No graphical representations SVG will be generated")
+                else:
+                    graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.output_dir, "circle")
         
         """
         with open(output_fasta_file_linear, 'w') as data_store:
@@ -938,12 +946,21 @@ class Padlock(circ_module.circ_template.CircTemplate):
         primer_script = 'circtools_padlockprobe_formatter.R'
 
         # ------------------------------------ run formatter script and write output to various files -----------------------
+        # for formatter command
+        no_svg_flag = ""
+        if not self.no_svg:
+            no_svg_flag = "FALSE"
+        else:
+            no_svg_flag = "TRUE"
+
         # formatter script calling for circular RNA probes
         if (self.rna_type == 0 or self.rna_type == 2):    
             print("Formatting circular RNA probe outputs")
             primex_data_formatted = os.popen(primer_script + " " +
                                              blast_storage_tmp + " "
-                                             + "\"" + self.experiment_title + "\""
+                                             + "\"" + self.experiment_title + "\"" + " "
+                                             + "\"" + no_svg_flag + "\"" #+ " "
+                                             #+ "\"" + self.svg_dir + "\"" 
                                              ).read()
 
             with open(output_html_file, 'w') as data_store:
@@ -965,7 +982,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
             print("Formatting linear RNA probe outputs")
             primex_data_formatted_linear = os.popen(primer_script + " " +
                                              blast_storage_tmp_linear + " "
-                                             + "\"" + self.experiment_title + "\""
+                                             + "\"" + self.experiment_title + "\"" + " "
+                                             + "\"" + no_svg_flag + "\"" #+ " "
+                                             #+ "\"" + self.svg_dir + "\"" 
                                              ).read()
 
             with open(output_html_file_linear, 'w') as data_store:
