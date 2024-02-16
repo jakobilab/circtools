@@ -14,6 +14,9 @@ args <- commandArgs(trailingOnly = TRUE)
 
 experiment_name <- args[2]
 
+no_svg_flag <- args[3]
+#svg_dir <- args[4]
+
 # set output to HTML
 options(knitr.table.format = 'html')
 
@@ -225,41 +228,71 @@ data_table$Strand<- gsub("\\b0\\b", "", data_table$Strand )
 rownames(data_table) <- c()
 
 # main output table generation
-output_table <- data_table %>%
+if (no_svg_flag == "FALSE"){
+  output_table <- data_table %>%
     mutate(
-    #Product_size = color_bar(product_color)(Product_size),
-
-    #Forward = cell_spec(escape = F, Left_, popover = spec_popover( title = "Graphical represensation of designed probes and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
-    #color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
-    Forward = cell_spec(escape = F, Left_, background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"), color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
-
-    L = cell_spec(paste(BLAST_left_count),
-    popover = spec_popover(content = BLAST_left, title = "Blast Hits\"data-html=\"True\"", position = "right"),
-    background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
-    color = ifelse(BLAST_left_count > high_count_number, "white", "white"), bold = "true"),
-
-    #Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed probes and annotated circRNA structure\"data-html=\"True\"", position = "left", content =ID ), background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
-    #color = ifelse(BLAST_right_count > high_count_number, "white", "white")),
-    Reverse = cell_spec(escape = F, Right_, background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"), color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
-    
-
-
-    R = cell_spec(paste(BLAST_right_count),
-    popover = spec_popover(content = BLAST_right, title = "Blast Hits\"data-html=\"True\"", position = "left"),
-    background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
-    color = ifelse(BLAST_right_count > high_count_number, "white", "white"), bold = "true"),
-
-    TM_left = color_bar(left_tm_color)(TM_left),
-    TM_right = color_bar(right_tm_color)(TM_right),
-    TM_Full = color_bar(full_tm_color)(TM_Full),
-
-
-    GC_left = color_bar(left_gc_color)(GC_left),
-    GC_right = color_bar(right_gc_color)(GC_right),
-
-
-    Strand = formatter('span', style = style(font.weight = "bold"))(Strand)
-    ) %>%
+      #Product_size = color_bar(product_color)(Product_size),
+      
+      Forward = cell_spec(escape = F, Left_, popover = spec_popover( title = "Graphical represensation of designed probes\"data-html=\"True\"", position = "left", content =ID ), 
+                          background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
+                          color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
+      
+      L = cell_spec(paste(BLAST_left_count),
+                    popover = spec_popover(content = BLAST_left, title = "Blast Hits\"data-html=\"True\"", position = "right"),
+                    background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
+                    color = ifelse(BLAST_left_count > high_count_number, "white", "white"), bold = "true"),
+      
+      Reverse = cell_spec(escape = F, Right_, popover = spec_popover( title = "Graphical represensation of designed probes\"data-html=\"True\"", position = "left", content =ID ), 
+                background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
+                color = ifelse(BLAST_right_count > high_count_number, "white", "white")),
+      
+      R = cell_spec(paste(BLAST_right_count),
+                    popover = spec_popover(content = BLAST_right, title = "Blast Hits\"data-html=\"True\"", position = "left"),
+                    background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
+                    color = ifelse(BLAST_right_count > high_count_number, "white", "white"), bold = "true"),
+      TM_left = color_bar(left_tm_color)(TM_left),
+      TM_right = color_bar(right_tm_color)(TM_right),
+      TM_Full = color_bar(full_tm_color)(TM_Full),
+      
+      
+      GC_left = color_bar(left_gc_color)(GC_left),
+      GC_right = color_bar(right_gc_color)(GC_right),
+      
+      
+      Strand = formatter('span', style = style(font.weight = "bold"))(Strand)
+    )
+} else {
+  output_table <- data_table %>%
+    mutate(
+      Forward = cell_spec(escape = F, Left_, background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"), 
+                                                           color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
+      
+      L = cell_spec(paste(BLAST_left_count),
+                    popover = spec_popover(content = BLAST_left, title = "Blast Hits\"data-html=\"True\"", position = "right"),
+                    background = ifelse(BLAST_left_count > high_count_number, "red", "darkgreen"),
+                    color = ifelse(BLAST_left_count > high_count_number, "white", "white"), bold = "true"),
+      
+      Reverse = cell_spec(escape = F, Right_, background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"), 
+                                                            color = ifelse(BLAST_left_count > high_count_number, "white", "white")),
+      
+      R = cell_spec(paste(BLAST_right_count),
+                    popover = spec_popover(content = BLAST_right, title = "Blast Hits\"data-html=\"True\"", position = "left"),
+                    background = ifelse(BLAST_right_count > high_count_number, "red", "darkgreen"),
+                    color = ifelse(BLAST_right_count > high_count_number, "white", "white"), bold = "true"),
+      TM_left = color_bar(left_tm_color)(TM_left),
+      TM_right = color_bar(right_tm_color)(TM_right),
+      TM_Full = color_bar(full_tm_color)(TM_Full),
+      
+      
+      GC_left = color_bar(left_gc_color)(GC_left),
+      GC_right = color_bar(right_gc_color)(GC_right),
+      
+      
+      Strand = formatter('span', style = style(font.weight = "bold"))(Strand)
+      )
+}
+ 
+ output_table <- output_table %>%
     select(- Left_) %>%
     select(- Right_) %>%
     select(- BLAST_left) %>%
@@ -277,7 +310,7 @@ output_table <- data_table %>%
     kable("html", escape = F, col.names=colnames_final) %>%
     kable_styling(bootstrap_options = c("striped", "hover", "responsive"), full_width = T) %>%
     # column_spec(5, width = "3cm")
-    add_header_above(c("Input IDs" = 5, "Designed Probes" = 10)) # %>%
+    add_header_above(c("Input IDs" = 5, "Designed Probes" = 10))
     # group_rows("Group 1", 4, 7) %>%
     # group_rows("Group 1", 8, 10)
     # collapse_rows(columns = 1)
