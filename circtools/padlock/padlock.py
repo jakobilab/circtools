@@ -597,7 +597,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # First for linear RNAs, store the exons per gene in the gene-list
             primex_data_with_blast_results_linear = []
             designed_probes_for_blast_linear = []
-            #fasta_xenium_linear_dict = {}
+            fasta_xenium_linear_dict = {}
+            fasta_xenium_linear = ""
             all_exon_cache = {}             # to store all exons for linear RNA splicing
             probe_bed_linear = []
             for each_gene in self.gene_list:
@@ -637,7 +638,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                     #print(list_exons_seq[i][-25:], list_exons_seq[i+1][:25])
                     scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
-                    #fasta_xenium_linear_dict[each_gene + "_" + "_".join(temp_split)] = scan_sequence 
+                    fasta_xenium_linear_dict[each_gene + "_" + "_".join(temp_split)] = scan_sequence 
+                    fasta_xenium_linear += ">" + each_gene + "_" + "_".join(temp_split) + "\n" + scan_sequence + "\n"
                     for j in range(0,len(scan_sequence)):
                         scan_window = scan_sequence[j:j+40]
                         if (len(scan_window) < 40):
@@ -693,7 +695,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
             print("Finding probes for circular RNAs")
             if self.detect_dir:
                 fasta_xenium = ""
-                fasta_xenium_linear = ""
+                #fasta_xenium_linear = ""
                 with open(self.detect_dir) as fp:
 
                     for line in fp:
@@ -865,13 +867,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     else:
                         circle_exon = exon_dict_circle_bed12[each_circle][1]
                     circle_exon = "_".join([circle_exon[x] for x in [3,0,1,2,5]])
-                    """
+                    
                     print("ID for matching junctions: ", circle_exon)
-                    if ( circle_exon in fasta_xenium_linear_dict.keys()):
-                       #print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
-                       fasta_xenium += ">" + circle_exon + "\n" + scan_sequence + "\n" 
-                       fasta_xenium_linear += ">" + circle_exon + "\n" + fasta_xenium_linear_dict[circle_exon] + "\n"
-                    """
+                    #if ( circle_exon in fasta_xenium_linear_dict.keys()):
+                    #   #print("FASTA ENTRY", circle_exon, scan_sequence, fasta_xenium_linear_dict[circle_exon])
+                    fasta_xenium += ">" + circle_exon + "\n" + scan_sequence + "\n"                     
                     
                     # Scan a 40bp window over this scan_sequence and run primer3 on each 40bp sequence
                     for i in range(0,len(scan_sequence)):
@@ -934,12 +934,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 else:
                     graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.output_dir, "circle")
         
-        """
+        
         with open(output_fasta_file_linear, 'w') as data_store:
             data_store.write(fasta_xenium_linear)
         with open(output_fasta_file, 'w') as data_store:
             data_store.write(fasta_xenium)
-        """
+        
         
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
