@@ -934,11 +934,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 else:
                     graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.output_dir, "circle")
         
-        
-        with open(output_fasta_file_linear, 'w') as data_store:
-            data_store.write(fasta_xenium_linear)
-        with open(output_fasta_file, 'w') as data_store:
-            data_store.write(fasta_xenium)
+        if (self.rna_type == 1 or self.rna_type == 2):
+            with open(output_fasta_file_linear, 'w') as data_store:
+                data_store.write(fasta_xenium_linear)
+        if (self.rna_type == 0 or self.rna_type == 2):
+            with open(output_fasta_file, 'w') as data_store:
+                data_store.write(fasta_xenium)
         
         
         # need to define path top R wrapper
