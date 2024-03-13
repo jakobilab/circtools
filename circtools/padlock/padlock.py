@@ -611,12 +611,13 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 #print(all_exons_unique)
                 fasta_bed_line = ""
                 for each_element in all_exons_unique:
-                    each_element[1] = str(int(each_element[1]) - 1)
-                    each_line = "\t".join([each_element[i] for i in [0,1,2,5]])
-                    virtual_bed_file = pybedtools.BedTool(each_line, from_string=True)
-                    virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file)
+                    each_element[1] = str(int(each_element[1]) - 1)         # fix for sequence generation - 1 bp extra was getting added
+                    virtual_bed_file = pybedtools.BedTool("\t".join(each_element), from_string=True)
+                    virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file, s=True)
                     seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
                     list_exons_seq.append(seq)
+                    each_line = "\t".join([each_element[i] for i in [0,1,2,5]])     # this entry is for final HTML report chr, start, end, gene
+                    print("Check each_line", each_line)
                     list_exons_pos.append(each_line)
 
                 with open(exon_storage_linear_tmp, 'a') as data_store:
@@ -636,7 +637,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     scan_coord_chr = temp_split[0]
                     scan_coord_strand = temp_split[3]
 
-                    #print(list_exons_seq[i][-25:], list_exons_seq[i+1][:25])
                     scan_sequence = list_exons_seq[i][-25:] + list_exons_seq[i+1][:25]
                     fasta_xenium_linear_dict[each_gene + "_" + "_".join(temp_split)] = scan_sequence 
                     fasta_xenium_linear += ">" + each_gene + "_" + "_".join(temp_split) + "\n" + scan_sequence + "\n"
@@ -796,9 +796,9 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                         virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
-                        virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
-                        #print(fasta_bed_line_start, fasta_bed_line_stop)
+                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
+                        virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file, s=True)
+
                         if stop == 0 or start == 0:
                             print("Could not identify the exact exon-border of the circRNA.")
                             print("Will continue with non-annotated, manually extracted sequence.")
@@ -811,7 +811,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             
                             exon_dict_circle_bed12[name].append(current_line)
                             virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
-                            virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
+                            virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
                             virtual_bed_file_stop = ""
                         exon1 = ""
                         exon2 = ""
@@ -859,8 +859,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         # last exon and first 25 bases of first exon as a scan sequence
                         scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
                         print(each_circle, exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25])
-
-                    print("##################", each_circle, exon_dict_circle_bed12[each_circle])
                     if (len(exon_dict_circle_bed12[each_circle]) == 1):
                         #print("CHECK if SINGLE-EXON or SOMETHING ELSE", each_circle, exon_dict_circle_bed12[each_circle])
                         circle_exon = exon_dict_circle_bed12[each_circle][0]
