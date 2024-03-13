@@ -706,7 +706,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                         line = line.rstrip()
                         current_line = line.split('\t')
-
                         if current_line[3] == "not_annotated":
                             continue
 
@@ -829,9 +828,20 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             exon1 = exon2
                             exon2 = ""
 
-                        exon_cache[name] = {1: exon1, 2: exon2}
-                        with open(exon_storage_tmp, 'a') as data_store:
-                            data_store.write("\t".join([name, exon1, exon2, "\n"]))
+                        if (current_line[5] == "+"):
+                            exon_cache[name] = {1: exon1, 2: exon2}
+                            with open(exon_storage_tmp, 'a') as data_store:
+                                data_store.write("\t".join([name, exon1, exon2, "\n"]))
+                        elif (current_line[5] == "-"):
+                            exon_cache[name] = {1: exon2, 2: exon1}
+                            with open(exon_storage_tmp, 'a') as data_store:
+                                data_store.write("\t".join([name, exon2, exon1, "\n"]))
+                        else:
+                            print("Strand information not present. Assuming positive strand")
+                            exon_cache[name] = {1: exon1, 2: exon2}
+                            with open(exon_storage_tmp, 'a') as data_store:
+                                data_store.write("\t".join([name, exon1, exon2, "\n"]))                            
+                        
             
             else:
                 print("Please provide Circtools detect output Coordinate file via option -d.")
