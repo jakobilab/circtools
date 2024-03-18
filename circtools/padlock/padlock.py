@@ -249,35 +249,22 @@ class Padlock(circ_module.circ_template.CircTemplate):
             if circ_rna_number < 100:
 
                 for entry in probes_for_blast:
-                    #print(entry)
                     circular_rna_id = entry[0].split('_')
                     
+                    combined_seq = entry[1] + entry[2]      # because Xenium people BLAST both of them together
                     if entry[1] == "NA":
                         continue
 
-                    # only blast 1
-                    elif entry[2] in blast_object_cache and not entry[1] in blast_object_cache:
-                        blast_input_file += "\n>" + entry[1] + "\n" + entry[1]
-                        blast_object_cache[entry[1]] = 1
-                        primer_to_circ_cache[entry[1]] = circular_rna_id[0]
+                    # if not already BLASTed, add entry to the BLAST input file
+                    elif not combined_seq in blast_object_cache:
+                        blast_input_file += "\n>" + combined_seq + "\n" + combined_seq
+                        blast_object_cache[combined_seq] = 1
+                        primer_to_circ_cache[combined_seq] = circular_rna_id[0]
 
-                    # only blast 2
-                    elif entry[1] in blast_object_cache and not entry[2] in blast_object_cache:
-                        blast_input_file += "\n>" + entry[2] + "\n" + entry[2]
-                        blast_object_cache[entry[2]] = 1
-                        primer_to_circ_cache[entry[2]] = circular_rna_id[0]
-
-                    # seen both already, skip
-                    elif entry[1] in blast_object_cache and entry[2] in blast_object_cache:
+                    # seen already, skip
+                    elif combined_seq in blast_object_cache:
                         continue
 
-                    # nothing seen yet, blast both
-                    else:
-                        blast_input_file += "\n>" + entry[1] + "\n" + entry[1] + "\n>" + entry[2] + "\n" + entry[2]
-                        blast_object_cache[entry[1]] = 1
-                        blast_object_cache[entry[2]] = 1
-                        primer_to_circ_cache[entry[1]] = circular_rna_id[0]
-                        primer_to_circ_cache[entry[2]] = circular_rna_id[0]
             else:
                 print("Too many circRNAs selected, skipping BLAST step.")
 
@@ -327,11 +314,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     print(-1)
 
                 result_handle = open(blast_xml_tmp_file)
+                run_blast = 1
 
                 blast_records = NCBIXML.parse(result_handle)
 
                 for blast_record in blast_records:
-                    #print(blast_record)
 
                     if blast_record.query not in blast_result_cache:
                         blast_result_cache[blast_record.query] = []
@@ -358,6 +345,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 #print(entry)
                 line = "\t".join(map(str, entry))
                 #print(line)
+                combined_seq = entry[1] + entry[2]      # because Xenium people BLAST both of them together
 
                 if run_blast == 1:
                     left_result = "No hits"
@@ -366,11 +354,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     left_result = "Not blasted, no off-targets found"
                     right_result = left_result
 
-                if entry[1] in blast_result_cache:
-                    left_result = ";".join(blast_result_cache[entry[1]])
+                if combined_seq in blast_result_cache:
+                    left_result = ";".join(blast_result_cache[combined_seq])
 
-                if entry[2] in blast_result_cache:
-                    right_result = ";".join(blast_result_cache[entry[2]])
+                if combined_seq in blast_result_cache:
+                    right_result = ";".join(blast_result_cache[combined_seq])
 
                 # update line
                 data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
