@@ -231,7 +231,28 @@ class Padlock(circ_module.circ_template.CircTemplate):
             #    print("Melting temperature outside range!", gene_string,  rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, junction)
             #    return None
 
-            print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            # checking for hairpin/homodimer/heterodimer possibilities
+            warnings = []
+            hairpin5 = primer3.calc_hairpin(rbd5)
+            hairpin3 = primer3.calc_hairpin(rbd3)
+            homo5 = primer3.calc_homodimer(rbd5)
+            homo3 = primer3.calc_homodimer(rbd3) 
+            hetero = primer3.calc_heterodimer(rbd5, rbd3)
+
+            if ( (int(hairpin5.tm) > melt_tmp_5) or (int(hairpin3.tm) > melt_tmp_3)):
+                warnings.append("Potential Hairpin")
+            
+            if ( (int(homo5.tm) > melt_tmp_5) or (int(homo3.tm) > melt_tmp_3)):
+                warnings.append("Potential Homodimer")
+
+            if (int(hetero.tm) > melt_tmp_5):
+                warnings.append("Potential Heterodimer")
+
+            if len(warnings) == 0:
+                print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            else:
+                print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction, ",".join(warnings)) 
+                
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
             return(output_list)
