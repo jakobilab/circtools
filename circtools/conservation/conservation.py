@@ -64,6 +64,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
         self.other_blast_db = "nt"
 
+        if self.organism not in ["mm", "hs", "ss", "rn", "cl"]:
+            print("Please provide valid species. Options available: Mouse, Human, Pig, Rat, Dog")
+            sys.exit(-1)
+
     def module_name(self):
         """Return a string representing the name of the module."""
         return self.program_name
@@ -142,7 +146,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
     def run_module(self):
 
-     if self.id_list and os.access(self.id_list[0], os.R_OK):
+        if self.id_list and os.access(self.id_list[0], os.R_OK):
             print("Detected supplied circRNA ID file.")
             with open(self.id_list[0]) as f:
                 lines = f.read().splitlines()
@@ -165,11 +169,9 @@ class Conservation(circ_module.circ_template.CircTemplate):
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
         exons_bed_list = [x.split("\t") for x in exons_bed.strip().split("\n")]
-        #print(exons_bed_list)
         # create a "virtual" BED file for circular RNA bedtools intersect
         virtual_bed_file = pybedtools.BedTool(exons_bed, from_string=True)
         print("Start merging GTF file outside the function")
-        #virtual_bed_file.saveas('exons_hs.bed')
         # we trust that bedtools >= 2.27 is installed. Otherwise this merge will probably fail
         exons = virtual_bed_file.sort().merge(s=True,  # strand specific
                                                  c="4,5,6",  # copy columns 5 & 6
@@ -177,6 +179,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
         #print(exons_bed_list[:5])
         exons_bed_list = [x.split("\t") for x in str(exons).splitlines()]
 
+        flanking_exon_cache = {}
+        all_exons_circle = {} 
         if self.detect_dir:
             with open(self.detect_dir) as fp:
                 
@@ -220,11 +224,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     start = 0
                     stop = 0
-                    
-                    all_exons_circle = []       # list of all exons that form the circle
 
                     #print("Current line", current_line)
                     flanking_exon_cache[name] = {}
+                    all_exons_circle[name] = []
                     for result_line in str(result).splitlines():
                         bed_feature = result_line.split('\t')
                         # this is a single-exon circRNA
@@ -266,6 +269,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
                             all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
 
+                    print(all_exons_circle)
+                    print(name, all_exons_circle[name])
                     # first and last exons
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
@@ -283,7 +288,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
                                                     current_line[2],
                                                     current_line[5]])
                         
-                        exon_dict_circle_bed12[name].append(current_line)
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
                         virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
                         virtual_bed_file_stop = ""
@@ -299,25 +303,15 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     circ_rna_number += 1
                     print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
 
-                    if exon2 and not exon1:
-                        exon1 = exon2
-                        exon2 = ""
-
-                    if (current_line[5] == "+"):
-                        exon_cache[name] = {1: exon1, 2: exon2}
-                        with open(exon_storage_tmp, 'a') as data_store:
-                            data_store.write("\t".join([name, exon1, exon2, "\n"]))
-                    elif (current_line[5] == "-"):
-                        exon_cache[name] = {1: exon2, 2: exon1}
-                        with open(exon_storage_tmp, 'a') as data_store:
-                            data_store.write("\t".join([name, exon2, exon1, "\n"]))
+                    # fetch the information about first/last circle that contributes to the BSJ
+                    if current_line[5] == "+":
+                        bsj_exon = all_exons_circle[name][-1]
+                    elif current_line[5] == "-":
+                        bsj_exon = all_exons_circle[name][0]
                     else:
-                        print("Strand information not present. Assuming positive strand")
-                        exon_cache[name] = {1: exon1, 2: exon2}
-                        with open(exon_storage_tmp, 'a') as data_store:
-                            data_store.write("\t".join([name, exon1, exon2, "\n"]))                            
-                    
-        
+                        print("No strand information present, assuming + strand")
+                        bsj_exon = all_exons_circle[name][-1]
+     
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
             sys.exit(-1)
