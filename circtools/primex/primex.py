@@ -587,7 +587,9 @@ class Primex(circ_module.circ_template.CircTemplate):
 
                     # piece 2:
                     feature = SeqFeature(
-                        FeatureLocation(0, reverse_primer_start), strand=-1)
+                        FeatureLocation(0, reverse_primer_start))
+                    feature.location.strand = -1
+
                     gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
                                              arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
 
