@@ -282,15 +282,22 @@ class Primex(circ_module.circ_template.CircTemplate):
 
                         # this is a single-exon circRNA
                         if bed_feature[1] == current_line[1] and bed_feature[2] == current_line[2]:
+                            temp_bed_feature = bed_feature
+                            temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
+                            result_line = "\t".join(temp_bed_feature)
                             fasta_bed_line_start += result_line + "\n"
                             start = 1
                             stop = 1
 
                         if bed_feature[1] == current_line[1] and start == 0:
+                            temp_bed_feature = bed_feature
+                            temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
                             fasta_bed_line_start += result_line + "\n"
                             start = 1
 
                         if bed_feature[2] == current_line[2] and stop == 0:
+                            temp_bed_feature = bed_feature
+                            temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
                             fasta_bed_line_stop += result_line + "\n"
                             stop = 1
 
@@ -302,8 +309,8 @@ class Primex(circ_module.circ_template.CircTemplate):
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
-                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
+                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s = True)
+                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file, s = True)
 
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
@@ -317,7 +324,7 @@ class Primex(circ_module.circ_template.CircTemplate):
                                                     current_line[5]])
 
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
-                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
+                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s = True)
                         virtual_bed_file_stop = ""
 
                     exon1 = ""
