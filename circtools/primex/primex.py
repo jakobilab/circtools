@@ -633,4 +633,6 @@ class Primex(circ_module.circ_template.CircTemplate):
         # cleanup / delete tmp files
         os.remove(exon_storage_tmp)
         os.remove(blast_storage_tmp)
-        os.remove(blast_xml_tmp)
+
+        if not self.no_blast:
+            os.remove(blast_xml_tmp)
