@@ -31,6 +31,10 @@ from Bio.Blast import NCBIXML
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
+# Loading the functionalities defined in other scripts as modules
+from . import FetchOrthologs as FO 
+FO.fetch_info("SLC8A1")
+
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
 
