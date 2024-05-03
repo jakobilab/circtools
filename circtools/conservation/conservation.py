@@ -219,8 +219,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     # call exon fetchorthologs function to store orthologs
                     fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
                     fetchOrtho.fetch_info()
-                    orthologs = fetchOrtho.parse_json()
-                    print(orthologs)
 
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
@@ -300,17 +298,16 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     if virtual_bed_file_stop:
                         exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
 
+                    circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
+
                     # fetch the information about first/last circle that contributes to the BSJ
                     if current_line[5] == "+":
                         bsj_exon = all_exons_circle[name][-1]
-                        circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
                     elif current_line[5] == "-":
                         bsj_exon = all_exons_circle[name][0]
-                        circ_sequence = exon1 + exon2       # this is the joint exon circular RNA sequence to use for alignment
                     else:
                         print("No strand information present, assuming + strand")
                         bsj_exon = all_exons_circle[name][-1]
-                        circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
 
                     print(bsj_exon)
                     print(circ_sequence)
