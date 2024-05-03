@@ -33,7 +33,7 @@ from Bio.Graphics import GenomeDiagram
 
 # Loading the functionalities defined in other scripts as modules
 from . import FetchOrthologs as FO 
-FO.fetch_info("SLC8A1")
+
 
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -169,6 +169,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         circ_rna_number = 0
+              
+        species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
 
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
@@ -182,7 +184,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                                                  o="distinct,distinct,distinct")  # group
         #print(exons_bed_list[:5])
         exons_bed_list = [x.split("\t") for x in str(exons).splitlines()]
-
+        
         flanking_exon_cache = {}
         all_exons_circle = {} 
         if self.detect_dir:
@@ -214,6 +216,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     circrna_length = int(current_line[2]) - int(current_line[1])
 
+                    # call exon fetchorthologs function to store orthologs
+                    fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
+                    fetchOrtho.fetch_info()
+
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
                                             current_line[1],
@@ -235,22 +241,17 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     for result_line in str(result).splitlines():
                         bed_feature = result_line.split('\t')
                         # this is a single-exon circRNA
-                        #print("bed feature", bed_feature)
                         if bed_feature[1] == current_line[1] and bed_feature[2] == current_line[2]:
-                            #print("Single exon condition")
                             # remove 1 bp from start and end to correct for the gap 
                             temp_bed_feature = bed_feature 
                             temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
-                            #temp_bed_feature[2] = str(int(temp_bed_feature[2]) + 1)
                             result_line = "\t".join(temp_bed_feature)
-                            #print("Updated result line", result_line)
                             fasta_bed_line_start += result_line + "\n"
                             start = 1
                             stop = 1
                             all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
 
                         if bed_feature[1] == current_line[1] and start == 0:
-                            #print("Start zero condition")
                             temp_bed_feature = bed_feature
                             temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
                             result_line = "\t".join(temp_bed_feature) 
@@ -259,7 +260,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
 
                         if bed_feature[2] == current_line[2] and stop == 0:
-                            #print("Stop zero condition")
                             temp_bed_feature = bed_feature
                             temp_bed_feature[1] = str(int(temp_bed_feature[1]) - 1)
                             result_line = "\t".join(temp_bed_feature) 
@@ -267,14 +267,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             stop = 1
                             all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
 
-                        # these exons are kept for correctly drawing the circRNAs later
-                        # not used for primer design
-                        if bed_feature[1] > current_line[1] and bed_feature[2] < current_line[2]:
-                            flanking_exon_cache[name][bed_feature[1] + "_" + bed_feature[2]] = 1
-                            all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
-
                     print(all_exons_circle)
-                    print(name, all_exons_circle[name])
+
                     # first and last exons
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
@@ -304,8 +298,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     if virtual_bed_file_stop:
                         exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
 
-                    circ_rna_number += 1
-                    print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
+                    circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
 
                     # fetch the information about first/last circle that contributes to the BSJ
                     if current_line[5] == "+":
@@ -315,6 +308,13 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     else:
                         print("No strand information present, assuming + strand")
                         bsj_exon = all_exons_circle[name][-1]
+
+                    print(bsj_exon)
+                    print(circ_sequence)
+                    
+                    circ_rna_number += 1
+                    print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
+
      
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
