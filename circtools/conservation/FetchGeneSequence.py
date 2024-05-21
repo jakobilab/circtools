@@ -1,4 +1,4 @@
-# This script is used to fetch the ortholog information per gene 
+# This script is used to fetch exon sequences per circle 
 # using the REST API by ENSMBLE
 
 import sys
