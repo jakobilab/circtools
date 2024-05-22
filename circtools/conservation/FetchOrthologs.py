@@ -24,24 +24,24 @@ class fetch(object):
  
         if not r.ok:
             r.raise_for_status()
+            print("Could not fetch ortholog information from ENSEMBL. Exiting!")
             sys.exit() 
-        self.r = r
+        return(r)
 
     def parse_json(self):
         ortho_dict = {}
         species_dict = {"canis_lupus_familiaris": "dog", "mus_musculus": "mouse", "homo_sapiens": "human",
                         "sus_scrofa": "pig", "rattus_norvegicus": "rat"}
-        # this function takes JSON output from REST API and fetches the orthologs information
-        out_string = self.r.json()
+        # this function takes JSON output from REST API and parses the ortholog information
+        out_string = self.fetch_info().json()
         original_species_gene_id = out_string['data'][0]["id"]
-        #print(self.from_species, original_species_gene_id)
         ortho_dict[self.from_species] = original_species_gene_id 
         ortho_dir = out_string['data'][0]["homologies"]
         for each_key in ortho_dir:
-            #print(species_dict[each_key["species"]], each_key["id"])
             ortho_dict[species_dict[each_key["species"]]] = each_key["id"] 
         
         return ortho_dict
+    
 #obj = fetch("SLC8A1", "human")
 #obj.fetch_info()
 #obj.parse_json()
