@@ -31,3 +31,4 @@ class liftover(object):
 
         liftover_utility = "/home/skulkarni/liftOver"
         command = liftover_utility + " " + chain_file + " " + tmp_to_bed + " " + tmp_unlifted 
+        print(command)
