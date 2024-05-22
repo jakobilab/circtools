@@ -169,6 +169,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         circ_rna_number = 0
+        letters = string.ascii_letters
+        tmp_prefix =  ''.join(random.choice(letters) for i in range(10))        # prefix for tmp files
               
         species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
 
@@ -218,10 +220,12 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     # call exon fetchorthologs function to store orthologs
                     fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
-                    fetchOrtho.fetch_info()
-
+                    check = fetchOrtho.parse_json()
+                    #print(check)
+                    print(current_line)
                     # now liftover the coordinates from source to target species
-                    lifted = LO.liftover()
+                    lifted = LO.liftover("human", "mouse", current_line, self.temp_dir, tmp_prefix)
+                    lifted.lifting()
 
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
@@ -270,7 +274,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             stop = 1
                             all_exons_circle[name].append([bed_feature[1], bed_feature[2]])
 
-                    print(all_exons_circle)
+                    #print(all_exons_circle)
 
                     # first and last exons
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
@@ -312,8 +316,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         print("No strand information present, assuming + strand")
                         bsj_exon = all_exons_circle[name][-1]
 
-                    print(bsj_exon)
-                    print(circ_sequence)
+                    #print(bsj_exon)
+                    #print(circ_sequence)
                     
                     circ_rna_number += 1
                     print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
