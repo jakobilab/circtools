@@ -225,7 +225,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     print(current_line)
                     # now liftover the coordinates from source to target species
                     lifted = LO.liftover("human", "mouse", current_line, self.temp_dir, tmp_prefix)
-                    lifted.lifting()
+                    lifted.parseLiftover()
 
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
