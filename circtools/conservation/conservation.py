@@ -33,7 +33,7 @@ from Bio.Graphics import GenomeDiagram
 
 # Loading the functionalities defined in other scripts as modules
 from . import FetchOrthologs as FO 
-
+from . import LiftOver as LO
 
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -219,6 +219,9 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     # call exon fetchorthologs function to store orthologs
                     fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
                     fetchOrtho.fetch_info()
+
+                    # now liftover the coordinates from source to target species
+                    lifted = LO.liftover()
 
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
