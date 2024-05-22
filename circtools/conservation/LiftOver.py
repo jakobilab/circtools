@@ -1,5 +1,7 @@
 # This script is used to fetch the ortholog information per gene 
 # using the REST API by ENSMBLE
+import os, sys
+import subprocess
 
 class liftover(object):
 
@@ -29,6 +31,46 @@ class liftover(object):
         tmp_unlifted = tmp_from_bed + ".unlifted"       # unlifted file
         open(tmp_unlifted, 'a').close()                   # erase old contents
 
+        # liftover command running
         liftover_utility = "/home/skulkarni/liftOver"
         command = liftover_utility + " " + tmp_from_bed + " " + chain_file + " " + tmp_to_bed + " " + tmp_unlifted + "  -multiple -minMatch=0.1"
         print(command)
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        p_status = p.wait()
+        # check if command ran well
+        if (p_status != 0):
+            print("liftOver command not run successfully. Exiting!")
+            print(err)
+            sys.exit()
+        else:
+            print("Successfully ran liftover for " + self.to_species)
+            self.liftover_input_file = tmp_from_bed
+            self.liftover_output_file = tmp_to_bed
+            self.liftover_unlifted_file = tmp_unlifted
+
+    def parseLiftover(self):
+        # function to parse liftover output files and return the lifted coordinates to main function
+        self.lifting()
+        tmp_from_bed = self.liftover_input_file
+        tmp_to_bed = self.liftover_output_file
+        tmp_unlifted = self.liftover_unlifted_file
+        
+        # read in the unlifted file to see if there were any errors 
+        # if not, read the output file and print the lifted coordinates
+        if os.stat(tmp_unlifted).st_size != 0:
+            print("Unlifted coordinates present. Liftover did not run well. Exiting!")
+            sys.exit()
+        else:
+            fin = open(tmp_to_bed).readlines() #.strip().split("\t")
+            with open(tmp_to_bed) as fin:
+                lines = fin.read().splitlines()
+            if (len(lines) == 1):
+                #print(lines)
+                lifted_coordinates = lines[0].split("\t")
+            else:
+                # somehow the lifted coordinates are split into two. 
+                for line in lines:
+                    print(line)
+            print("Lifted over coordinates:", lifted_coordinates)
+        return(lifted_coordinates)
