@@ -51,6 +51,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
         self.id_list = self.cli_params.id_list
         self.experiment_title = self.cli_params.experiment_title
         self.input_circRNA = self.cli_params.sequence_file
+        self.mm10_flag = self.cli_params.mm10_conversion
+        self.hg19_flag = self.cli_params.hg19_conversion
         
         # gene_list file argument
         if (self.cli_params.gene_list):
@@ -205,18 +207,30 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     if self.gene_list and not self.id_list and current_line[3] not in self.gene_list:
                         continue
-                        
+
+                    # if mouse and human assemblies are told, convert the the co-ordinates using liftover function
+                    if self.mm10_flag:
+                        print("Before liftover:", current_line)
+                        print("Converting mm10 coordinates to mm39 assembly")
+                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, "mm10")
+                        current_line = lifted.parseLiftover()
+                    elif self.hg19_flag:
+                        print("Before liftover:", current_line)
+                        print("Converting hg19 coordinates to hg38 assembly") 
+                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, "hg19")
+                        current_line = lifted.parseLiftover()
+
                     sep = "_"
                     name = sep.join([current_line[3],
                                         current_line[0],
                                         current_line[1],
                                         current_line[2],
                                         current_line[5]])
-
+                    print(name)
                     if self.id_list and not self.gene_list and name not in self.id_list:
                         continue
 
-                    circrna_length = int(current_line[2]) - int(current_line[1])
+                    #circrna_length = int(current_line[2]) - int(current_line[1])
 
                     # call exon fetchorthologs function to store orthologs
                     fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
@@ -224,7 +238,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     #print(check)
                     print(current_line)
                     # now liftover the coordinates from source to target species
-                    lifted = LO.liftover("human", "mouse", current_line, self.temp_dir, tmp_prefix)
+                    lifted = LO.liftover("human", "mouse", current_line, self.temp_dir, tmp_prefix, "other")
                     lifted.parseLiftover()
 
                     sep = "\t"
@@ -307,6 +321,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
 
+                    print(all_exons_circle[name])
                     # fetch the information about first/last circle that contributes to the BSJ
                     if current_line[5] == "+":
                         bsj_exon = all_exons_circle[name][-1]
