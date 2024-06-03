@@ -12,6 +12,19 @@ class liftover(object):
         self.tmpdir = tmpdir
         self.prefix = prefix
 
+
+    def call_liftover_binary(self):
+        # encapsulated liftover binary call
+
+        # liftover command
+        liftover_utility = "/home/skulkarni/liftOver"
+        command = liftover_utility + " " + self.liftover_input_file + " " + self.chain_file + " " + self.liftover_output_file + " " + self.liftover_unlifted_file + "  -multiple -minMatch=0.1"
+        print(command)
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return(p)      
+
+    
     def lifting(self):
         # function to perform actual lifting
 
@@ -25,29 +38,29 @@ class liftover(object):
             data_store.write("chr" + "\t".join(self.from_coord) + "\n")
         # chain file
         chain_file = self.from_id + "To" + self.to_id.title() + ".over.chain.gz"
+        self.chain_file = chain_file
         
         tmp_to_bed = tmp_from_bed + ".out"              # output file
         open(tmp_to_bed, 'a').close()                   # erase old contents
         tmp_unlifted = tmp_from_bed + ".unlifted"       # unlifted file
         open(tmp_unlifted, 'a').close()                   # erase old contents
 
-        # liftover command running
-        liftover_utility = "/home/skulkarni/liftOver"
-        command = liftover_utility + " " + tmp_from_bed + " " + chain_file + " " + tmp_to_bed + " " + tmp_unlifted + "  -multiple -minMatch=0.1"
-        print(command)
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.liftover_input_file = tmp_from_bed
+        self.liftover_output_file = tmp_to_bed
+        self.liftover_unlifted_file = tmp_unlifted
+
+        # liftover binary call
+        p = self.call_liftover_binary()
+        
+        # check the command status 
         out, err = p.communicate()
         p_status = p.wait()
-        # check if command ran well
         if (p_status != 0):
             print("liftOver command not run successfully. Exiting!")
-            print(err)
+            print(out, err)
             sys.exit()
         else:
             print("Successfully ran liftover for " + self.to_species)
-            self.liftover_input_file = tmp_from_bed
-            self.liftover_output_file = tmp_to_bed
-            self.liftover_unlifted_file = tmp_unlifted
 
     def parseLiftover(self):
         # function to parse liftover output files and return the lifted coordinates to main function
