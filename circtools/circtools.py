@@ -571,6 +571,24 @@ class CircTools(object):
                            required=False,
                            nargs='+'
                            )
+        
+        group.add_argument("-hg19",
+                           "--hg19",
+                           dest="hg19_conversion",
+                           help="Are given circular co-ordinates for human from hg19 assembly?"
+                           "If the flag is on, these will be converted into hg38.",
+                           default=False,
+                           action='store_true'
+                           )
+        
+        group.add_argument("-mm10",
+                           "--mm10",
+                           dest="mm10_conversion",
+                           help="Are given circular co-ordinates for mouse from mm10 assembly?"
+                           "If the flag is on, these will be converted into mm39.",
+                           default=False,
+                           action='store_true'
+                           )
 
         args = parser.parse_args(sys.argv[2:])
 
