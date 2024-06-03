@@ -5,13 +5,13 @@ import subprocess
 
 class liftover(object):
 
-    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix) -> None:
+    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, flag) -> None:
         self.from_species = from_species
         self.to_species = to_species
         self.from_coord = bed_coord     # BED coordinates in form of a list of chr, start and stop, score and strand
         self.tmpdir = tmpdir
         self.prefix = prefix
-
+        self.flag = flag
 
     def call_liftover_binary(self):
         # encapsulated liftover binary call
@@ -22,18 +22,39 @@ class liftover(object):
         print(command)
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        return(p)      
+        return(p)
 
     
     def lifting(self):
         # function to perform actual lifting
 
-        species_IDs_dict = {"mouse":"mm10", "human":"hg38", "pig":"susScr11", "dog":"canFam6"}
-        self.from_id = species_IDs_dict[self.from_species]
-        self.to_id = species_IDs_dict[self.to_species]
+        ## check if the flag for mm10 and hg19 conversion is true. 
+        if self.flag == "mm10":
+            # this is only internal leftover for mouse from version mm10 to mm39
+            self.from_id = "mm10"
+            self.to_id = "mm39"
+            tmp_from_bed = self.tmpdir + self.prefix + "_liftover_internal.tmp"
+            open(tmp_from_bed, 'w').close()             # erase old contents
+        
+        elif self.flag == "hg19":
+            # this is only internal leftover for mouse from version hg19 to hg38
+            self.from_id = "hg19"
+            self.to_id = "hg38"
+            tmp_from_bed = self.tmpdir + self.prefix + "_liftover_internal.tmp"
+            open(tmp_from_bed, 'w').close()             # erase old contents
+        
+        elif self.flag == "other":
+            species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6"}
+            self.from_id = species_IDs_dict[self.from_species]
+            self.to_id = species_IDs_dict[self.to_species]
+            tmp_from_bed = self.tmpdir + self.prefix + "_liftover.tmp"
+            open(tmp_from_bed, 'w').close()             # erase old contents
+        
+        else:
+            print("Unidentified flag for liftOver function:", self.flag)
+            sys.exit()
 
-        tmp_from_bed = self.tmpdir + self.prefix + "_liftover.tmp"
-        open(tmp_from_bed, 'w').close()             # erase old contents
+        
         with open(tmp_from_bed, 'a') as data_store:
             data_store.write("chr" + "\t".join(self.from_coord) + "\n")
         # chain file
@@ -60,7 +81,7 @@ class liftover(object):
             print(out, err)
             sys.exit()
         else:
-            print("Successfully ran liftover for " + self.to_species)
+            print("Successfully ran liftOver command " + self.to_species)
 
     def parseLiftover(self):
         # function to parse liftover output files and return the lifted coordinates to main function
@@ -85,5 +106,7 @@ class liftover(object):
                 # somehow the lifted coordinates are split into two. 
                 for line in lines:
                     print(line)
-            print("Lifted over coordinates:", lifted_coordinates)
+            
+            lifted_coordinates[0] = lifted_coordinates[0].replace("chr", "")
+            print("Lifted coordinates:", lifted_coordinates)
         return(lifted_coordinates)
