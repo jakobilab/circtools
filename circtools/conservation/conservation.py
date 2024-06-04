@@ -237,10 +237,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     check = fetchOrtho.parse_json()
                     #print(check)
                     print(current_line)
-                    # now liftover the coordinates from source to target species
-                    lifted = LO.liftover("human", "mouse", current_line, self.temp_dir, tmp_prefix, "other")
-                    lifted.parseLiftover()
-
+                    
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
                                             current_line[1],
@@ -321,23 +318,40 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
 
-                    print(all_exons_circle[name])
+                    print("All exons circle: ", all_exons_circle[name])
                     # fetch the information about first/last circle that contributes to the BSJ
-                    if current_line[5] == "+":
-                        bsj_exon = all_exons_circle[name][-1]
-                    elif current_line[5] == "-":
-                        bsj_exon = all_exons_circle[name][0]
-                    else:
-                        print("No strand information present, assuming + strand")
-                        bsj_exon = all_exons_circle[name][-1]
-
-                    #print(bsj_exon)
-                    #print(circ_sequence)
-                    
-                    circ_rna_number += 1
                     print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
 
-     
+                    if len(all_exons_circle[name]) == 1:
+                        # this is a single exon circle
+                        bsj_exon = all_exons_circle[name][0] 
+                    else:
+                        if current_line[5] == "+":
+                            bsj_exon = all_exons_circle[name][-1]
+                            first_exon = all_exons_circle[name][0]
+                        elif current_line[5] == "-":
+                            bsj_exon = all_exons_circle[name][0]
+                            first_exon = all_exons_circle[name][-1]
+                        else:
+                            print("No strand information present, assuming + strand")
+                            bsj_exon = all_exons_circle[name][-1]
+                            first_exon = all_exons_circle[name][0]
+
+                    print(bsj_exon, first_exon)
+                    
+                    # take these flanking exons per circle and perform liftover 
+                    if first_exon:
+                        # liftover first exon
+                        print("*** Lifting over first exon ***")
+                        first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
+                        lifted = LO.liftover("human", "mouse", first_line, self.temp_dir, tmp_prefix, "other")
+                        lifted.find_lifted_exons()
+                    
+                    print("*** Lifting over BSJ exon ***")
+                    bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
+                    lifted = LO.liftover("human", "mouse", bsj_line, self.temp_dir, tmp_prefix, "other")
+                    lifted.find_lifted_exons()
+
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
             sys.exit(-1)
