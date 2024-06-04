@@ -2,6 +2,7 @@
 # using the REST API by ENSMBLE
 import os, sys
 import subprocess
+import requests
 
 class liftover(object):
 
@@ -110,3 +111,23 @@ class liftover(object):
             lifted_coordinates[0] = lifted_coordinates[0].replace("chr", "")
             print("Lifted coordinates:", lifted_coordinates)
         return(lifted_coordinates)
+    
+
+    def find_lifted_exons(self):
+        # function to see if the lifted coordinates are exons
+        # if not, take nearby exons
+
+        lifted = self.parseLiftover()
+        chr = str(lifted[0])
+        start = str(lifted[1])
+        end = str(lifted[2])
+
+        server = "https://rest.ensembl.org"
+        ext = "/overlap/region/mouse/" + chr + ":" + start + "-" + end + "?feature=exon"
+
+        r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+        if not r.ok:
+            r.raise_for_status()
+            sys.exit()
+
+        #print("exon information: ", r.text)
