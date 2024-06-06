@@ -6,13 +6,14 @@ import requests
 
 class liftover(object):
 
-    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, flag) -> None:
+    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, orthologs, flag) -> None:
         self.from_species = from_species
         self.to_species = to_species
         self.from_coord = bed_coord     # BED coordinates in form of a list of chr, start and stop, score and strand
         self.tmpdir = tmpdir
         self.prefix = prefix
         self.flag = flag
+        self.ortho_dict = orthologs
 
     def call_liftover_binary(self):
         # encapsulated liftover binary call
@@ -112,18 +113,36 @@ class liftover(object):
             print("Lifted coordinates:", lifted_coordinates)
         return(lifted_coordinates)
     
+    def parse_gff_rest(self, output):
+        # function to parse the gff output from REST API exon extraction information
+        # returns list of fetched exons overlapping a given region of interest
+        exon_list = []
+        out = output.strip().split("\n")
+        for eachline in out:
+            if (eachline.startswith("#")):  continue
+            eachline = eachline.split("\t")
+            if (eachline[2] == "exon"):
+                # reduce 1bp from start because circcoordinates are 0 based
+                eachline[3] = str(int(eachline[3]) -1 )
+                exon_list.append([eachline[0], eachline[3], eachline[4]])
+        
+        print("All exons: ", exon_list)
+        exon_list = [list(x) for x in set(tuple(x) for x in exon_list)] 
+        print("Unique exons: ", exon_list)
+        return(exon_list)
 
     def find_lifted_exons(self):
-        # function to see if the lifted coordinates are exons
-        # if not, take nearby exons
+        # function to see if the lifted coordinates are exons. If not, take nearby exons
 
         lifted = self.parseLiftover()
         chr = str(lifted[0])
         start = str(lifted[1])
         end = str(lifted[2])
 
+        target_geneid = self.ortho_dict[self.to_species]
+        print("Extracting exons for : ", target_geneid)
         server = "https://rest.ensembl.org"
-        ext = "/overlap/region/mouse/" + chr + ":" + start + "-" + end + "?feature=exon"
+        ext = "/overlap/region/" + self.to_species + "/" + chr + ":" + start + "-" + end + "?feature=gene;feature=exon"
 
         r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
         if not r.ok:
@@ -131,3 +150,6 @@ class liftover(object):
             sys.exit()
 
         #print("exon information: ", r.text)
+        # call above gff parsing function on this output
+        lifted_exons = self.parse_gff_rest(r.text)
+        #print(lifted_exons)
