@@ -212,12 +212,12 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     if self.mm10_flag:
                         print("Before liftover:", current_line)
                         print("Converting mm10 coordinates to mm39 assembly")
-                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, "mm10")
+                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, {}, "mm10")
                         current_line = lifted.parseLiftover()
                     elif self.hg19_flag:
                         print("Before liftover:", current_line)
                         print("Converting hg19 coordinates to hg38 assembly") 
-                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, "hg19")
+                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, {}, "hg19")
                         current_line = lifted.parseLiftover()
 
                     sep = "_"
@@ -232,12 +232,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     #circrna_length = int(current_line[2]) - int(current_line[1])
 
-                    # call exon fetchorthologs function to store orthologs
-                    fetchOrtho = FO.fetch("Slc8a1", species_dictionary[self.organism])
-                    check = fetchOrtho.parse_json()
-                    #print(check)
-                    print(current_line)
-                    
+                   
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
                                             current_line[1],
@@ -339,26 +334,31 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     print(bsj_exon, first_exon)
                     
+                    host_gene = current_line[3]
+                    # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
+                    fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism])
+                    ortho_dict = fetchOrtho.parse_json()
+                    print(ortho_dict)
+                    print(current_line)
+
                     # take these flanking exons per circle and perform liftover 
                     if first_exon:
                         # liftover first exon
                         print("*** Lifting over first exon ***")
                         first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
-                        lifted = LO.liftover("human", "mouse", first_line, self.temp_dir, tmp_prefix, "other")
+                        lifted = LO.liftover("human", "mouse", first_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
                         lifted.find_lifted_exons()
                     
                     print("*** Lifting over BSJ exon ***")
                     bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
-                    lifted = LO.liftover("human", "mouse", bsj_line, self.temp_dir, tmp_prefix, "other")
+                    lifted = LO.liftover("human", "mouse", bsj_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
                     lifted.find_lifted_exons()
 
+        
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
             sys.exit(-1)
         
-            if not exon_cache:
-                print("Could not find any circRNAs matching your criteria, exiting.")
-                exit(-1)
         print("Cleaning up")
         """      
         ## cleanup / delete tmp files
