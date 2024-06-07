@@ -3,6 +3,7 @@
 import os, sys
 import subprocess
 import requests
+import pybedtools
 
 class liftover(object):
 
@@ -126,9 +127,7 @@ class liftover(object):
                 eachline[3] = str(int(eachline[3]) -1 )
                 exon_list.append([eachline[0], eachline[3], eachline[4]])
         
-        print("All exons: ", exon_list)
         exon_list = [list(x) for x in set(tuple(x) for x in exon_list)] 
-        print("Unique exons: ", exon_list)
         return(exon_list)
 
     def find_lifted_exons(self):
@@ -149,7 +148,31 @@ class liftover(object):
             r.raise_for_status()
             sys.exit()
 
-        #print("exon information: ", r.text)
         # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
-        #print(lifted_exons)
+        print(lifted_exons)
+
+        # now perform bedtools operation to find out the correct exon boundaries
+        lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
+        exon_bed = pybedtools.BedTool(lifted_exons_string, from_string = True)
+        region = "\t".join([chr, start, end])
+        region_bed = pybedtools.BedTool(region, from_string = True)
+
+        intersect_exon = exon_bed.intersect(region_bed, wao=True)
+        #print("Intersect:", str(intersect_exon))
+
+        if (intersect_exon != ""):
+            # parse the above information to keep the longest overlapping exon
+            intersect_out = [i.split("\t") for i in str(intersect_exon).strip().split("\n")]
+            intersect_out = [list(map(int, i)) for i in intersect_out]
+            print(intersect_out)
+
+            # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
+            final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
+            #print(final_exon)
+
+            return(final_exon)                  # the sequences will be extracted for this exon
+        else:
+            # no intersecting exons found
+            # take closest?
+            print("No nearby exon found")
