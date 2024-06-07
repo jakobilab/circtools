@@ -25,7 +25,9 @@ class sequence(object):
             r.raise_for_status()
             sys.exit()
         self.r = r
-        print(r.text)
+        #print(r.text)
+
+        return(r.text)
 
 #obj = sequence("human", [1, 43829790, 43829804])
 #obj.fetch_sequence()

@@ -34,6 +34,7 @@ from Bio.Graphics import GenomeDiagram
 # Loading the functionalities defined in other scripts as modules
 from . import FetchOrthologs as FO 
 from . import LiftOver as LO
+from . import FetchRegionGeneSequence as FS
 
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -64,6 +65,17 @@ class Conservation(circ_module.circ_template.CircTemplate):
             print("Need to provide gene list by either -G or -GL options!")
             exit(-1)
 
+        # target species argument
+        if (self.cli_params.target_species):
+            # argument is comma separated list of target species for which conservation will be calculated
+            self.target_species = self.cli_params.target_species.split(",")
+            if not any(e in self.target_species for e in ["mm", "hs", "ss", "rn", "cl"]):
+                print("Please only specify available choices of organisms: mm, hs, ss, rn or cl")
+                exit(-1)
+        else:
+            print("Need to provide target species to calculate conservation")
+            exit(-1)
+
         if self.id_list and self.gene_list:
             print("Please specify either host genes via -G/-GL or circRNA IDs via -i.")
             sys.exit(-1)
@@ -73,6 +85,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
         if self.organism not in ["mm", "hs", "ss", "rn", "cl"]:
             print("Please provide valid species. Options available: Mouse, Human, Pig, Rat, Dog")
             sys.exit(-1)
+
 
     def module_name(self):
         """Return a string representing the name of the module."""
@@ -346,14 +359,20 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         # liftover first exon
                         print("*** Lifting over first exon ***")
                         first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
-                        lifted = LO.liftover("human", "mouse", first_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
-                        lifted.find_lifted_exons()
+                        lifted = LO.liftover(species_dictionary[self.organism], "mouse", first_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
+                        first_exon_liftover = lifted.find_lifted_exons()
                     
                     print("*** Lifting over BSJ exon ***")
                     bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
-                    lifted = LO.liftover("human", "mouse", bsj_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
-                    lifted.find_lifted_exons()
+                    lifted = LO.liftover(species_dictionary[self.organism], "mouse", bsj_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
+                    bsj_exon_liftover = lifted.find_lifted_exons()
 
+                    # fetch sequences for both these exons now
+                    first_exon_seq = FS.sequence(species_dictionary[self.organism], first_exon_liftover)
+                    bsj_exon_seq = FS.sequence(species_dictionary[self.organism], bsj_exon_liftover)
+
+                    circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
+                    print(circ_sequence_target)
         
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
