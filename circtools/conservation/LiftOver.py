@@ -143,7 +143,11 @@ class liftover(object):
         server = "https://rest.ensembl.org"
         ext = "/overlap/region/" + self.to_species + "/" + chr + ":" + start + "-" + end + "?feature=gene;feature=exon"
 
-        r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+        try:
+            r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+        except requests.exceptions.RequestException as e:
+            raise SystemExit(e)
+        
         if not r.ok:
             r.raise_for_status()
             sys.exit()

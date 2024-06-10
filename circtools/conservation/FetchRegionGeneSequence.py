@@ -19,7 +19,10 @@ class sequence(object):
         server = "https://rest.ensembl.org"
         ext = "/sequence/region/" + self.species + "/" + chr + ":" + start + ".." + end + "?"
  
-        r = requests.get(server+ext, headers={ "Content-Type" : "text/plain"})
+        try:
+            r = requests.get(server+ext, headers={ "Content-Type" : "text/plain"})
+        except requests.exceptions.RequestException as e:
+            raise SystemExit(e)
  
         if not r.ok:
             r.raise_for_status()

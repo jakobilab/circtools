@@ -19,8 +19,11 @@ class fetch(object):
 
         server = "https://rest.ensembl.org"
         ext = "/homology/symbol/" + self.from_species + "/" + self.gene_symbol + "?format=condensed;type=orthologues;" + str_to_species
- 
-        r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+
+        try:
+            r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+        except requests.exceptions.RequestException as e:
+            raise SystemExit(e)
  
         if not r.ok:
             r.raise_for_status()
