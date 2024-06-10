@@ -29,6 +29,8 @@ class fetch(object):
             r.raise_for_status()
             print("Could not fetch ortholog information from ENSEMBL. Exiting!")
             sys.exit() 
+
+        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
         return(r)
 
     def parse_json(self):

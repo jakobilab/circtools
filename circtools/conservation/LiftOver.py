@@ -151,7 +151,8 @@ class liftover(object):
         if not r.ok:
             r.raise_for_status()
             sys.exit()
-
+        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
+        
         # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
         print(lifted_exons)

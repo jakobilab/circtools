@@ -28,6 +28,7 @@ class sequence(object):
             r.raise_for_status()
             sys.exit()
         self.r = r
+        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
         #print(r.text)
 
         return(r.text)
