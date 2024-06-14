@@ -517,8 +517,8 @@ class CircTools(object):
         group.add_argument("-TS",
                            "--target_organism",
                            dest="target_species",
-                           help="Target species to be used to calculate conservation score",
-                           choices=("mm", "rn", "hs", "ss", "cl")
+                           help="Target species to be used to calculate conservation score"
+                           #choices=("mm", "rn", "hs", "ss", "cl")
                            )
 
         group.add_argument("-s",
