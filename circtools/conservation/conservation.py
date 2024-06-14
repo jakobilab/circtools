@@ -35,6 +35,7 @@ from Bio.Graphics import GenomeDiagram
 from . import FetchOrthologs as FO 
 from . import LiftOver as LO
 from . import FetchRegionGeneSequence as FS
+from . import SequenceAlignment as AL
 
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -324,7 +325,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     if virtual_bed_file_stop:
                         exon2 = open(virtual_bed_file_stop.seqfn).read().split("\n", 1)[1].rstrip()
 
+
+                    fasta_out_string = ""               # the fasta file string for sequennce alignment
                     circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
+                    fasta_out_string = fasta_out_string + ">" + self.organism + "\n" + circ_sequence + "\n"  
 
                     print("All exons circle: ", all_exons_circle[name])
                     # fetch the information about first/last circle that contributes to the BSJ
@@ -354,26 +358,39 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     print(ortho_dict)
                     print(current_line)
 
-                    # take these flanking exons per circle and perform liftover 
-                    if first_exon:
-                        # liftover first exon
-                        print("*** Lifting over first exon ***")
-                        first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
-                        lifted = LO.liftover(species_dictionary[self.organism], "mouse", first_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
-                        first_exon_liftover = lifted.find_lifted_exons()
+                    for each_target_species in self.target_species:
+                        print(each_target_species)             
                     
-                    print("*** Lifting over BSJ exon ***")
-                    bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
-                    lifted = LO.liftover(species_dictionary[self.organism], "mouse", bsj_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
-                    bsj_exon_liftover = lifted.find_lifted_exons()
+                        # take these flanking exons per circle and perform liftover 
+                        if first_exon:
+                            # liftover first exon
+                            print("*** Lifting over first exon ***")
+                            first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
+                            lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
+                            first_exon_liftover = lifted.find_lifted_exons()
+                        
+                        print("*** Lifting over BSJ exon ***")
+                        bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
+                        lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix, ortho_dict, "other")
+                        bsj_exon_liftover = lifted.find_lifted_exons()
 
-                    # fetch sequences for both these exons now
-                    first_exon_seq = FS.sequence(species_dictionary[self.organism], first_exon_liftover)
-                    bsj_exon_seq = FS.sequence(species_dictionary[self.organism], bsj_exon_liftover)
+                        # fetch sequences for both these exons now
+                        first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
+                        bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
 
-                    circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
-                    print(circ_sequence_target)
-        
+                        circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
+                        print(circ_sequence_target)
+
+                        fasta_out_string = fasta_out_string + ">" + each_target_species + "\n" + circ_sequence_target + "\n" 
+
+                    fasta_file_alignment = self.temp_dir + "/alignment_" + name + ".fasta"
+                    with open(fasta_file_alignment, "w") as fasta_out:
+                        fasta_out.write(fasta_out_string)
+
+                    # call multiple sequencce alignment function
+                    align = AL.Alignment(fasta_file_alignment)
+                    align.draw_phylo_tree()
+
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
             sys.exit(-1)
