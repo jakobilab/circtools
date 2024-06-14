@@ -47,7 +47,7 @@ class liftover(object):
             open(tmp_from_bed, 'w').close()             # erase old contents
         
         elif self.flag == "other":
-            species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6"}
+            species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6", "rat":"rn7"}
             self.from_id = species_IDs_dict[self.from_species]
             self.to_id = species_IDs_dict[self.to_species]
             tmp_from_bed = self.tmpdir + self.prefix + "_liftover.tmp"
@@ -61,7 +61,8 @@ class liftover(object):
         with open(tmp_from_bed, 'a') as data_store:
             data_store.write("chr" + "\t".join(self.from_coord) + "\n")
         # chain file
-        chain_file = self.from_id + "To" + self.to_id.title() + ".over.chain.gz"
+        tmp_name_species = self.to_id[0].upper() + self.to_id[1:]
+        chain_file = self.from_id + "To" + tmp_name_species + ".over.chain.gz"
         self.chain_file = chain_file
         
         tmp_to_bed = tmp_from_bed + ".out"              # output file
