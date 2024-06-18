@@ -11,6 +11,7 @@ class liftover(object):
         self.from_species = from_species
         self.to_species = to_species
         self.from_coord = bed_coord     # BED coordinates in form of a list of chr, start and stop, score and strand
+        self.gene_name = bed_coord[3]
         self.tmpdir = tmpdir
         self.prefix = prefix
         self.flag = flag
@@ -139,6 +140,8 @@ class liftover(object):
         start = str(lifted[1])
         end = str(lifted[2])
 
+        print("To be lifted coordinates: ", self.from_coord)
+
         target_geneid = self.ortho_dict[self.to_species]
         print("Extracting exons for : ", target_geneid)
         server = "https://rest.ensembl.org"
@@ -156,14 +159,13 @@ class liftover(object):
         
         # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
-        print(lifted_exons)
+        print("Lifted exons:", lifted_exons)
 
         # now perform bedtools operation to find out the correct exon boundaries
         lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
         exon_bed = pybedtools.BedTool(lifted_exons_string, from_string = True)
         region = "\t".join([chr, start, end])
         region_bed = pybedtools.BedTool(region, from_string = True)
-
         intersect_exon = exon_bed.intersect(region_bed, wao=True)
         #print("Intersect:", str(intersect_exon))
 
@@ -179,6 +181,46 @@ class liftover(object):
 
             return(final_exon)                  # the sequences will be extracted for this exon
         else:
-            # no intersecting exons found
-            # take closest?
-            print("No nearby exon found")
+            # no intersecting exons found. In this case, fetch orthologs for this species and extract exon information
+            # and intersect with exons to take the closest exon information
+            print("No nearby exon found. Trying for neaby exon search using orthology information.")
+
+            ortho_gene = self.ortho_dict["dog"]
+
+            # fetch the exon information for this genee
+
+            server = "https://rest.ensembl.org"
+            ext = "/overlap/id/" + ortho_gene + "?feature=exon"
+            print(server+ext)
+            try:
+                r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+            except requests.exceptions.RequestException as e:
+                raise SystemExit(e)
+            
+            if not r.ok:
+                r.raise_for_status()
+                sys.exit()
+            print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
+            #print("All exons for gene id "+ ortho_gene)
+            #print(r.text)
+            
+            # call above gff parsing function on this output
+            all_exons = self.parse_gff_rest(r.text)
+            all_exons.sort(key=lambda x: x[1])
+
+            # now perform bedtools operation to find out the correct exon boundaries
+            all_exons_string = "\n".join(["\t".join(i) for i in all_exons])
+            #print("All exons for closest:", all_exons_string)
+            exon_bed_all = pybedtools.BedTool(all_exons_string, from_string = True)
+            region = "\t".join([chr, start, end])
+            #print("To  find closest region from :", region)
+            region_bed = pybedtools.BedTool(region, from_string = True)
+            closest_exon = region_bed.closest(exon_bed_all, sortout=True)
+            final_exon = str(closest_exon).strip().split("\t")[-3:]
+            print("Closest exon:",   final_exon)
+
+            return(final_exon)
+
+#lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
+#                    {'dog': 'ENSCAFG00845009273', 'human': 'ENSG00000115652'}, "other")
+#first_exon_liftover = lifted.find_lifted_exons()
