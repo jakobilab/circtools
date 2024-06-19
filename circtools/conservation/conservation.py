@@ -70,7 +70,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
         if (self.cli_params.target_species):
             # argument is comma separated list of target species for which conservation will be calculated
             self.target_species = self.cli_params.target_species.split(",")
-            if not any(e in self.target_species for e in ["mm", "hs", "ss", "rn", "cl"]):
+            if any(e not in ["mm", "hs", "ss", "rn", "cl"] for e in self.target_species):
                 print("Please only specify available choices of organisms: mm, hs, ss, rn or cl")
                 exit(-1)
         else:
