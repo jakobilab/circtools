@@ -48,5 +48,6 @@ class Alignment(object):
         plt.show()
         plt.savefig(out_png)
 
-#obj = Alignment("/scratch/circtools2/circtools/sample_data/temp/alignment_UXS1_2_106145190_106166083_-.fasta")
-#obj.draw_phylo_tree()
+if __name__ == "__main__":
+    obj = Alignment("/scratch/circtools2/circtools/sample_data/temp/alignment_UXS1_2_106145190_106166083_-.fasta")
+    obj.draw_phylo_tree()
