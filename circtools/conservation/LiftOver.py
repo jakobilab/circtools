@@ -185,7 +185,7 @@ class liftover(object):
             # and intersect with exons to take the closest exon information
             print("No nearby exon found. Trying for neaby exon search using orthology information.")
 
-            ortho_gene = self.ortho_dict["dog"]
+            ortho_gene = self.ortho_dict[self.to_species]
 
             # fetch the exon information for this genee
 
@@ -221,6 +221,7 @@ class liftover(object):
 
             return(final_exon)
 
-#lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
-#                    {'dog': 'ENSCAFG00845009273', 'human': 'ENSG00000115652'}, "other")
-#first_exon_liftover = lifted.find_lifted_exons()
+if __name__ == "__main__":
+    lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
+                    {'dog': 'ENSCAFG00845009273', 'human': 'ENSG00000115652'}, "other")
+    first_exon_liftover = lifted.find_lifted_exons()
