@@ -374,6 +374,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other")
                         bsj_exon_liftover = lifted.find_lifted_exons()
 
+
                         # fetch sequences for both these exons now
                         first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
                         bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
@@ -381,7 +382,23 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
                         print(circ_sequence_target)
 
+                        # writing into fasta file for alignments
                         fasta_out_string = fasta_out_string + ">" + each_target_species + "\n" + circ_sequence_target + "\n" 
+                        
+                        print("Both lifted exons::", first_exon_liftover, bsj_exon_liftover)
+                        # writing BED outputfile
+                        if current_line[5] == "+":
+                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
+                        elif current_line[5] == "-":
+                            lifted_circle = bsj_exon_liftover[:2] + [first_exon_liftover[2]]
+                        else:
+                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
+
+                        lifted_circle = list(map(str, lifted_circle))
+                        print("Lifted circle in target species ", each_target_species , " is " , lifted_circle)
+                        out_bed_file = self.output_dir + "lifted_" + name + "_" +   each_target_species + ".bed"
+                        with open(out_bed_file, "w") as bed_out:
+                            bed_out.write("\t".join(lifted_circle)+"\n")        
 
                     fasta_file_alignment = self.temp_dir + "/alignment_" + name + ".fasta"
                     with open(fasta_file_alignment, "w") as fasta_out:
