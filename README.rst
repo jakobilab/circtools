@@ -74,7 +74,7 @@ Modules
 
 Circtools currently offers seven modules:
 
-detect `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Detect.html>`__
+detect `(detailed documentation) <https://docs.circ.tools/en/latest/Detect.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``detect`` command is an interface to
@@ -84,7 +84,7 @@ data. The module is the foundation of all other steps for the circtools
 work flow. All parameters supplied to circtools will be directly passed
 to DCC.
 
-quickcheck `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Quickcheck.html>`__
+quickcheck `(detailed documentation) <https://docs.circ.tools/en/latest/Quickcheck.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The quickcheck module of circtools is an easy way to check the results
@@ -93,7 +93,7 @@ in a given experiment. The module needs the mapping log files produced
 by STAR as well as the directory with the DCC results. The module than
 generates a series of figures in PDF format to assess the results.
 
-reconstruct `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Reconstruct.html>`__
+reconstruct `(detailed documentation) <https://docs.circ.tools/en/latest/Reconstruct.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``reconstruct`` command is an interface to
@@ -101,7 +101,7 @@ The ``reconstruct`` command is an interface to
 DCC-generated data to reconstruct circRNA structures. All parameters
 supplied to circtools will be directly passed to FUCHS.
 
-circtest `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Circtest.html>`__
+circtest `(detailed documentation) <https://docs.circ.tools/en/latest/Circtest.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``circtest`` command is an interface to
@@ -114,7 +114,7 @@ documentation <https://github.com/dieterich-lab/CircTest>`__. In
 essence, the module allows dynamic grouping of the columns (samples) in
 the DCC data.
 
-exon `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Exon.html>`__
+exon `(detailed documentation) <https://docs.circ.tools/en/latest/Exon.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The exon module of circtools employs the `ballgown R
@@ -124,7 +124,7 @@ to combine data generated with DCC and circtest with ballgown-compatible
 `tablemaker <https://github.com/leekgroup/tablemaker>`__ in order get
 deeper insights into differential exon usage within circRNA candidates.
 
-enrich `(detailed documentation) <https://circtools.readthedocs.io/en/latest/Enrichment.html>`__
+enrich `(detailed documentation) <https://docs.circ.tools/en/latest/Enrichment.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``enrichment`` module may be used to identify circRNAs enriched for
@@ -136,7 +136,7 @@ through the
 `ENCODE <https://www.encodeproject.org/search/?type=Experiment&assay_title=eCLIP>`__
 project.
 
-primer `(detailed documentation) <https://circtools.readthedocs.io/en/latest/primer.html>`__
+primer `(detailed documentation) <https://docs.circ.tools/en/latest/Primer.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``primer`` command is used to design and visualize primers required
@@ -146,7 +146,7 @@ for follow up wet lab experiments to verify circRNA candidates.
 .. |docs| image:: https://readthedocs.org/projects/circtools/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
-    :target: https://circtools.readthedocs.io/en/latest/?badge=latest
+    :target: https://docs.circ.tools/en/latest/?badge=latest
 
 .. |build| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master
     :alt: CI Status
