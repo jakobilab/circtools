@@ -13,7 +13,7 @@ class Alignment(object):
         # convert the output from mafft into a distance matrix
         print(self.out_fasta)
         aln = AlignIO.read(self.out_fasta, 'clustal')
-        print(aln)
+        #print(aln)
 
         calculator = DistanceCalculator('identity')
         dm = calculator.get_distance(aln)
@@ -45,6 +45,7 @@ class Alignment(object):
         fig = plt.figure(figsize=(10, 10), dpi=100)
         axes = fig.add_subplot(1, 1, 1)
         Phylo.draw(tree, axes=axes, do_show=False)
+        axes.get_yaxis().set_visible(False)
         plt.show()
         plt.savefig(out_png)
 
