@@ -36,15 +36,25 @@ class Alignment(object):
     def draw_phylo_tree(self):
         # visulalisation of alignment results in form of phylogenetic tree    
 
+        # defining function for label drawing in phylo plot
+        def get_label(leaf):
+            if leaf.name == None:
+                return(leaf.name )
+            else:
+                temp = leaf.name.split("_")
+                string = temp[1] + "(" + temp[2] + ":" + temp[3] + ")"
+                print(leaf.name, string)
+                return(string)
+
         self.run_mafft()
 
         tree_file = self.fasta_file + ".tree"
         out_png = self.fasta_file.replace(".fasta", ".png") 
         
         tree = Phylo.read(tree_file, "newick")               # this is an output file from mafft_cline() function with --treeout option
-        fig = plt.figure(figsize=(10, 10), dpi=100)
+        fig = plt.figure(figsize=(15, 10), dpi=100)
         axes = fig.add_subplot(1, 1, 1)
-        Phylo.draw(tree, axes=axes, do_show=False)
+        Phylo.draw(tree, axes=axes, do_show=False, label_func=get_label)
         fig.text(0.50, 0.02, 'Genome Versions: Human-hg38, Mouse-mm39, Pig-SusScr11, Rat-Rn7 and Dog-CanFam6', horizontalalignment='center', wrap=True)
         axes.get_yaxis().set_visible(False)
         plt.show()
