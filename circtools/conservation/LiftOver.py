@@ -23,7 +23,6 @@ class liftover(object):
         # liftover command
         liftover_utility = "/home/skulkarni/liftOver"
         command = liftover_utility + " " + self.liftover_input_file + " " + self.chain_file + " " + self.liftover_output_file + " " + self.liftover_unlifted_file + "  -multiple -minMatch=0.1"
-        print(command)
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return(p)
@@ -140,10 +139,10 @@ class liftover(object):
         start = str(lifted[1])
         end = str(lifted[2])
 
-        print("To be lifted coordinates: ", self.from_coord)
+        #print("To be lifted coordinates: ", self.from_coord)
 
         target_geneid = self.ortho_dict[self.to_species]
-        print("Extracting exons for : ", target_geneid)
+        #print("Extracting exons for : ", target_geneid)
         server = "https://rest.ensembl.org"
         ext = "/overlap/region/" + self.to_species + "/" + chr + ":" + start + "-" + end + "?feature=gene;feature=exon"
 
@@ -168,16 +167,17 @@ class liftover(object):
         region_bed = pybedtools.BedTool(region, from_string = True)
         intersect_exon = exon_bed.intersect(region_bed, wao=True)
         #print("Intersect:", str(intersect_exon))
+        ortho_gene = self.ortho_dict[self.to_species]
 
         if (intersect_exon != ""):
             # parse the above information to keep the longest overlapping exon
             intersect_out = [i.split("\t") for i in str(intersect_exon).strip().split("\n")]
             intersect_out = [list(map(int, i)) for i in intersect_out]
-            print(intersect_out)
+            #print(intersect_out)
 
             # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
             final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
-            #print(final_exon)
+            print("Final:", final_exon)
 
             return(final_exon)                  # the sequences will be extracted for this exon
         else:
@@ -185,13 +185,11 @@ class liftover(object):
             # and intersect with exons to take the closest exon information
             print("No nearby exon found. Trying for neaby exon search using orthology information.")
 
-            ortho_gene = self.ortho_dict[self.to_species]
-
             # fetch the exon information for this genee
 
             server = "https://rest.ensembl.org"
             ext = "/overlap/id/" + ortho_gene + "?feature=exon"
-            print(server+ext)
+            #print(server+ext)
             try:
                 r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
             except requests.exceptions.RequestException as e:
