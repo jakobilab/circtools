@@ -328,7 +328,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     fasta_out_string = ""               # the fasta file string for sequennce alignment
                     circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
-                    fasta_out_string = fasta_out_string + ">" + self.organism + "\n" + circ_sequence + "\n"  
+                    fasta_out_string = fasta_out_string + ">" + self.organism + "(" + current_line[0] + ":" + current_line[1] + "-" + current_line[2] + ")" + "\n" + circ_sequence + "\n"  
 
                     print("All exons circle: ", all_exons_circle[name])
                     # fetch the information about first/last circle that contributes to the BSJ
@@ -381,9 +381,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                         circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
                         print(circ_sequence_target)
-
-                        # writing into fasta file for alignments
-                        fasta_out_string = fasta_out_string + ">" + each_target_species + "\n" + circ_sequence_target + "\n" 
                         
                         print("Both lifted exons::", first_exon_liftover, bsj_exon_liftover)
                         # writing BED outputfile
@@ -400,6 +397,9 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         with open(out_bed_file, "w") as bed_out:
                             bed_out.write("\t".join(lifted_circle)+"\n")        
 
+                        # writing into fasta file for alignments
+                        fasta_out_string = fasta_out_string + ">" + each_target_species + "(" + lifted_circle[0] + ":" + lifted_circle[1] + "-" + lifted_circle[2] + ")" + "\n" + circ_sequence_target + "\n" 
+                        
                     fasta_file_alignment = self.temp_dir + "/alignment_" + name + ".fasta"
                     with open(fasta_file_alignment, "w") as fasta_out:
                         fasta_out.write(fasta_out_string)
