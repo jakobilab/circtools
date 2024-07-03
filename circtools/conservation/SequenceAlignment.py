@@ -45,6 +45,7 @@ class Alignment(object):
         fig = plt.figure(figsize=(10, 10), dpi=100)
         axes = fig.add_subplot(1, 1, 1)
         Phylo.draw(tree, axes=axes, do_show=False)
+        fig.text(0.50, 0.02, 'Genome Versions: Human-hg38, Mouse-mm39, Pig-SusScr11, Rat-Rn7 and Dog-CanFam6', horizontalalignment='center', wrap=True)
         axes.get_yaxis().set_visible(False)
         plt.show()
         plt.savefig(out_png)
