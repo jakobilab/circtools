@@ -596,6 +596,14 @@ class CircTools(object):
                            default=False,
                            action='store_true'
                            )
+        
+        group.add_argument("-pairwise_flag",
+                           "--pairwise_flag",
+                           dest="pairwise_flag",
+                           help="Should pairwise alignments be performed as well? Additional barplot will be plotted in this case.",
+                           default=False,
+                           action='store_true'
+                           )
 
         args = parser.parse_args(sys.argv[2:])
 
