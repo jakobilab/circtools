@@ -55,6 +55,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
         self.input_circRNA = self.cli_params.sequence_file
         self.mm10_flag = self.cli_params.mm10_conversion
         self.hg19_flag = self.cli_params.hg19_conversion
+        self.pairwise = self.cli_params.pairwise_flag
         
         # gene_list file argument
         if (self.cli_params.gene_list):
@@ -380,8 +381,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
 
                         circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
-                        print(circ_sequence_target)
+                        #print(circ_sequence_target)
                         
+                        print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
+
                         print("Both lifted exons::", first_exon_liftover, bsj_exon_liftover)
                         # writing BED outputfile
                         if current_line[5] == "+":
@@ -405,8 +408,11 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         fasta_out.write(fasta_out_string)
 
                     # call multiple sequencce alignment function
-                    align = AL.Alignment(fasta_file_alignment)
+                    align = AL.Alignment(fasta_file_alignment, self.organism)
                     align.draw_phylo_tree()
+                    # if pairwise alignment flag is turned on, run the pairwise alignment function
+                    if (self.pairwise):
+                        align.pairwise_alignment()
 
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
