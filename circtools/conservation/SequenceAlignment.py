@@ -3,11 +3,16 @@ from Bio.Align.Applications import MafftCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 import matplotlib.pyplot as plt
 from Bio import Phylo
+from itertools import combinations
+from Bio import SeqIO,  Align
+from Bio.Seq import Seq
+from Bio.Align import *
 
 class Alignment(object):
 
-    def __init__(self, input_fasta) -> None:
+    def __init__(self, input_fasta, source_species) -> None:
         self.fasta_file = input_fasta
+        self.source_species = source_species
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
@@ -60,6 +65,33 @@ class Alignment(object):
         plt.show()
         plt.savefig(out_png)
 
+    def pairwise_alignment(self):
+        # perform pairwise alignment if the flag is on
+        
+        combi = combinations(SeqIO.parse(self.fasta_file , "fasta"), 2)
+        aligner = Align.PairwiseAligner()
+        plot_dict = {}
+        for pair in combi:
+            species_1 = pair[0].id.split("(")[0]
+            species_2 = pair[1].id.split("(")[0]
+            if ((self.source_species == species_1) or (self.source_species == species_2)):
+                alignments = aligner.align(pair[0].seq, pair[1].seq)
+                print(species_1, species_2, pair[0].id, pair[1].id, alignments.score)
+                plot_dict[species_1+"_"+species_2] = float(alignments.score)
+        
+        print(plot_dict)
+        # plot as a bar plot
+        species = list(plot_dict.keys())
+        scores = list(plot_dict.values())
+        out_bar = self.fasta_file.replace(".fasta", "_pairwise.png") 
+        fig = plt.figure(figsize = (10, 10))
+        plt.bar(species, scores, color ='blue', width = 0.4)
+        plt.xlabel("Pairwise alignments")
+        plt.ylabel("Alignment scores")
+        plt.show()
+        plt.savefig(out_bar)
+
 if __name__ == "__main__":
-    obj = Alignment("/scratch/circtools2/circtools/sample_data/temp/alignment_UXS1_2_106145190_106166083_-.fasta")
+    obj = Alignment("/scratch/circtools2/circtools/sample_data/temp/alignment_UXS1_2_106145190_106166083_-.fasta", "hs")
     obj.draw_phylo_tree()
+    obj.pairwise_alignment()
