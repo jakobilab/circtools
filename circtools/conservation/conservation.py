@@ -350,13 +350,22 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             bsj_exon = all_exons_circle[name][-1]
                             first_exon = all_exons_circle[name][0]
 
-                    #print(bsj_exon, first_exon)
-                    
-                    host_gene = current_line[3]
                     # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
+                    host_gene = current_line[3]
                     fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism])
                     ortho_dict = fetchOrtho.parse_json()
                     print(ortho_dict)
+                    # check if each target species is present in the dictionary and remove if not
+                    for each_species in self.target_species:
+                        species_name = species_dictionary[each_species]
+                        if species_name not in ortho_dict.keys():
+                            print("No ortholog found in species" + species_name + ". Removing this species for further analysis.")
+                            self.target_species.remove(each_species)
+                    # after removing this species, check if there are any species left to perform the analysis
+                    if len(self.target_species) == 0:
+                        print("No species found to perform conservation analysis.")
+                        sys.exit()
+
                     print(current_line)
 
                     for each_target_species in self.target_species:
