@@ -369,11 +369,17 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
                             lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other")
                             first_exon_liftover = lifted.find_lifted_exons()
+                            if (first_exon_liftover == None):
+                                print("No lifted co-ordinates found for first exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")
+                                continue
                         
                         print("*** Lifting over BSJ exon ***")
                         bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
                         lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other")
                         bsj_exon_liftover = lifted.find_lifted_exons()
+                        if (bsj_exon_liftover == None):
+                            print("No lifted co-ordinates found for BSJ exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")
+                            continue
 
 
                         # fetch sequences for both these exons now

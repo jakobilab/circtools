@@ -98,7 +98,8 @@ class liftover(object):
         # if not, read the output file and print the lifted coordinates
         if os.stat(tmp_unlifted).st_size != 0:
             print("Unlifted coordinates present. Liftover did not run well. Exiting!")
-            sys.exit()
+            #sys.exit()
+            return(None)
         else:
             fin = open(tmp_to_bed).readlines() #.strip().split("\t")
             with open(tmp_to_bed) as fin:
@@ -113,7 +114,7 @@ class liftover(object):
             
             lifted_coordinates[0] = lifted_coordinates[0].replace("chr", "")
             print("Lifted coordinates:", lifted_coordinates)
-        return(lifted_coordinates)
+            return(lifted_coordinates)
     
     def parse_gff_rest(self, output):
         # function to parse the gff output from REST API exon extraction information
@@ -135,6 +136,8 @@ class liftover(object):
         # function to see if the lifted coordinates are exons. If not, take nearby exons
 
         lifted = self.parseLiftover()
+        if lifted == None:
+            return(None)
         chr = str(lifted[0])
         start = str(lifted[1])
         end = str(lifted[2])
