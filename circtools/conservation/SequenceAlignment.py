@@ -70,7 +70,14 @@ class Alignment(object):
 
     def pairwise_alignment(self):
         # perform pairwise alignment if the flag is on
-        
+
+        # read in the fasta file and store the length of sequence for normalising
+        fasta_sequences = SeqIO.parse(open(self.fasta_file),'fasta')
+        for fasta in fasta_sequences:
+            if self.source_species in fasta.id:
+                length = int(len(fasta.seq))
+
+        # perform combinations and their alignment scores
         combi = combinations(SeqIO.parse(self.fasta_file , "fasta"), 2)
         aligner = Align.PairwiseAligner()
         plot_dict = {}
@@ -83,6 +90,9 @@ class Alignment(object):
                 plot_dict[species_1+"_"+species_2] = float(alignments.score)
         
         print(plot_dict)
+        # normalise the alignment scores by length of sequence of source species circle
+        plot_dict = {k: v / length for k, v in plot_dict.items()}
+
         # plot as a bar plot
         species = list(plot_dict.keys())
         scores = list(plot_dict.values())
