@@ -57,11 +57,14 @@ class Alignment(object):
         out_png = self.fasta_file.replace(".fasta", ".png") 
         
         tree = Phylo.read(tree_file, "newick")               # this is an output file from mafft_cline() function with --treeout option
-        fig = plt.figure(figsize=(15, 10), dpi=100)
+        fig = plt.figure(figsize=(11, 10), dpi=100)
         axes = fig.add_subplot(1, 1, 1)
         Phylo.draw(tree, axes=axes, do_show=False, label_func=get_label)
-        fig.text(0.50, 0.02, 'Genome Versions: Human-hg38, Mouse-mm39, Pig-SusScr11, Rat-Rn7 and Dog-CanFam6', horizontalalignment='center', wrap=True)
+        fig.text(0.50, 0.02, 'Genome Versions: Human(hs)-hg38, Mouse(mm)-mm39, Pig(ss)-SusScr11, Rat(rn)-Rn7 and Dog(cl)-CanFam6', horizontalalignment='center', wrap=True)
         axes.get_yaxis().set_visible(False)
+        axes.spines['top'].set_visible(False)
+        axes.spines['right'].set_visible(False)
+        axes.spines['left'].set_visible(False)
         plt.show()
         plt.savefig(out_png)
 
