@@ -10,9 +10,10 @@ from Bio.Align import *
 
 class Alignment(object):
 
-    def __init__(self, input_fasta, source_species) -> None:
+    def __init__(self, input_fasta, source_species, circle_name) -> None:
         self.fasta_file = input_fasta
         self.source_species = source_species
+        self.circle_name = circle_name
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
@@ -65,6 +66,7 @@ class Alignment(object):
         axes.spines['top'].set_visible(False)
         axes.spines['right'].set_visible(False)
         axes.spines['left'].set_visible(False)
+        plt.title("Sequence conservation tree for circle: " + self.circle_name)
         plt.show()
         plt.savefig(out_png)
 

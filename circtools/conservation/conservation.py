@@ -415,7 +415,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         fasta_out.write(fasta_out_string)
 
                     # call multiple sequencce alignment function
-                    align = AL.Alignment(fasta_file_alignment, self.organism)
+                    align = AL.Alignment(fasta_file_alignment, self.organism, name)
                     align.draw_phylo_tree()
                     # if pairwise alignment flag is turned on, run the pairwise alignment function
                     if (self.pairwise):
