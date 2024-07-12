@@ -91,9 +91,9 @@ class Alignment(object):
                 print(species_1, species_2, pair[0].id, pair[1].id, alignments.score)
                 plot_dict[species_1+"_"+species_2] = float(alignments.score)
         
-        print(plot_dict)
         # normalise the alignment scores by length of sequence of source species circle
         plot_dict = {k: v / length for k, v in plot_dict.items()}
+        print(plot_dict)
 
         # plot as a bar plot
         species = list(plot_dict.keys())
