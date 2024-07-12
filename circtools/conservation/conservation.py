@@ -350,7 +350,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             bsj_exon = all_exons_circle[name][-1]
                             first_exon = all_exons_circle[name][0]
 
-                    print(bsj_exon, first_exon)
+                    #print(bsj_exon, first_exon)
                     
                     host_gene = current_line[3]
                     # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
@@ -363,7 +363,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         print(each_target_species)             
                     
                         # take these flanking exons per circle and perform liftover 
-                        if first_exon:
+                        if "first_exon" in locals():
                             # liftover first exon
                             print("*** Lifting over first exon ***")
                             first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
@@ -383,22 +383,23 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
 
                         # fetch sequences for both these exons now
-                        first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
-                        bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
-
-                        circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
-                        #print(circ_sequence_target)
-                        
-                        print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
-
-                        print("Both lifted exons::", first_exon_liftover, bsj_exon_liftover)
-                        # writing BED outputfile
-                        if current_line[5] == "+":
-                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
-                        elif current_line[5] == "-":
-                            lifted_circle = bsj_exon_liftover[:2] + [first_exon_liftover[2]]
+                        if "first_exon" in locals():
+                            first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
+                            bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
+                            circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
+                            print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
+                            # writing BED outputfile
+                            if current_line[5] == "+":
+                                lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
+                            elif current_line[5] == "-":
+                                lifted_circle = bsj_exon_liftover[:2] + [first_exon_liftover[2]]
+                            else:
+                                lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
                         else:
-                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
+                            bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
+                            circ_sequence_target = str(bsj_exon_seq.fetch_sequence())
+                            print("Lifted over coordinates:", bsj_exon_liftover)
+                            lifted_circle = bsj_exon_liftover
 
                         lifted_circle = list(map(str, lifted_circle))
                         print("Lifted circle in target species ", each_target_species , " is " , lifted_circle)
