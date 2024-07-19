@@ -103,6 +103,8 @@ class Alignment(object):
         plt.bar(species, scores, color ='blue', width = 0.4)
         plt.xlabel("Pairwise alignments")
         plt.ylabel("Alignment scores")
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)
         plt.show()
         plt.savefig(out_bar)
 
