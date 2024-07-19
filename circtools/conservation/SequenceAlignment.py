@@ -13,7 +13,8 @@ class Alignment(object):
     def __init__(self, input_fasta, source_species, circle_name) -> None:
         self.fasta_file = input_fasta
         self.source_species = source_species
-        self.circle_name = circle_name
+        temp_name = circle_name.split("_")
+        self.circle_name = temp_name[0] + "(" + temp_name[1] + ":" + temp_name[2] + "-" + temp_name[3] + ")"
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
@@ -67,6 +68,7 @@ class Alignment(object):
         axes.spines['right'].set_visible(False)
         axes.spines['left'].set_visible(False)
         plt.title("Sequence conservation tree for circle: " + self.circle_name)
+        plt.xticks(fontsize=12)
         plt.show()
         plt.savefig(out_png)
 
@@ -103,8 +105,8 @@ class Alignment(object):
         plt.bar(species, scores, color ='blue', width = 0.4)
         plt.xlabel("Pairwise alignments", fontsize = 14)
         plt.ylabel("Alignment scores", fontsize = 14)
-        plt.xticks(fontsize=14)
-        plt.yticks(fontsize=14)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
         plt.title("Pairwise alignment scores for circle: " +  self.circle_name)
         plt.show()
         plt.savefig(out_bar)
