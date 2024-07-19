@@ -105,6 +105,7 @@ class Alignment(object):
         plt.ylabel("Alignment scores")
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
+        plt.title("Pairwise alignment scores for circle: " +  self.circle_name)
         plt.show()
         plt.savefig(out_bar)
 
