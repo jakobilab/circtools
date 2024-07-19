@@ -32,6 +32,7 @@ from . import circFilter as Ft
 from . import findcircRNA as Fc
 from . import genecount as Gc
 from .fix2chimera import Fix2Chimera
+from . import CombineCirctoolsCiriquant as Ccc
 
 import circ_module.circ_template
 
@@ -175,7 +176,7 @@ class Detect(circ_module.circ_template.CircTemplate):
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
             print(
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
-            exit(-1)
+
 
         if options.bam and len(options.bam) == 1:
 
@@ -559,6 +560,28 @@ class Detect(circ_module.circ_template.CircTemplate):
             print("Temporary files deleted")
 
         logging.info("circtools completed successfully")
+
+        ## Merging with CIRIquant if flag is provided to be True
+        if options.flag_ciriquant:
+            # check first the command-line options for ciriquant
+            if not options.list_ciriquant:
+                logging.error("Input error! A list of CIRIquant output files must be provided to use the metatool module")
+                sys.exit("Please provide the file with list of CIRIquant outputs per sample.")
+            elif not output_circ_counts:
+                logging.error("CircRNACount file not found: "+ output_circ_counts)
+                sys.exit("Please check if " + output_circ_counts + " exists")
+            elif not output_linear_counts:
+                logging.error("LinearCount file not found: "+ output_linear_counts)
+                sys.exit("Please check if " + output_linear_counts + " exists")
+            elif not output_coordinates:
+                logging.error("CircCoordinate file not found: "+ output_coordinates)
+                sys.exit("Please check if " + output_coordinates + " exists")
+            else:
+                logging.info("Merging the predictions from Circtools and CIRIquant")
+                cq = Ccc.metatool()
+                cq.merging(options.list_ciriquant[0], output_circ_counts,
+                           output_coordinates, output_linear_counts, 
+                           options.cleanup, options.out_dir)
 
 
 def fixall(joinedfnames, mate1filenames, mate2filenames, out_dir, tmp_dir):
