@@ -40,6 +40,8 @@ RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wg
 
 USER circtools
 
+WORKDIR /circtools/
+
 # define entrypoint
 
 ENTRYPOINT ["circtools"]
