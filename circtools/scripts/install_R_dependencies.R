@@ -52,7 +52,9 @@ pkgs <- c(
     'BSgenome',
     'IRanges',
     'S4Vectors',
-    'Biostrings'
+    'Biostrings',
+    "aod",
+    "plyr"
 )
 countdown <- function(from)
 {
