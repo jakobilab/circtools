@@ -53,6 +53,7 @@ pkgs <- c(
     'IRanges',
     'S4Vectors',
     'Biostrings',
+    "openxlsx",
     "aod",
     "plyr"
 )
