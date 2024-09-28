@@ -54,6 +54,7 @@ pkgs <- c(
     'S4Vectors',
     'Biostrings',
     "openxlsx",
+    "ggrepel",
     "aod",
     "plyr"
 )
