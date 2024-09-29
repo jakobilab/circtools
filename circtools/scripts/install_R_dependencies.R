@@ -19,33 +19,30 @@ args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
 # we need these packages
-# pkgs <- c(
-#     "aod",
-#     "amap",
-#     "ballgown",
-#     "biomaRt",
-#     "data.table",
-#     "edgeR",
-#     "GenomicFeatures",
-#     "GenomicRanges",
-#     "ggbio",
-#     "ggfortify",
-#     "ggplot2",
-#     "gplots",
-#     "ggrepel",
-#     "gridExtra",
-#     "openxlsx",
-#     "plyr",
-#     "Hmisc",
-#     "reshape2",
-#     "devtools",
-#     "kableExtra",
-#     "formattable",
-#     "dplyr",
-#     "RColorBrewer"
-# )
-
 pkgs <- c(
+    "aod",
+    "amap",
+    "ballgown",
+    "biomaRt",
+    "data.table",
+    "edgeR",
+    "GenomicFeatures",
+    "GenomicRanges",
+    "ggbio",
+    "ggfortify",
+    "ggplot2",
+    "gplots",
+    "ggrepel",
+    "gridExtra",
+    "openxlsx",
+    "plyr",
+    "Hmisc",
+    "reshape2",
+    "devtools",
+    "kableExtra",
+    "formattable",
+    "dplyr",
+    "RColorBrewer",
     "devtools",
     'GenomicRanges',
     'ggplot2',
@@ -58,6 +55,20 @@ pkgs <- c(
     "aod",
     "plyr"
 )
+#
+# pkgs <- c(
+#     "devtools",
+#     'GenomicRanges',
+#     'ggplot2',
+#     'BSgenome',
+#     'IRanges',
+#     'S4Vectors',
+#     'Biostrings',
+#     "openxlsx",
+#     "ggrepel",
+#     "aod",
+#     "plyr"
+# )
 countdown <- function(from)
 {
   cat(from)
