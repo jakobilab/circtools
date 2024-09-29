@@ -12,6 +12,9 @@ LABEL org.label-schema.build-date=$BUILD_DATE
 
 # update all repos, install minimal start packages
 
+WORKDIR /circtools/
+
+
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com/http:\/\/mirror\.arizona\.edu/' /etc/apt/sources.list; sed -i 's/http:\/\/security\.ubuntu\.com/http:\/\/mirror\.arizona\.edu/' /etc/apt/sources.list; apt-get update; apt-get install --no-install-recommends wget git gpg ca-certificates -y
 
 RUN useradd -ms /bin/bash circtools
@@ -36,11 +39,9 @@ RUN apt-get update; DEBIAN_FRONTEND=noninteractive TZ=America/Phoenix apt-get in
 
 #RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; bash /circtools/scripts/install_external.sh; Rscript /circtools/scripts/install_R_dependencies.R; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
 
-RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary -O /usr/bin/bedtools; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*; rm circtools/ -rf;
-
+RUN git clone https://github.com/jakobilab/circtools.git ; ls -la circtools/; wget https://bootstrap.pypa.io/get-pip.py; python3 get-pip.py; rm get-pip.py; python3 -m pip install -U setuptools pip numpy; python3 -m pip install circtools/; wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary -O /usr/bin/bedtools; Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/; pip cache purge; apt-get purge python3-dev; apt-get autoremove; apt-get autoclean; rm -rf /var/lib/apt/lists/*;
 USER circtools
 
-WORKDIR /circtools/
 
 # define entrypoint
 
