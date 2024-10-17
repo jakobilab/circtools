@@ -21,13 +21,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and Push image
+      - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
+          context: ./docker/
           provenance: false
-        run: |
-           docker buildx build \
-             --file ./docker/Dockerfile \
-             --platform linux/arm64,linux/amd64\
-             --tag ghcr.io/jakobilab/circtools/circtools:latest \
-             --push .
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/jakobilab/circtools/circtools:latest
+          push: ${{ github.ref == 'refs/heads/master' }}
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
