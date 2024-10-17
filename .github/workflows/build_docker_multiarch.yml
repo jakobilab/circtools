@@ -1,4 +1,4 @@
-name: Docker Container
+name: Multi-arch Docker Container
 
 on:
   workflow_run:
