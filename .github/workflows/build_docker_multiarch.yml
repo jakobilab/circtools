@@ -1,7 +1,7 @@
 name: Multi-arch Docker Container
 
 on:
-  push:
+  pull_request:
 
 jobs:
   build-and-push-docker-image:
@@ -19,10 +19,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and Push image
-      run: |
-        docker buildx build \
-          --file ./docker/Dockerfile \
-          --platform linux/arm64,linux/amd64\
-          --tag ghcr.io/jakobilab/circtools/circtools:latest \
-          --push .
+      - name: Build and Push image
+          run: |
+            docker buildx build \
+              --file ./docker/Dockerfile \
+              --platform linux/arm64,linux/amd64\
+              --tag ghcr.io/jakobilab/circtools/circtools:latest \
+              --push .
