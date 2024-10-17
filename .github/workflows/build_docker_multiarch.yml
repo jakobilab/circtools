@@ -23,11 +23,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push image
         uses: docker/build-push-action@v6
-           with:
-               provenance: false
-        run: |
-          docker buildx build \
-            --file ./docker/Dockerfile \
-            --platform linux/arm64,linux/amd64\
-            --tag ghcr.io/jakobilab/circtools/circtools:latest \
-            --push .
+         with:
+           provenance: false
+         run: |
+           docker buildx build \
+             --file ./docker/Dockerfile \
+             --platform linux/arm64,linux/amd64\
+             --tag ghcr.io/jakobilab/circtools/circtools:latest \
+             --push .
