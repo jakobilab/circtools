@@ -11,7 +11,6 @@ jobs:
     name: Build multiarch Docker image and push to repositories
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout code
           - name: Checkout code
             uses: actions/checkout@v3
           - name: Set up Docker Buildx
