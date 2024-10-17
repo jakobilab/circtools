@@ -1,10 +1,7 @@
 name: Multi-arch Docker Container
 
 on:
-  workflow_run:
-    workflows: ["circtools CI"]
-    types:
-      - completed
+  push:
 
 jobs:
   build-and-push-docker-image:
@@ -22,7 +19,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Build and Push image
       run: |
         docker buildx build \
