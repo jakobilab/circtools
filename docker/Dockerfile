@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL stage=builder
 
@@ -22,8 +22,8 @@ RUN useradd -ms /bin/bash circtools
 # Set up repositories first
 
 # RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/R.gpg  >/dev/null; wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xba6932366a755776" | gpg --dearmor | tee /etc/apt/trusted.gpg.d/python.gpg  >/dev/null; echo "deb [signed-by=/etc/apt/trusted.gpg.d/R.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | tee -a /etc/apt/sources.list.d/r-project.list; echo "deb [signed-by=/etc/apt/trusted.gpg.d/python.gpg] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy main" | tee -a /etc/apt/sources.list.d/python_ppa.list; mkdir /root/.R/;  wget https://raw.githubusercontent.com/jakobilab/circtools/devel/docker/Makevars -O /root/.R/Makevars; apt-get update -y
-
-RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/R.gpg  >/dev/null; echo "deb [signed-by=/etc/apt/trusted.gpg.d/R.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | tee -a /etc/apt/sources.list.d/r-project.list;  mkdir /root/.R/;  wget https://raw.githubusercontent.com/jakobilab/circtools/devel/docker/Makevars -O /root/.R/Makevars; apt-get update -y
+#
+RUN mkdir /root/.R/;  wget https://raw.githubusercontent.com/jakobilab/circtools/devel/docker/Makevars -O /root/.R/Makevars; apt-get update -y
 
 COPY Makevars /root/.R/Makevars
 
