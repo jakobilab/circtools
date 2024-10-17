@@ -1,10 +1,6 @@
 name: Docker Container
 
 on:
-  workflow_run:
-    workflows: ["circtools CI"]
-    types:
-      - completed
 
 jobs:
   build-and-push-docker-image:
