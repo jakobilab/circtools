@@ -3,8 +3,6 @@ name: Multi-arch Docker Container
 on:
   push:
 
-provenance: false
-
 jobs:
   build-and-push-docker-image:
     name: Build Docker image and push to repositories
