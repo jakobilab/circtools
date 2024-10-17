@@ -25,7 +25,7 @@ RUN useradd -ms /bin/bash circtools
 #
 RUN mkdir /root/.R/;  wget https://raw.githubusercontent.com/jakobilab/circtools/devel/docker/Makevars -O /root/.R/Makevars; apt-get update -y
 
-COPY Makevars /root/.R/Makevars
+#COPY Makevars /root/.R/Makevars
 
 # install R, Python and dependencies
 
