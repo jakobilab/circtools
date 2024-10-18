@@ -1,7 +1,10 @@
 name: Multi-arch Docker Container
 
 on:
-  push:
+  workflow_run:
+    workflows: ["circtools CI"]
+    types:
+      - completed
 
 jobs:
   build-and-push-docker-image:
