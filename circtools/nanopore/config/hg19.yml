@@ -1,0 +1,35 @@
+---
+dataset:
+    hg19
+
+fasta:
+    url: https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
+    type: gz
+    name: genome.fa.gz
+
+chrom_size:
+    url: https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
+    type: plain
+    name: genome.chrom.sizes
+
+ref_flat:
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?jsh_pageVertPos=0&clade=mammal&org=Human&db=hg19&hgta_group=allTables&hgta_track=hg19&hgta_table=refFlat&hgta_regionType=genome&hgta_outputType=primaryTable&boolshad.sendToGalaxy=0&boolshad.sendToGreat=0&hgta_outFileName=foo.gz&hgta_outSep=tab&hgta_compressType=gzip&hgta_doTopSubmit=Get+output
+    type: gz-no-unpack
+    name: refFlat.csv.gz
+    postprocess: refFlat
+
+gencode_exon:
+    url: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_37/GRCh37_mapping/gencode.v37lift37.annotation.gtf.gz
+    type: gz
+    name: gencode.csv.gz
+    postprocess: gencode
+
+gencode_intron:
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?clade=mammal&org=Human&db=hg19&hgta_group=genes&hgta_track=wgEncodeGencodeV34lift37&hgta_table=0&hgta_regionType=genome&hgta_outFileName=test.gz.gz&hgta_ctVis=pack&hgta_ctUrl=&fbUpBases=200&fbExonBases=0&fbQual=intron&fbIntronBases=0&fbDownBases=200&hgta_doGetBed=get+BED&hgta_compressType=gzip
+    type: gz
+    name: gencode_intron.bed.gz
+
+est:
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?hgta_ctName=tb_all_est&hgta_ctUrl=&fbUpBases=200&fbQual=exon&fbExonBases=0&fbIntronBases=0&fbDownBases=200&hgta_doGetBed=get+BED&clade=mammal&org=Human&db=hg19&hgta_group=allTracks&hgta_track=intronEst&hgta_table=all_est&hgta_regionType=genome&hgta_outputType=bed&hgta_outFileName=test3.gz&hgta_compressType=gzip
+    type: gz
+    name: est.bed.gz
