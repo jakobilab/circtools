@@ -54,10 +54,12 @@ class CircTools(object):
                circtest:     circular RNA statistical testing
                nanopore:     circular RNA detection from Oxford Nanopore data
                primex:       circular RNA primer design tool
+               padlock:      circular RNA padlock probe design tool
                sirna:        circular RNA siRNA design tool
                reconstruct:  circular RNA reconstruction
                enrich:       circular RNA RBP enrichment scan
                exon:         circular RNA alternative exon analysis
+               conservation: circular RNA conservation analysis
             """)
         parser.add_argument("command", help="Command to run")
 
@@ -284,6 +286,7 @@ class CircTools(object):
                            nargs='+'
                            )
 
+        
         group.add_argument("-p",
                            "--product-size",
                            dest="product_size",
@@ -337,6 +340,283 @@ class CircTools(object):
         import primex.primex
         primex_instance = primex.primex.Primex(args, program_name, version)
         primex_instance.run_module()
+
+    ## padlock probe module added by Shubhada
+    @staticmethod
+    def padlock():
+        parser = argparse.ArgumentParser(
+            description="circular and linear RNA padlock probe design")
+        # NOT prefixing the argument with -- means it"s not optional
+
+        group = parser.add_argument_group("Input")
+
+        group.add_argument("-d",
+                           "--detect-dir",
+                           dest="detect_dir",
+                           help="CircCoordinates file from circtools detect module")
+
+        group.add_argument("-g",
+                           "--gtf-file",
+                           dest="gtf_file",
+                           help="GTF file of genome annotation e.g. ENSEMBL",
+                           required=True
+                           )
+
+        group.add_argument("-f",
+                           "--fasta",
+                           dest="fasta_file",
+                           help="FASTA file with genome sequence (must match annotation)",
+                           required=True
+                           )
+
+        group.add_argument("-O",
+                           "--organism",
+                           dest="organism",
+                           help="Organism of the study (used for primer BLASTing), "
+                                "rn = Rattus norvegicus, mm = Mus musculus, hs = Homo sapiens, ss = Sus scrofa",
+                           choices=("mm", "rn", "hs", "ss")
+                           )
+
+        group.add_argument("-s",
+                           "--sequence",
+                           dest="sequence_file",
+                           help="FASTA file containing the circRNA sequence (exons and introns)"
+                           )
+
+        group = parser.add_argument_group("Output options")
+
+        group.add_argument("-o",
+                           "--output",
+                           dest="output_dir",
+                           help="Output directory (must exist)",
+                           default="./"
+                           )
+
+        group.add_argument("-T",
+                           "--title",
+                           dest="experiment_title",
+                           help="Title of the experiment for HTML output and file name",
+                           default="circtools_padlock_probe_design"
+                           )
+
+        group = parser.add_argument_group("Additional options")
+
+        group.add_argument("-t",
+                           "--temp",
+                           dest="global_temp_dir",
+                           help="Temporary directory (must exist)",
+                           default="/tmp/"
+                           )
+
+        group.add_argument("-G",
+                           "--genes",
+                           dest="gene_list",
+                           help="Space-separated list of host gene names. Primers for CircRNAs of those genes will be "
+                                "designed."
+                                "E.g. -G \"CAMSAP1\" \"RYR2\"",
+                           required=False,
+                           nargs='+'
+                           )
+        
+        group.add_argument("-GL",
+                           "--genes-file",
+                           dest="gene_list_file",
+                           help="File containing gene names for which primers need to be designed. Need to provide this if -G option not provided"                          ,
+                           required=False,
+                           nargs='+'
+                           )
+
+        group.add_argument("-i",
+                           "--id-list",
+                           dest="id_list",
+                           help="Space-separated list of circRNA IDs."
+                                " E.g. -i \"CAMSAP1_9_135850137_135850461_-\" \"CAMSAP1_9_135881633_135883078_-\"",
+                           required=False,
+                           nargs='+'
+                           )
+
+        group.add_argument("-b",
+                           "--no-blast",
+                           dest="blast",
+                           help="Should primers be BLASTED? Even if selected yes here, not more than 50 primers will"
+                                "be sent to BLAST in any case.",
+                           default=False,
+                           action='store_true'
+                           )
+        
+        group.add_argument("-n",
+                           "--num-pairs",
+                           dest="num_pairs",
+                           help="Number of primer pairs to be designed",
+                           type=int,
+                           default=10
+                           )
+
+        group.add_argument("-r",
+                           "--rna-type",
+                           dest="rna_type",
+                           help="Flag for RNA type for which you want to generated padlock probes\n. 0 for Circular RNAs only, 1 for Linear RNAs only and 2 for Both. DEFAULT 2",
+                           type=int,
+                           default=2
+                           )
+        
+        group.add_argument("-svg",
+                           "--no-svg",
+                           dest="svg",
+                           help="Should the SVG files for graphical representation be generated?",
+                           default=False,
+                           action='store_true'
+                           )
+
+        args = parser.parse_args(sys.argv[2:])
+
+        # start the padlock module
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import padlock.padlock
+        padlock_instance = padlock.padlock.Padlock(args, program_name, version)
+        padlock_instance.run_module()
+
+    ## Conservation module added by Shubhada
+    @staticmethod
+    def conservation():
+        parser = argparse.ArgumentParser(
+            description="circular RNA conservation analysis")
+        # NOT prefixing the argument with -- means it"s not optional
+
+        group = parser.add_argument_group("Input")
+
+        group.add_argument("-d",
+                           "--detect-dir",
+                           dest="detect_dir",
+                           help="CircCoordinates file from circtools detect module")
+
+        group.add_argument("-g",
+                           "--gtf-file",
+                           dest="gtf_file",
+                           help="GTF file of genome annotation e.g. ENSEMBL",
+                           required=True
+                           )
+
+        group.add_argument("-f",
+                           "--fasta",
+                           dest="fasta_file",
+                           help="FASTA file with genome sequence (must match annotation)",
+                           required=True
+                           )
+
+        group.add_argument("-O",
+                           "--organism",
+                           dest="organism",
+                           help="Organism of the study (used for primer BLASTing), "
+                                "rn = Rattus norvegicus, mm = Mus musculus, hs = Homo sapiens, ss = Sus scrofa, cl = Canis lupus familiaris",
+                           choices=("mm", "rn", "hs", "ss", "cl")
+                           )
+        
+        group.add_argument("-TS",
+                           "--target_organism",
+                           dest="target_species",
+                           help="Target species to be used to calculate conservation score"
+                           #choices=("mm", "rn", "hs", "ss", "cl")
+                           )
+
+        group.add_argument("-s",
+                           "--sequence",
+                           dest="sequence_file",
+                           help="FASTA file containing the circRNA sequence (exons and introns)"
+                           )
+
+        group = parser.add_argument_group("Output options")
+
+        group.add_argument("-o",
+                           "--output",
+                           dest="output_dir",
+                           help="Output directory (must exist)",
+                           default="./"
+                           )
+
+        group.add_argument("-T",
+                           "--title",
+                           dest="experiment_title",
+                           help="Title of the experiment for HTML output and file name",
+                           default="circtools_padlock_probe_design"
+                           )
+
+        group = parser.add_argument_group("Additional options")
+
+        group.add_argument("-t",
+                           "--temp",
+                           dest="global_temp_dir",
+                           help="Temporary directory (must exist)",
+                           default="/tmp/"
+                           )
+
+        group.add_argument("-G",
+                           "--genes",
+                           dest="gene_list",
+                           help="Space-separated list of host gene names. Primers for CircRNAs of those genes will be "
+                                "designed."
+                                "E.g. -G \"CAMSAP1\" \"RYR2\"",
+                           required=False,
+                           nargs='+'
+                           )
+        
+        group.add_argument("-GL",
+                           "--genes-file",
+                           dest="gene_list_file",
+                           help="File containing gene names for which primers need to be designed. Need to provide this if -G option not provided"                          ,
+                           required=False,
+                           nargs='+'
+                           )
+
+        group.add_argument("-i",
+                           "--id-list",
+                           dest="id_list",
+                           help="Space-separated list of circRNA IDs."
+                                " E.g. -i \"CAMSAP1_9_135850137_135850461_-\" \"CAMSAP1_9_135881633_135883078_-\"",
+                           required=False,
+                           nargs='+'
+                           )
+        
+        group.add_argument("-hg19",
+                           "--hg19",
+                           dest="hg19_conversion",
+                           help="Are given circular co-ordinates for human from hg19 assembly?"
+                           "If the flag is on, these will be converted into hg38.",
+                           default=False,
+                           action='store_true'
+                           )
+        
+        group.add_argument("-mm10",
+                           "--mm10",
+                           dest="mm10_conversion",
+                           help="Are given circular co-ordinates for mouse from mm10 assembly?"
+                           "If the flag is on, these will be converted into mm39.",
+                           default=False,
+                           action='store_true'
+                           )
+        
+        group.add_argument("-pairwise_flag",
+                           "--pairwise_flag",
+                           dest="pairwise_flag",
+                           help="Should pairwise alignments be performed as well? Additional barplot will be plotted in this case.",
+                           default=False,
+                           action='store_true'
+                           )
+
+        args = parser.parse_args(sys.argv[2:])
+
+        # start the conservation module
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import conservation.conservation
+        conservation_instance = conservation.conservation.Conservation(args, program_name, version)
+        conservation_instance.run_module()
+
 
     @staticmethod
     def sirna():
@@ -603,8 +883,17 @@ class CircTools(object):
                                 "must have the same order as input chimeric junction files")
         group.add_argument("-A", "--refseq", dest="refseq",
                            help="Reference sequence FASTA file")
-
         parser.add_argument_group(group)
+
+        # ciriquant merging
+        group = parser.add_argument_group("CIRIquant Options", "Options for merging Circtools and CIRIquant matches")
+        group.add_argument("-cq", "--flag_ciriquant", action="store_true",
+                           dest="flag_ciriquant", default=False,
+                           help="If specified, -cql must also be provided. [default: False]")
+        group.add_argument("-cql", "--list_ciriquant", nargs="+", dest="list_ciriquant", help="Two-column tab-separated text file with list of CIRIquant output files. First column is sample ID and second column is full path to .ciri output file")
+        group.add_argument("-S", "--cleanup", dest="cleanup", help="String to be removed from each sample name so that the names of Circtools and CIRIquant are the same [Default: \"_STARmapping.*Chimeric.out.junction\"]", default="*Chimeric.out.junction")
+        parser.add_argument_group(group)
+        
 
         args = parser.parse_args(sys.argv[2:])
 
