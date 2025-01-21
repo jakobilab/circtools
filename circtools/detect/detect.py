@@ -176,7 +176,7 @@ class Detect(circ_module.circ_template.CircTemplate):
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
             print(
                 "BAM file list is shorter than mate list. Maybe you forgot the @ (@file.list)?")
-
+            exit(-1)
 
         if options.bam and len(options.bam) == 1:
 
@@ -479,7 +479,7 @@ class Detect(circ_module.circ_template.CircTemplate):
                                               tmp_dir=options.tmp_dir,
                                               circ_coor=options.circ,
                                               ref=options.refseq,
-                                              countlinearsplicedreads=False),
+                                              countlinearsplicedreads=True),
                             bamfiles)
                     else:
                         if options.detect:
