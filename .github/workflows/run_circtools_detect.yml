@@ -14,9 +14,11 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-        R: ['4.1.0' , '4.2.0' ]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+#         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-12, macos-13]
+#        R: ['4.2.0', '4.3.0', '4.4.0' ]
+        R:  ['4.4.0' ]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         #os: [ubuntu-22.04]
         #os: [ macos-11]
         #R: ['4.2.0' ]
@@ -24,11 +26,11 @@ jobs:
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        ref: master
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
