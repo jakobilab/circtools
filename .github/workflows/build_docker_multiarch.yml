@@ -25,7 +25,7 @@ jobs:
       - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v6
         with:
-          context: ./docker/
+          context: ./
           provenance: false
           platforms: linux/amd64,linux/arm64
           tags: |
