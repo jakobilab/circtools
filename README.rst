@@ -6,7 +6,9 @@
 .. figure:: https://raw.githubusercontent.com/jakobilab/circtools/master/docs/img/circtools_200px.png
    :alt: circtools
 
-|docs| |build| |docker| |zenodo| |downloads| |pypi|
+|docs| |zenodo|
+|downloads| |pypi|
+|build| |docker|
 
 Introduction
 -------------
