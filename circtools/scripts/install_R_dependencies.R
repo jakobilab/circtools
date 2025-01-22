@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Copyright (C) 2017 Tobias Jakobi
+# Copyright (C) 2025 Tobias Jakobi
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,20 +55,7 @@ pkgs <- c(
     "aod",
     "plyr"
 )
-#
-# pkgs <- c(
-#     "devtools",
-#     'GenomicRanges',
-#     'ggplot2',
-#     'BSgenome',
-#     'IRanges',
-#     'S4Vectors',
-#     'Biostrings',
-#     "openxlsx",
-#     "ggrepel",
-#     "aod",
-#     "plyr"
-# )
+
 countdown <- function(from)
 {
   cat(from)
@@ -102,14 +89,6 @@ message("")
 for (package in pkgs){
     message(paste("Need to install package", package))
 }
-message("")
-message("Installation will start in 10 seconds.")
-message("Press ctrl+c to cancel.")
-message("")
-
-countdown(10)
-message("")
-
 
 if (
     majorVersion >= 4
