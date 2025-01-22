@@ -65,7 +65,7 @@ RUN cd /build/ && \
 
 # Download and install pblat
 RUN cd /build/ && \
-    git clone https://github.com/icebert/pblat.git && \
+    git clone https://github.com/jakobilab/pblat.git && \
     cd pblat && \
     make && \
     cp pblat /usr/local/bin/
