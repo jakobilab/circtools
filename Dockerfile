@@ -1,18 +1,10 @@
 FROM ubuntu:24.04
 
 LABEL stage=builder
-
 LABEL maintainer="tjakobi@arizona.edu"
 
-#ARG CIRCTOOLS_VERSION
-#
-#ARG BUILD_DATE
-
-ARG MAKEFLAGS="-j36"
-
-# Set environemt
+ARG MAKEFLAGS="-j4"
 ENV DEBIAN_FRONTEND=noninteractive
-
 ENV TZ=America/Phoenix
 
 #LABEL org.label-schema.build-date=$BUILD_DATE
@@ -65,7 +57,7 @@ RUN cd /build/ && \
 
 # Download and install pblat
 RUN cd /build/ && \
-    git clone https://github.com/jakobilab/pblat.git && \
+    git clone https://github.com/icebert/pblat.git && \
     cd pblat && \
     make && \
     cp pblat /usr/local/bin/
