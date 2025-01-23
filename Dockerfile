@@ -51,9 +51,11 @@ RUN mkdir /build/
 
 # Download and install BEDTools
 RUN cd /build/ && \
-    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.0/bedtools.static && \
-    chmod +x bedtools.static && \
-    mv bedtools.static /usr/local/bin/bedtools
+    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
+    tar zxvf bedtools-2.31.1.tar.gz && \
+    cd bedtools2 && \
+    make && \
+    cp bin/* /usr/local/bin/
 
 # Download and install pblat
 RUN cd /build/ && \
