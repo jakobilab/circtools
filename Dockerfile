@@ -54,7 +54,7 @@ RUN cd /build/ && \
     wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
     tar zxvf bedtools-2.31.1.tar.gz && \
     cd bedtools2 && \
-    make && \
+    make -j4 && \
     cp bin/* /usr/local/bin/
 
 # Download and install pblat
