@@ -8,7 +8,7 @@ The circtools padlock module is a specialized primer design tool tailored specif
 Required tools and packages
 ----------------------------
 
-``circtools primex`` depends on R, several R packages, and BioPython:
+``circtools padlock`` depends on R, several R packages, and BioPython:
 
 R packages:
 
@@ -107,7 +107,7 @@ A sample call to padlock using the `Jakobi et al. 2016 <https://www.sciencedirec
     gzip -d Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
     gzip -d Mus_musculus.GRCm38.90.gtf.gz
 
-    # run circtools primex, design primer for linear RNA Slc8a1
+    # run circtools padlock, design primer for linear RNA Slc8a1
     circtools padlock -f Mus_musculus.GRCm38.dna.primary_assembly.fa -g Mus_musculus.GRCm38.90.gtf -O mm -G Slc8a1 -T "Slc8a1 probes" -r 1 -b
 
 
