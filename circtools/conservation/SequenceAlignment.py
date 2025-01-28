@@ -56,7 +56,8 @@ class Alignment(object):
         self.run_mafft()
 
         tree_file = self.fasta_file + ".tree"
-        out_png = self.fasta_file.replace(".fasta", ".png") 
+        #out_png = self.fasta_file.replace(".fasta", ".png") 
+        out_svg = self.fasta_file.replace(".fasta", ".svg") 
         
         tree = Phylo.read(tree_file, "newick")               # this is an output file from mafft_cline() function with --treeout option
         fig = plt.figure(figsize=(11, 10), dpi=100)
@@ -70,7 +71,8 @@ class Alignment(object):
         plt.title("Sequence conservation tree for circle: " + self.circle_name)
         plt.xticks(fontsize=12)
         plt.show()
-        plt.savefig(out_png)
+        #plt.savefig(out_png)
+        plt.savefig(out_svg)
 
     def pairwise_alignment(self):
         # perform pairwise alignment if the flag is on
@@ -100,7 +102,7 @@ class Alignment(object):
         # plot as a bar plot
         species = list(plot_dict.keys())
         scores = list(plot_dict.values())
-        out_bar = self.fasta_file.replace(".fasta", "_pairwise.png") 
+        out_bar = self.fasta_file.replace(".fasta", "_pairwise.svg") 
         fig = plt.figure(figsize = (10, 10))
         plt.bar(species, scores, color ='blue', width = 0.4)
         plt.xlabel("Pairwise alignments", fontsize = 14)
