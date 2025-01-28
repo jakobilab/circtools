@@ -110,10 +110,10 @@ class liftover(object):
             else:
                 # somehow the lifted coordinates are split into two. 
                 for line in lines:
-                    print(line)
+                    print("Lifted coordinates are splitted into two regions", line)
             
             lifted_coordinates[0] = lifted_coordinates[0].replace("chr", "")
-            print("Lifted coordinates:", lifted_coordinates)
+            #print("Lifted coordinates:", lifted_coordinates)
             return(lifted_coordinates)
     
     def parse_gff_rest(self, output):
@@ -161,7 +161,7 @@ class liftover(object):
         
         # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
-        print("Lifted exons:", lifted_exons)
+        #print("Lifted exons:", lifted_exons)
 
         # now perform bedtools operation to find out the correct exon boundaries
         lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
@@ -180,7 +180,7 @@ class liftover(object):
 
             # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
             final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
-            print("Final:", final_exon)
+            #print("Final:", final_exon)
 
             return(final_exon)                  # the sequences will be extracted for this exon
         else:
@@ -218,7 +218,7 @@ class liftover(object):
             region_bed = pybedtools.BedTool(region, from_string = True)
             closest_exon = region_bed.closest(exon_bed_all, sortout=True)
             final_exon = str(closest_exon).strip().split("\t")[-3:]
-            print("Closest exon:",   final_exon)
+            #print("Closest exon:",   final_exon)
 
             return(final_exon)
 
