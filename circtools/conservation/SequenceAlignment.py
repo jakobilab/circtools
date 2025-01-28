@@ -18,7 +18,7 @@ class Alignment(object):
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
-        print(self.out_fasta)
+        #print(self.out_fasta)
         aln = AlignIO.read(self.out_fasta, 'clustal')
         #print(aln)
 
@@ -50,7 +50,7 @@ class Alignment(object):
             else:
                 temp = leaf.name.split("_")
                 string = temp[1] + "(" + temp[2] + ":" + temp[3] + ")"
-                print(leaf.name, string)
+                #print(leaf.name, string)
                 return(string)
 
         self.run_mafft()
@@ -90,12 +90,12 @@ class Alignment(object):
             species_2 = pair[1].id.split("(")[0]
             if ((self.source_species == species_1) or (self.source_species == species_2)):
                 alignments = aligner.align(pair[0].seq, pair[1].seq)
-                print(species_1, species_2, pair[0].id, pair[1].id, alignments.score)
+                #print(species_1, species_2, pair[0].id, pair[1].id, alignments.score)
                 plot_dict[species_1+"_"+species_2] = float(alignments.score)
         
         # normalise the alignment scores by length of sequence of source species circle
         plot_dict = {k: v / length for k, v in plot_dict.items()}
-        print(plot_dict)
+        #print(plot_dict)
 
         # plot as a bar plot
         species = list(plot_dict.keys())
@@ -110,8 +110,9 @@ class Alignment(object):
         plt.title("Pairwise alignment scores for circle: " +  self.circle_name)
         plt.show()
         plt.savefig(out_bar)
-
+'''
 if __name__ == "__main__":
     obj = Alignment("/scratch/circtools2/circtools/sample_data/temp/alignment_UXS1_2_106145190_106166083_-.fasta", "hs")
     obj.draw_phylo_tree()
     obj.pairwise_alignment()
+'''
