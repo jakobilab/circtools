@@ -28,7 +28,7 @@ Click `here <https://docs.circ.tools/>`__ to access the complete documentation o
 Installation
 ------------
 
-The ``circtools`` package is written in Python 3 (supporting Python 3.7 - 3.12). It requires only a small number of external dependencies, namely standard bioinformatics tools:
+The ``circtools`` package is written in Python 3 (supporting Python 3.8 - 3.12). It requires only a small number of external dependencies, namely standard bioinformatics tools:
 
 -  `bedtools (>= 2.27.1) <https://bedtools.readthedocs.io/en/latest/content/installation.html>`__
    [RBP enrichment module, installed automatically]
