@@ -30,6 +30,7 @@ RUN apt-get update && \
     zlib1g-dev \
     libbz2-dev \
     libjpeg-turbo8-dev \
+    libopenblas-dev \
     libcurl4-openssl-dev \
     libxml2-dev \
     libblas-dev \
