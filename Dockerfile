@@ -48,8 +48,6 @@ RUN apt-get update && \
 # Download and install circtools
 ADD . /build/circtools/
 
-RUN file /usr/lib/R/bin/INSTALL
-
 RUN head /usr/lib/R/bin/INSTALL
 
 # Download and install circtools R deps
