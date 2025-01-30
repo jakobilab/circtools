@@ -45,65 +45,74 @@ RUN apt-get update && \
     libncurses-dev \
     libjpeg-dev
 
-# make build dir
-RUN mkdir /build/
-
-# Download and install BEDTools
-RUN cd /build/ && \
-    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
-    tar zxvf bedtools-2.31.1.tar.gz && \
-    cd bedtools2 && \
-    make -j4 && \
-    cp bin/* /usr/local/bin/
-
-# Download and install pblat
-RUN cd /build/ && \
-    git clone https://github.com/icebert/pblat.git && \
-    cd pblat && \
-    make && \
-    cp pblat /usr/local/bin/
-
-# Download and install samtools
-RUN cd /build/ && \
-    wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
-    tar xvf samtools-1.21.tar.bz2 && \
-    cd samtools-1.21 && \
-    make && \
-    make install
-
-## Download and install circtools
-#RUN cd /build/ && \
-#    git clone https://github.com/jakobilab/circtools.git  && \
-#    python3 -m pip install -U setuptools numpy --break-system-packages && \
-#    python3 -m pip install circtools/ --break-system-packages
-
 # Download and install circtools
 ADD . /build/circtools/
 
-RUN cd /build/ && \
-    python3 -m pip install -U setuptools numpy --break-system-packages && \
-    python3 -m pip install circtools/ --break-system-packages
+RUN file /usr/lib/R/bin/INSTALL
+
+RUN head /usr/lib/R/bin/INSTALL
 
 # Download and install circtools R deps
 RUN cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/
-
-RUN pip install nanofilt --break-system-packages -v
-
-# Clean up to save space
-RUN pip cache purge && \
-    apt-get purge python3-dev -y && \
-    apt-get autoremove -y && \
-    apt-get autoclean -y && \
-    rm /build/ /var/lib/apt/lists/ -rf
-
-# add script to bend absolute path names for circtools inside docker
-ADD docker_path_wrapper.py /usr/local/bin/
-
-RUN mkdir /host_os/
-
-# set circtools user
-#USER circtools
-
-# define entrypoint
-ENTRYPOINT ["docker_path_wrapper.py"]
+#
+## make build dir
+#RUN mkdir /build/
+#
+## Download and install BEDTools
+#RUN cd /build/ && \
+#    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
+#    tar zxvf bedtools-2.31.1.tar.gz && \
+#    cd bedtools2 && \
+#    make -j4 && \
+#    cp bin/* /usr/local/bin/
+#
+## Download and install pblat
+#RUN cd /build/ && \
+#    git clone https://github.com/icebert/pblat.git && \
+#    cd pblat && \
+#    make && \
+#    cp pblat /usr/local/bin/
+#
+## Download and install samtools
+#RUN cd /build/ && \
+#    wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
+#    tar xvf samtools-1.21.tar.bz2 && \
+#    cd samtools-1.21 && \
+#    make && \
+#    make install
+#
+### Download and install circtools
+##RUN cd /build/ && \
+##    git clone https://github.com/jakobilab/circtools.git  && \
+##    python3 -m pip install -U setuptools numpy --break-system-packages && \
+##    python3 -m pip install circtools/ --break-system-packages
+#
+## Download and install circtools
+#ADD . /build/circtools/
+#
+#RUN cd /build/ && \
+#    python3 -m pip install -U setuptools numpy --break-system-packages && \
+#    python3 -m pip install circtools/ --break-system-packages
+#
+#
+#
+#RUN pip install nanofilt --break-system-packages -v
+#
+## Clean up to save space
+#RUN pip cache purge && \
+#    apt-get purge python3-dev -y && \
+#    apt-get autoremove -y && \
+#    apt-get autoclean -y && \
+#    rm /build/ /var/lib/apt/lists/ -rf
+#
+## add script to bend absolute path names for circtools inside docker
+#ADD docker_path_wrapper.py /usr/local/bin/
+#
+#RUN mkdir /host_os/
+#
+## set circtools user
+##USER circtools
+#
+## define entrypoint
+#ENTRYPOINT ["docker_path_wrapper.py"]
