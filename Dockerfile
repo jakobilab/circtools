@@ -43,7 +43,7 @@ RUN apt-get update && \
     libfreetype6-dev \
     libtiff5-dev \
     libncurses-dev \
-    libjpeg-dev \
+    libjpeg-dev
 
 # make build dir
 RUN mkdir /build/
