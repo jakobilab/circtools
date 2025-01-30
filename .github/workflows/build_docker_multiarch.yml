@@ -12,7 +12,7 @@ jobs:
     strategy:
         matrix:
             arch: [linux/arm64, linux/amd64, linux/arm/v7]
-    name: Build Docker image and push to repositories
+    name: Build Docker container
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
