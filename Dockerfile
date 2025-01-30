@@ -102,6 +102,8 @@ ADD docker_path_wrapper.py /usr/local/bin/
 
 RUN mkdir /host_os/
 
+LABEL org.opencontainers.image.description="Official circtools Docker image"
+
 # set circtools user
 #USER circtools
 
