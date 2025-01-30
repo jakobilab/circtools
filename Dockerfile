@@ -45,7 +45,6 @@ RUN apt-get update && \
     libncurses-dev \
     libjpeg-dev \
 
-
 # make build dir
 RUN mkdir /build/
 
@@ -84,7 +83,6 @@ ADD . /build/circtools/
 RUN cd /build/ && \
     python3 -m pip install -U setuptools numpy --break-system-packages && \
     python3 -m pip install circtools/ --break-system-packages
-
 
 
 RUN pip install nanofilt --break-system-packages -v
