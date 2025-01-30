@@ -35,7 +35,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
-          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Official circtools docker container
+          outputs: type=image,name=target
           tags: |
             ghcr.io/jakobilab/circtools/circtools:latest
           push: ${{ github.ref == 'refs/heads/master' }}
