@@ -12,7 +12,7 @@ jobs:
     strategy:
         matrix:
             arch: [linux/arm64, linux/amd64, linux/arm/v7]
-    name: Docker container
+    name: Docker
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
