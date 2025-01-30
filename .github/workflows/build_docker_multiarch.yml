@@ -9,6 +9,9 @@ on:
 
 jobs:
   build-and-push-docker-image:
+    strategy:
+        matrix:
+            arch: [linux/arm64, linux/amd64, linux/arm/v7]
     name: Build Docker image and push to repositories
     runs-on: ubuntu-22.04
     steps:
@@ -32,7 +35,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
-          platforms: linux/arm64, linux/amd64, linux/arm/v7
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Official circtools docker container
           tags: |
             ghcr.io/jakobilab/circtools/circtools:latest
