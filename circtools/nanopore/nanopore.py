@@ -363,7 +363,7 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         elif self.cli_params.download:
             self.run_download()
         elif self.cli_params.check:
-            self.run_check()
+            self.run_check(verbose=True)
 
     def run_download(self):
 
@@ -386,7 +386,6 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         tools = {"bedtools": "bedtools",
                  "NanoFilt": "NanoFilt -h",
                  "pblat": "pblat",
-                 "perl": "perl -v",
                  "samtools": "samtools --help"}
 
         failed = False
