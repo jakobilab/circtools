@@ -473,6 +473,8 @@ class Nanopore(circ_module.circ_template.CircTemplate):
                 "Error: '{}' does not exists! Please make sure that the path is written correctly".format(
                     self.reference_path))
             exit(-1)
+        else:
+            self.reference_path = os.path.abspath(self.reference_path)
 
         # Check if reference_path is a directory:
         if not os.path.isdir(self.reference_path):
