@@ -1396,7 +1396,7 @@ class CircTools(object):
                            dest="download",
                            action="store_true",
                            help="Download third-party data, such as "
-                                "genomes required for the analysis.",
+                                "genomes, required for the analysis.",
                            )
 
         group = parser.add_argument_group("Options")
