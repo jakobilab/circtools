@@ -206,7 +206,7 @@ date
 
 ### Extra stuff v2
 
-## Remove empty columns in circRNA candicates file:
+## Remove empty columns in circRNA candidates file:
 mv $sample.circRNA_candidates.annotated.txt OLD.$sample.circRNA_candidates.annotated.txt
 grep -v [[:space:]]0[[:space:]][+-][[:space:]]\.[[:space:]]\.[[:space:]]\.[[:space:]]\.[[:space:]]\. OLD.$sample.circRNA_candidates.annotated.txt > $sample.circRNA_candidates.annotated.txt
 
@@ -266,7 +266,7 @@ wc -l $intron_ucsc introns.uniq.bed introns.uniq.exon_remove.bed $sample.introns
 
 echo
 echo "Name of columns in *novelExonMap.bed file"
-echo "1: chr, 2: start, 3: end, 4: intron name, 5: filler, 6: strand, 7-10: coverageBed output combared to total reads, 11: contained in circRNA(s), 12: novel exon(s) in intron?"
+echo "1: chr, 2: start, 3: end, 4: intron name, 5: filler, 6: strand, 7-10: coverageBed output compared to total reads, 11: contained in circRNA(s), 12: novel exon(s) in intron?"
 echo "coverageBed generates theses columns:"
 echo "           1) The number of features in B that overlapped the A interval."
 echo "           2) The number of bases in A that had non-zero coverage."
