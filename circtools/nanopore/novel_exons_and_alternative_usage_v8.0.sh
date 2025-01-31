@@ -1,8 +1,20 @@
 #!/bin/bash
-#SBATCH -c 1
-#SBATCH -p normal
-#SBATCH --mem=64g
-#SBATCH --time=12:00:00
+
+# This file contains code that is derived from MIT-licensed software:
+#   Original code by Morten T Venø <morten.veno@omiics.com>,
+#   licensed under the MIT License.
+#
+# The MIT License:
+# ---------------------------------------------------------------------
+# See LICENSE_MIT for the full MIT license text.
+# ---------------------------------------------------------------------
+# Modifications and additions to this file are licensed under:
+# The GNU General Public License (GPL), version 3 or later.
+#
+# Copyright (C) 2025 Tobias Jakobi
+#
+# See the LICENSE file in the root directory for the full terms of the GPL.
+#
 
 if [ $# -ne 7 ]; then
     echo "This script is called directly by the circtools nanopore pipeline and not meant for direct user interaction."

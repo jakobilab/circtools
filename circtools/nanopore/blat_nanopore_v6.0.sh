@@ -1,8 +1,21 @@
 #!/bin/bash
-#SBATCH -c 8
-#SBATCH -p normal
-#SBATCH --mem=128g
-#SBATCH --time=72:00:00
+
+# This file contains code that is derived from MIT-licensed software:
+#   Original code by Morten T Venø <morten.veno@omiics.com>,
+#   licensed under the MIT License.
+#
+# The MIT License:
+# ---------------------------------------------------------------------
+# See LICENSE_MIT for the full MIT license text.
+# ---------------------------------------------------------------------
+# Modifications and additions to this file are licensed under:
+# The GNU General Public License (GPL), version 3 or later.
+#
+# Copyright (C) 2025 Tobias Jakobi
+#
+# See the LICENSE file in the root directory for the full terms of the GPL.
+#
+
 
 # This is version 5.5 of the Nanopore circRNA datection pipeline
 # This version uses blat to map reads.  NanoFilt is used to trim low quality reads (q 7). Parallel BLAT is used to map nanopore reads to genome.
