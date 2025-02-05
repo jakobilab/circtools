@@ -505,6 +505,9 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         script_path = str(Path(os.path.expanduser(self.script_path)).resolve())
         output_path = str(Path(self.output_path).resolve())
 
+        final_path = os.path.join(self.config_location, self.config+".yml")
+
+
         # Check if the script-path exists
         if not os.path.exists(script_path):
             print(
@@ -555,27 +558,37 @@ class Nanopore(circ_module.circ_template.CircTemplate):
             print("")
 
             print("circRNA detection has finished")
-            print("Starting the novel exon and alternative usage script")
 
-            os.chdir(original_directory)
+            with open(final_path, 'r') as config_file:
+                build_config = (yaml.safe_load(config_file))
 
-            keep_check = {True: "yes", False: "no"}
+                if len(build_config) == 7:
 
-            keep_temp = keep_check[self.keep_temp]
+                    print("Starting the novel exon and alternative usage script")
 
-            subprocess.run(["bash",
-                            os.path.join(self.script_path,
-                            "novel_exons_and_alternative_usage_v8.0.sh"),
-                            sample_name,
-                            self.config,
-                            self.reference_path,
-                            self.script_path,
-                            self.output_path,
-                            keep_temp,
-                            str(self.threads)
-                            ]
-                           )
-            print("")
+                    os.chdir(original_directory)
+
+                    keep_check = {True: "yes", False: "no"}
+
+                    keep_temp = keep_check[self.keep_temp]
+
+                    subprocess.run(["bash",
+                                    os.path.join(self.script_path,
+                                    "novel_exons_and_alternative_usage_v8.0.sh"),
+                                    sample_name,
+                                    self.config,
+                                    self.reference_path,
+                                    self.script_path,
+                                    self.output_path,
+                                    keep_temp,
+                                    str(self.threads)
+                                    ]
+                                   )
+                    print("")
+
+                else:
+                    print("Skipping novel exon and alternative usage script.")
+                    print("Only supported for human and mouse genome.")
 
             print("Long_read_circRNA has finished!")
         else:
