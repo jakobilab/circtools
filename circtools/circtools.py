@@ -1425,7 +1425,11 @@ class CircTools(object):
         group.add_argument("-C",
                            "--config",
                            dest="config",
-                           choices=['hg19', 'hg38', 'mm9', 'mm10', 'rn6', 'rn7', 'susScr11'],
+                           choices=['hg19', 'hg38',
+                                    'mm9', 'mm10',
+                                    'rn6', 'rn7',
+                                    'susScr11',
+                                    'canFam6'],
                            help="Required. Select which genome build "
                                 "the sample that is from, and specify which "
                                 "genome reference files should be used.",
