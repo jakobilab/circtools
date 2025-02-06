@@ -61,7 +61,7 @@ RUN mkdir /build/
 #
 ## Download and install pblat
 #RUN cd /build/ && \
-#    git clone --depth =1 https://github.com/icebert/pblat.git && \
+#    git clone --depth=1 https://github.com/icebert/pblat.git && \
 #    cd pblat && \
 #    make && \
 #    cp pblat /usr/local/bin/
@@ -76,7 +76,7 @@ RUN mkdir /build/
 
 ## Download and install circtools
 #RUN cd /build/ && \
-#    git clone --depth =1 https://github.com/jakobilab/circtools.git  && \
+#    git clone --depth=1 https://github.com/jakobilab/circtools.git  && \
 #    python3 -m pip install -U setuptools numpy --break-system-packages && \
 #    python3 -m pip install circtools/ --break-system-packages
 
@@ -96,7 +96,7 @@ ADD . /build/circtools/
 RUN uname -m
 
 RUN cd /build/ && \
-    git clone --depth =1 https://github.com/ucscGenomeBrowser/kent.git && \
+    git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
     cd kent/src/ && \
     make userApps && \
     cp ~/bin/`uname -m`/liftOver /usr/local/bin
