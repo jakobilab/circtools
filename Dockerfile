@@ -94,7 +94,7 @@ RUN uname -m
 
 RUN cd /build/ && \
     git clone https://github.com/ucscGenomeBrowser/kent.git && \
-    cd kent && \
+    cd kent/src/ && \
     make userApps && \
     cp ~/bin/`uname -m`/liftOver /usr/local/bin
 
