@@ -104,6 +104,13 @@ RUN mkdir /host_os/
 
 LABEL org.opencontainers.image.description="Official circtools Docker image"
 
+RUN uname -a
+#RUN cd /build/ && \
+#    git clone https://github.com/ucscGenomeBrowser/kent.git && \
+#    cd kent && \
+#    make userApps && \
+#    cp pblat /usr/local/bin/
+
 # set circtools user
 #USER circtools
 
