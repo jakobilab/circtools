@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-push-docker-image:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.arch }}
 
     strategy:
         matrix:
