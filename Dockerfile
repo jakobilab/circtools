@@ -78,12 +78,25 @@ RUN cd /build/ && \
 # Download and install circtools
 ADD . /build/circtools/
 
+#RUN cd /build/ && \
+#    python3 -m pip install -U setuptools numpy --break-system-packages && \
+#    python3 -m pip install circtools/ --break-system-packages && \
+#    cd /build/ && \
+#    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
+#    pip install nanofilt --break-system-packages -v &&\
+#    pip cache purge && \
+#    apt-get purge python3-dev -y && \
+#    apt-get autoremove -y && \
+#    apt-get autoclean -y && \
+#    rm /build/ /var/lib/apt/lists/ -rf
+
+
 RUN cd /build/ && \
-    python3 -m pip install -U setuptools numpy --break-system-packages && \
-    python3 -m pip install circtools/ --break-system-packages && \
+    python3 -m pip install -U setuptools numpy && \
+    python3 -m pip install circtools/ && \
     cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
-    pip install nanofilt --break-system-packages -v &&\
+    pip install nanofilt -v &&\
     pip cache purge && \
     apt-get purge python3-dev -y && \
     apt-get autoremove -y && \
