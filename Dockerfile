@@ -1,9 +1,9 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 LABEL stage=builder
 LABEL maintainer="tjakobi@arizona.edu"
 
-ARG MAKEFLAGS="-j4"
+ARG MAKEFLAGS="-j1"
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Phoenix
 
