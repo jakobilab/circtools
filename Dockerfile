@@ -40,7 +40,7 @@ RUN apt-get update && \
     libssl-dev \
     libharfbuzz-dev \
     uuid-dev \
-    libmariadbclient-dev \
+    libmariadb-dev-compat \
     libfribidi-dev \
     libfreetype6-dev \
     libtiff5-dev \
