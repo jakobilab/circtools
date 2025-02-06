@@ -90,6 +90,14 @@ ADD . /build/circtools/
 #
 #RUN pip install nanofilt --break-system-packages -v
 
+RUN uname -m
+
+RUN cd /build/ && \
+    git clone https://github.com/ucscGenomeBrowser/kent.git && \
+    cd kent && \
+    make userApps && \
+    cp ~/bin/`uname -m`/liftOver /usr/local/bin
+
 # Clean up to save space
 RUN pip cache purge && \
     apt-get purge python3-dev -y && \
@@ -104,13 +112,7 @@ RUN mkdir /host_os/
 
 LABEL org.opencontainers.image.description="Official circtools Docker image"
 
-RUN uname -m
 
-RUN cd /build/ && \
-    git clone https://github.com/ucscGenomeBrowser/kent.git && \
-    cd kent && \
-    make userApps && \
-    cp ~/bin/`uname -m`/liftOver /usr/local/bin
 
 # define entrypoint
 ENTRYPOINT ["docker_path_wrapper.py"]
