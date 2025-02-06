@@ -9,8 +9,14 @@ on:
 
 jobs:
   build-and-push-docker-image:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        matrix:
+            arch: [ubuntu-22.04-arm, ubuntu-22.04]
+
     name: Docker
-    runs-on: ubuntu-22.04-arm
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
