@@ -80,15 +80,15 @@ RUN cd /build/ && \
 # Download and install circtools
 ADD . /build/circtools/
 
-RUN cd /build/ && \
-    python3 -m pip install -U setuptools numpy --break-system-packages && \
-    python3 -m pip install circtools/ --break-system-packages
-
-# Download and install circtools R deps
-RUN cd /build/ && \
-    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/
-
-RUN pip install nanofilt --break-system-packages -v
+#RUN cd /build/ && \
+#    python3 -m pip install -U setuptools numpy --break-system-packages && \
+#    python3 -m pip install circtools/ --break-system-packages
+#
+## Download and install circtools R deps
+#RUN cd /build/ && \
+#    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/
+#
+#RUN pip install nanofilt --break-system-packages -v
 
 # Clean up to save space
 RUN pip cache purge && \
