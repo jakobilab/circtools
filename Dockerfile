@@ -73,7 +73,7 @@ RUN cd /build/ && \
     git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
     cd kent/src/ && \
     make userApps && \
-    cp ~/bin/`uname -m`/liftOver /usr/local/bin \
+    cp ~/bin/`uname -m`/liftOver /usr/local/bin
 
 # Download and install circtools
 ADD . /build/circtools/
