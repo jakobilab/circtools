@@ -24,6 +24,7 @@ RUN apt-get update && \
     python3-pip \
     make  \
     bzip2 \
+    rsync \
     g++ \
     gfortran  \
     libpng-dev \
