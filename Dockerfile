@@ -111,6 +111,8 @@ RUN pip cache purge && \
 # add script to bend absolute path names for circtools inside docker
 ADD docker_path_wrapper.py /usr/local/bin/
 
+RUN liftOver
+
 RUN mkdir /host_os/
 
 LABEL org.opencontainers.image.description="Official circtools Docker image"
