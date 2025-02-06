@@ -57,18 +57,18 @@ RUN cd /build/ && \
     tar zxvf bedtools-2.31.1.tar.gz && \
     cd bedtools2 && \
     make -j4 && \
-    cp bin/* /usr/local/bin/ \
+    cp bin/* /usr/local/bin/ && \
     cd /build/ && \
     git clone --depth=1 https://github.com/icebert/pblat.git && \
     cd pblat && \
     make && \
-    cp pblat /usr/local/bin/ \
+    cp pblat /usr/local/bin/ &&\
     cd /build/ && \
     wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
     tar xvf samtools-1.21.tar.bz2 && \
     cd samtools-1.21 && \
     make && \
-    make install \
+    make install &&\
     cd /build/ && \
     git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
     cd kent/src/ && \
@@ -80,10 +80,10 @@ ADD . /build/circtools/
 
 RUN cd /build/ && \
     python3 -m pip install -U setuptools numpy --break-system-packages && \
-    python3 -m pip install circtools/ --break-system-packages \
+    python3 -m pip install circtools/ --break-system-packages && \
     cd /build/ && \
-    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ \
-    pip install nanofilt --break-system-packages -v \
+    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
+    pip install nanofilt --break-system-packages -v &&\
     pip cache purge && \
     apt-get purge python3-dev -y && \
     apt-get autoremove -y && \
