@@ -23,6 +23,7 @@ pkgs <- c(
     "aod",
     "amap",
     "ballgown",
+    "devtools",
     "biomaRt",
     "data.table",
     "edgeR",
