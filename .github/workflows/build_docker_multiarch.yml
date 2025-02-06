@@ -23,8 +23,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.3.0
       - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v6.13.0
         with:
