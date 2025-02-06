@@ -1,4 +1,4 @@
-name: Docker Container
+name: Docker amd64
 
 on:
   push:
@@ -9,13 +9,8 @@ on:
 
 jobs:
   build-and-push-docker-image:
-    runs-on: ${{ matrix.arch }}
-
-    strategy:
-        matrix:
-            arch: [ubuntu-22.04-arm, ubuntu-22.04]
-
-    name: Docker
+    runs-on: ubuntu-24.04
+    name: Docker amd64
 
     steps:
       - name: Checkout code
@@ -36,6 +31,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+          platforms: linux/amd64
           outputs: type=image,name=target
           tags: |
             ghcr.io/jakobilab/circtools/circtools:latest
