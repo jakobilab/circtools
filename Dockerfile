@@ -80,42 +80,37 @@ RUN cd /build/ && \
 # Download and install circtools
 ADD . /build/circtools/
 
-RUN uname -a
+RUN cd /build/ && \
+    python3 -m pip install -U setuptools numpy --break-system-packages && \
+    python3 -m pip install circtools/ --break-system-packages
 
+# Download and install circtools R deps
+RUN cd /build/ && \
+    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/
 
-#RUN cd /build/ && \
-#    python3 -m pip install -U setuptools numpy --break-system-packages && \
-#    python3 -m pip install circtools/ --break-system-packages
-#
-## Download and install circtools R deps
-#RUN cd /build/ && \
-#    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/
-#
-#RUN pip install nanofilt --break-system-packages -v
-#
-## Clean up to save space
-#RUN pip cache purge && \
-#    apt-get purge python3-dev -y && \
-#    apt-get autoremove -y && \
-#    apt-get autoclean -y && \
-#    rm /build/ /var/lib/apt/lists/ -rf
-#
-## add script to bend absolute path names for circtools inside docker
-#ADD docker_path_wrapper.py /usr/local/bin/
-#
-#RUN mkdir /host_os/
-#
-#LABEL org.opencontainers.image.description="Official circtools Docker image"
-#
-#RUN uname -a
-#RUN cd /build/ && \
-#    git clone https://github.com/ucscGenomeBrowser/kent.git && \
-#    cd kent && \
-#    make userApps && \
-#    cp pblat /usr/local/bin/
+RUN pip install nanofilt --break-system-packages -v
 
-# set circtools user
-#USER circtools
+# Clean up to save space
+RUN pip cache purge && \
+    apt-get purge python3-dev -y && \
+    apt-get autoremove -y && \
+    apt-get autoclean -y && \
+    rm /build/ /var/lib/apt/lists/ -rf
+
+# add script to bend absolute path names for circtools inside docker
+ADD docker_path_wrapper.py /usr/local/bin/
+
+RUN mkdir /host_os/
+
+LABEL org.opencontainers.image.description="Official circtools Docker image"
+
+RUN uname -m
+
+RUN cd /build/ && \
+    git clone https://github.com/ucscGenomeBrowser/kent.git && \
+    cd kent && \
+    make userApps && \
+    cp ~/bin/`uname -m`/liftOver /usr/local/bin
 
 # define entrypoint
 ENTRYPOINT ["docker_path_wrapper.py"]

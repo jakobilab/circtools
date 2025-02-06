@@ -9,9 +9,6 @@ on:
 
 jobs:
   build-and-push-docker-image:
-    strategy:
-        matrix:
-            arch: [linux/arm64, linux/amd64, linux/arm/v7, foo]
     name: Docker
     runs-on: ubuntu-22.04
     steps:
