@@ -154,12 +154,12 @@ for follow up wet lab experiments to verify circRNA candidates.
     :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
 
 .. |docker_arm64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml/badge.svg?branch=master
-    :alt: Docker Build
+    :alt: Docker Build ARM64
     :scale: 100%
-    :target:https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml
+    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml
 
 .. |docker_amd64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml/badge.svg?branch=master
-    :alt: Docker Build
+    :alt: Docker Build AMD64
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml
 
