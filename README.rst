@@ -6,7 +6,7 @@
 .. figure:: https://raw.githubusercontent.com/jakobilab/circtools/master/docs/img/circtools_200px.png
    :alt: circtools
 
-|docs| |build| |docker| |zenodo| |downloads| |pypi|
+|docs||build||docker_amd64||docker_arm64||zenodo||downloads||pypi|
 
 Introduction
 -------------
@@ -153,10 +153,15 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
 
-.. |docker| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_multiarch.yml/badge.svg?branch=master
+.. |docker_arm64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml/badge.svg?branch=master
     :alt: Docker Build
     :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml
+    :target:https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml
+
+.. |docker_amd64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml/badge.svg?branch=master
+    :alt: Docker Build
+    :scale: 100%
+    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml
 
 .. |zenodo| image:: https://zenodo.org/badge/498448368.svg
     :alt: Zenodo DOI link
