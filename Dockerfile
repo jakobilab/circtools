@@ -36,6 +36,7 @@ RUN apt-get update && \
     libxml2-dev \
     libblas-dev \
     liblzma-dev \
+    libgit2-dev \
     libfontconfig1-dev \
     liblapack-dev \
     libssl-dev \
