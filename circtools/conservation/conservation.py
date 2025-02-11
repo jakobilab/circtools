@@ -237,7 +237,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
         letters = string.ascii_letters
         tmp_prefix =  ''.join(random.choice(letters) for i in range(10))        # prefix for tmp files
               
-        species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
+        # species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
+        species_dictionary = self.dict_species_conservation
+        dict_species_ortholog = self.dict_species_ortholog
+        dict_species_liftover = self.dict_species_liftover
 
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
@@ -275,12 +278,12 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     if self.mm10_flag:
                         #print("Before liftover:", current_line)
                         print("Converting mm10 coordinates to mm39 assembly")
-                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, {}, "mm10")
+                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, {}, "mm10", self.dict_species_liftover)
                         current_line = lifted.parseLiftover()
                     elif self.hg19_flag:
                         #print("Before liftover:", current_line)
                         print("Converting hg19 coordinates to hg38 assembly") 
-                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, {}, "hg19")
+                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, {}, "hg19", self.dict_species_liftover)
                         current_line = lifted.parseLiftover()
 
                     sep = "_"
@@ -400,7 +403,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
                     host_gene = current_line[3]
-                    fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism])
+                    fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism], self.dict_species_ortholog)
                     ortho_dict = fetchOrtho.parse_json()
                     #print(ortho_dict)
                     # check if each target species is present in the dictionary and remove if not
@@ -424,7 +427,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             # liftover first exon
                             print("*** Lifting over first exon ***")
                             first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
-                            lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other")
+                            lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other", self.dict_species_liftover)
                             first_exon_liftover = lifted.find_lifted_exons()
                             if (first_exon_liftover == None):
                                 print("No lifted co-ordinates found for first exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")
@@ -432,7 +435,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         
                         print("*** Lifting over BSJ exon ***")
                         bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
-                        lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other")
+                        lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other", self.dict_species_liftover)
                         bsj_exon_liftover = lifted.find_lifted_exons()
                         if (bsj_exon_liftover == None):
                             print("No lifted co-ordinates found for BSJ exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")

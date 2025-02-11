@@ -7,7 +7,7 @@ import pybedtools
 
 class liftover(object):
 
-    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, orthologs, flag) -> None:
+    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, orthologs, flag, dict_species_liftover) -> None:
         self.from_species = from_species
         self.to_species = to_species
         self.from_coord = bed_coord     # BED coordinates in form of a list of chr, start and stop, score and strand
@@ -16,6 +16,7 @@ class liftover(object):
         self.prefix = prefix
         self.flag = flag
         self.ortho_dict = orthologs
+        self.dict_species_liftover = dict_species_liftover
 
     def call_liftover_binary(self):
         # encapsulated liftover binary call
@@ -47,7 +48,8 @@ class liftover(object):
             open(tmp_from_bed, 'w').close()             # erase old contents
         
         elif self.flag == "other":
-            species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6", "rat":"rn7"}
+            #species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6", "rat":"rn7"}
+            species_IDs_dict = self.dict_species_liftover
             self.from_id = species_IDs_dict[self.from_species]
             self.to_id = species_IDs_dict[self.to_species]
             tmp_from_bed = self.tmpdir + self.prefix + "_liftover.tmp"
