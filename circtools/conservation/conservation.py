@@ -37,6 +37,17 @@ from . import LiftOver as LO
 from . import FetchRegionGeneSequence as FS
 from . import SequenceAlignment as AL
 
+import yaml
+import circtools
+
+# some functions for configs and dockers
+def fix_path_for_docker(path: str):
+    if is_running_in_docker() and os.path.isabs(path):
+        path = str(os.path.join("/host_os/", path))
+    return path
+
+
+
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
 
@@ -56,7 +67,39 @@ class Conservation(circ_module.circ_template.CircTemplate):
         self.mm10_flag = self.cli_params.mm10_conversion
         self.hg19_flag = self.cli_params.hg19_conversion
         self.pairwise = self.cli_params.pairwise_flag
-        
+        # changes for config file addition
+        self.config = self.cli_params.config
+        #self.reference_path = self.cli_params.reference_path
+        ## fix for docker if default argument is passed
+        #self.reference_path = fix_path_for_docker(self.reference_path)
+
+        # check  if config file provided
+        if not self.config:
+            print("Configuration file not specified. Exiting!")
+            exit(-1)
+
+        # check if config present in that path
+        if not os.path.isfile(self.config):
+            print("Configuration file {} not accessible.".format(final_path))
+            exit(-1)
+        else:
+            # process the available config file
+            with open(self.config, 'r') as config_file:
+                config = (yaml.safe_load(config_file))
+                dict_species_ortholog = {}
+                dict_species_liftover = {}
+                dict_species_conservation = {}
+                for each in config:
+                    # dictionary for fetchOrthologs.py script
+                    dict_species_ortholog[config[each]['ortho_id']] = config[each]['name']
+                    # dictionary for LiftOver.py script
+                    dict_species_liftover[config[each]['name']] = config[each]['id']
+                    # dictionary for conservation.py scipt
+                    dict_species_conservation[config[each]['input']] = config[each]['name']
+                self.dict_species_ortholog = dict_species_ortholog
+                self.dict_species_liftover = dict_species_liftover
+                self.dict_species_conservation = dict_species_conservation
+
         # gene_list file argument
         if (self.cli_params.gene_list):
             self.gene_list = self.cli_params.gene_list
@@ -165,6 +208,11 @@ class Conservation(circ_module.circ_template.CircTemplate):
             else:
                 return bed_content
 
+    def process_data(self, ):
+        # reading information from config file
+        with open(configuration, 'r') as config_file:
+            config = (yaml.safe_load(config_file))
+    
     def run_module(self):
 
         if self.id_list and os.access(self.id_list[0], os.R_OK):
