@@ -469,12 +469,12 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         # writing into fasta file for alignments
                         fasta_out_string = fasta_out_string + ">" + each_target_species + "(" + lifted_circle[0] + ":" + lifted_circle[1] + "-" + lifted_circle[2] + ")" + "\n" + circ_sequence_target + "\n" 
                         
-                    fasta_file_alignment = self.temp_dir + "/alignment_" + name + ".fasta"
+                    fasta_file_alignment = self.output_dir + "/alignment_" + name + ".fasta"
                     with open(fasta_file_alignment, "w") as fasta_out:
                         fasta_out.write(fasta_out_string)
 
                     # call multiple sequencce alignment function
-                    align = AL.Alignment(fasta_file_alignment, self.organism, name)
+                    align = AL.Alignment(fasta_file_alignment, self.organism, name, self.output_dir)
                     align.draw_phylo_tree()
                     # if pairwise alignment flag is turned on, run the pairwise alignment function
                     if (self.pairwise):

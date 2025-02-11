@@ -7,14 +7,16 @@ from itertools import combinations
 from Bio import SeqIO,  Align
 from Bio.Seq import Seq
 from Bio.Align import *
+import os
 
 class Alignment(object):
 
-    def __init__(self, input_fasta, source_species, circle_name) -> None:
+    def __init__(self, input_fasta, source_species, circle_name, output_dir) -> None:
         self.fasta_file = input_fasta
         self.source_species = source_species
         temp_name = circle_name.split("_")
         self.circle_name = temp_name[0] + "(" + temp_name[1] + ":" + temp_name[2] + "-" + temp_name[3] + ")"
+        self.output_dir = output_dir
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
@@ -56,8 +58,7 @@ class Alignment(object):
         self.run_mafft()
 
         tree_file = self.fasta_file + ".tree"
-        #out_png = self.fasta_file.replace(".fasta", ".png") 
-        out_svg = self.fasta_file.replace(".fasta", ".svg") 
+        out_svg = self.output_dir + "/" + os.path.basename(self.fasta_file).replace(".fasta", ".svg") 
         
         tree = Phylo.read(tree_file, "newick")               # this is an output file from mafft_cline() function with --treeout option
         fig = plt.figure(figsize=(11, 10), dpi=100)
@@ -71,7 +72,6 @@ class Alignment(object):
         plt.title("Sequence conservation tree for circle: " + self.circle_name)
         plt.xticks(fontsize=12)
         plt.show()
-        #plt.savefig(out_png)
         plt.savefig(out_svg)
 
     def pairwise_alignment(self):
@@ -92,7 +92,6 @@ class Alignment(object):
             species_2 = pair[1].id.split("(")[0]
             if ((self.source_species == species_1) or (self.source_species == species_2)):
                 alignments = aligner.align(pair[0].seq, pair[1].seq)
-                #print(species_1, species_2, pair[0].id, pair[1].id, alignments.score)
                 plot_dict[species_1+"_"+species_2] = float(alignments.score)
         
         # normalise the alignment scores by length of sequence of source species circle
@@ -102,7 +101,7 @@ class Alignment(object):
         # plot as a bar plot
         species = list(plot_dict.keys())
         scores = list(plot_dict.values())
-        out_bar = self.fasta_file.replace(".fasta", "_pairwise.svg") 
+        out_bar = self.output_dir + "/" + os.path.basename(self.fasta_file).replace(".fasta", "_pairwise.svg") 
         fig = plt.figure(figsize = (10, 10))
         plt.bar(species, scores, color ='blue', width = 0.4)
         plt.xlabel("Pairwise alignments", fontsize = 14)
