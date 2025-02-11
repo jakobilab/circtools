@@ -42,9 +42,33 @@ pkgs <- c(
     "kableExtra",
     "formattable",
     "dplyr",
-    "RColorBrewer"
+    "RColorBrewer",
+    "devtools",
+    'GenomicRanges',
+    'ggplot2',
+    'BSgenome',
+    'IRanges',
+    'S4Vectors',
+    'Biostrings',
+    "openxlsx",
+    "ggrepel",
+    "aod",
+    "plyr"
 )
-
+#
+# pkgs <- c(
+#     "devtools",
+#     'GenomicRanges',
+#     'ggplot2',
+#     'BSgenome',
+#     'IRanges',
+#     'S4Vectors',
+#     'Biostrings',
+#     "openxlsx",
+#     "ggrepel",
+#     "aod",
+#     "plyr"
+# )
 countdown <- function(from)
 {
   cat(from)

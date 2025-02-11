@@ -506,6 +506,12 @@ class CircTools(object):
                            required=True
                            )
 
+        group.add_argument("-C",
+                           "--config",
+                           dest="config",
+                           help="config file containing species with their IDs required for different settings",
+                           required=True)
+
         group.add_argument("-O",
                            "--organism",
                            dest="organism",
