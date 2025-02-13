@@ -106,3 +106,16 @@ A sample call to conservation using the `Jakobi et al. 2016 <https://www.science
 
 ``circtools conservation`` takes a few seconds to process the input data. It fetches the information like gene orthologs, liftOver co-ordinates, exon sequences from REST API. The lifted over co-ordinates in target species are written in BED file. A phylogenetic tree for sequence alignement is drawn and saved in an SVG file.
 
+If user wants to perform circle conservation analysis for species other than mentioned in the ``-O`` option, it can be easily done by editing the config file. An example config file is provided in the folder ``config/``. Following entries per species are required in order to include a new species:
+
+
+.. code-block:: config
+
+	mm:
+  		input: # two letter abbreviation of the species (mm)
+  		id: # genome versions for liftOver chain files (mm39)
+ 		name: # species alias according to Ensembl Rest API format (mouse)
+  		ortho_id: # species name according to Ensembl Rest API format (mus_musculus)
+
+
+

@@ -410,6 +410,19 @@ To install CIRIquant, please follow these `installation instructions <https://ci
 
 After this step, ``ciri/`` folder will contain alignment results with one folder per sample.
 
+To further run the ``metatool`` analysis, use above output files as an input to ``circtools detect`` using ``-cq`` option.
+
+
+.. code-block:: bash
+
+
+circtools detect @samplesheet -mt1 @mate1 -mt2 @mate2 -B @bam_files.txt -an ../../Mus_musculus.GRCm38.90.gtf -Pi -Nr 5 6 -A Mus_musculus.GRCm38.dna.primary_assembly.fa -cq -cql ciriquant_filelist
+
+
+
+
+where ``ciriquant_filelist`` is a file containing list of output files from ``ciri/`` separated by ``\n``.
+
 Output files
 ------------
 
