@@ -22,7 +22,7 @@ class liftover(object):
         # encapsulated liftover binary call
 
         # liftover command
-        liftover_utility = "/home/skulkarni/liftOver"
+        liftover_utility = os.path.dirname(os.path.realpath(__file__)) + "/liftOver"
         command = liftover_utility + " " + self.liftover_input_file + " " + self.chain_file + " " + self.liftover_output_file + " " + self.liftover_unlifted_file + "  -multiple -minMatch=0.1"
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
