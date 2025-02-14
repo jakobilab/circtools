@@ -30,3 +30,11 @@ def _run(bash_script):
 def wonderdump():
     return _run("/" + base_path + "/scripts/wonderdump")
 
+
+def novel_exons_and_alternative_usage():
+    return _run("/" + base_path + "/nanopore/novel_exons_and_alternative_usage_v8.0.sh")
+
+
+def blat_nanopore():
+    return _run("/" + base_path + "/nanopore/blat_nanopore_v6.0.sh")
+

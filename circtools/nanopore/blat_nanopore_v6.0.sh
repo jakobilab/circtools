@@ -1,13 +1,26 @@
 #!/bin/bash
-#SBATCH -c 8
-#SBATCH -p normal
-#SBATCH --mem=128g
-#SBATCH --time=72:00:00
+
+# This file contains code that is derived from MIT-licensed software:
+#   Original code by Morten T Venø <morten.veno@omiics.com>,
+#   licensed under the MIT License.
+#
+# The MIT License:
+# ---------------------------------------------------------------------
+# See LICENSE_MIT for the full MIT license text.
+# ---------------------------------------------------------------------
+# Modifications and additions to this file are licensed under:
+# The GNU General Public License (GPL), version 3 or later.
+#
+# Copyright (C) 2025 Tobias Jakobi
+#
+# See the LICENSE file in the root directory for the full terms of the GPL.
+#
+
 
 # This is version 5.5 of the Nanopore circRNA datection pipeline
 # This version uses blat to map reads.  NanoFilt is used to trim low quality reads (q 7). Parallel BLAT is used to map nanopore reads to genome.
 
-if [ $# -ne 7 ]; then
+if [ $# -ne 8 ]; then
     echo "This script is called directly by the circtools nanopore pipeline and not meant for direct user interaction."
     exit 1
 fi
@@ -19,6 +32,7 @@ reference_path=$4
 scriptFolder=$5
 output_path=$6
 threads=$7
+sample_ext=$8
 
 mkdir "$output_path"
 cd "$output_path" || exit
@@ -40,12 +54,12 @@ date
 echo "Sample: "$sample
 echo
 echo "Number of raw reads before NanoFilt -q 7 -l 250"
-zcat $data_folder/$sample.fq.gz | wc -l | awk '{print $1/4}'
+zcat $data_folder/$sample.$sample_ext | wc -l | awk '{print $1/4}'
 
 echo
 date
 echo "NanoFilt to remove reads under quality 7 and conversion to fasta"
-zcat $data_folder/$sample.fq.gz | NanoFilt -q 7 -l 250 | sed -n '1~4s/^@/>/p;2~4p' > $sample.fa
+zcat $data_folder/$sample.$sample_ext | NanoFilt -q 7 -l 250 | sed -n '1~4s/^@/>/p;2~4p' > $sample.fa
 echo
 date
 echo "Number of filtered reads after NanoFilt -q 7 -l 250"

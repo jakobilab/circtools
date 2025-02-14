@@ -15,7 +15,7 @@
 #
 # See the LICENSE file in the root directory for the full terms of the GPL.
 #
-
+import re
 from pathlib import Path
 import subprocess
 
@@ -363,7 +363,7 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         elif self.cli_params.download:
             self.run_download()
         elif self.cli_params.check:
-            self.run_check()
+            self.run_check(verbose=True)
 
     def run_download(self):
 
@@ -386,7 +386,6 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         tools = {"bedtools": "bedtools",
                  "NanoFilt": "NanoFilt -h",
                  "pblat": "pblat",
-                 "perl": "perl -v",
                  "samtools": "samtools --help"}
 
         failed = False
@@ -463,10 +462,10 @@ class Nanopore(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         # Check if sample ends with ".fq.gz"
-        if self.sample_name and not self.sample_name.endswith(".fq.gz"):
-            print("Error: Sample file '{}' does not end with '.fq.gz'".format(
-                self.sample_name))
-            exit(-1)
+        # if self.sample_name and not self.sample_name.endswith(".fq.gz"):
+        #     print("Error: Sample file '{}' does not end with '.fq.gz'".format(
+        #         self.sample_name))
+        #     exit(-1)
 
         # Check if reference_path exists
         if not os.path.exists(self.reference_path):
@@ -474,6 +473,8 @@ class Nanopore(circ_module.circ_template.CircTemplate):
                 "Error: '{}' does not exists! Please make sure that the path is written correctly".format(
                     self.reference_path))
             exit(-1)
+        else:
+            self.reference_path = os.path.abspath(self.reference_path)
 
         # Check if reference_path is a directory:
         if not os.path.isdir(self.reference_path):
@@ -500,9 +501,29 @@ class Nanopore(circ_module.circ_template.CircTemplate):
             exit(-1)
 
         # Prepare sample_path and sample_name
-        sample_name = os.path.basename(self.sample_name).replace('.fq.gz', '')
+
+        # sample_name = re.sub(r'\.\w+\.\w+$', "",self.sample_name)
+
+        #ext = re.sub(r'\.\w+\.\w+$', "",self.sample_name)
+
+        # Create a regex pattern with groups for name and age
+        pattern = r'^(\w+)\.(\w+\.\w+)$'
+
+        # Find a match in the text
+        match = re.search(pattern, self.sample_name)
+
+        if match:
+            # Access captured groups
+            sample_ext = match.group(2)
+            sample_name = match.group(1)
+
+
+        # sample_name = os.path.basename(self.sample_name).replace('.fq.gz', '')
         script_path = str(Path(os.path.expanduser(self.script_path)).resolve())
         output_path = str(Path(self.output_path).resolve())
+
+        final_path = os.path.join(self.config_location, self.config+".yml")
+
 
         # Check if the script-path exists
         if not os.path.exists(script_path):
@@ -550,31 +571,43 @@ class Nanopore(circ_module.circ_template.CircTemplate):
                  self.reference_path,
                  self.script_path,
                  self.output_path,
-                 str(self.threads)])
+                 str(self.threads),
+                 sample_ext],
+                 )
             print("")
 
             print("circRNA detection has finished")
-            print("Starting the novel exon and alternative usage script")
 
-            os.chdir(original_directory)
+            with open(final_path, 'r') as config_file:
+                build_config = (yaml.safe_load(config_file))
 
-            keep_check = {True: "yes", False: "no"}
+                if len(build_config) == 7:
 
-            keep_temp = keep_check[self.keep_temp]
+                    print("Starting the novel exon and alternative usage script")
 
-            subprocess.run(["bash",
-                            os.path.join(self.script_path,
-                            "novel_exons_and_alternative_usage_v8.0.sh"),
-                            sample_name,
-                            self.config,
-                            self.reference_path,
-                            self.script_path,
-                            self.output_path,
-                            keep_temp,
-                            str(self.threads)
-                            ]
-                           )
-            print("")
+                    os.chdir(original_directory)
+
+                    keep_check = {True: "yes", False: "no"}
+
+                    keep_temp = keep_check[self.keep_temp]
+
+                    subprocess.run(["bash",
+                                    os.path.join(self.script_path,
+                                    "novel_exons_and_alternative_usage_v8.0.sh"),
+                                    sample_name,
+                                    self.config,
+                                    self.reference_path,
+                                    self.script_path,
+                                    self.output_path,
+                                    keep_temp,
+                                    str(self.threads)
+                                    ]
+                                   )
+                    print("")
+
+                else:
+                    print("Skipping novel exon and alternative usage script.")
+                    print("Only supported for human and mouse genome.")
 
             print("Long_read_circRNA has finished!")
         else:

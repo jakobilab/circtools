@@ -1,0 +1,6 @@
+.github/
+build/
+circtools.egg-info/
+docker/
+tests/
+dist/

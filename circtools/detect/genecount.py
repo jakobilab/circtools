@@ -199,17 +199,17 @@ class Genecount(object):
         # mpileup get the number of spliced reads at circle start position and (start-1) position.
 
         print(("\t=> running mpileup 1 for start positions [%s]" % bamfile))
-        mpileup_start = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_start_coor_1')
+        mpileup_start = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_start_coor')
 
         print(("\t=> running mpileup 2 for start positions [%s]" % bamfile))
-        mpileup_start_1 = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_start_coor_2')
+        mpileup_start_1 = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_start_coor_1')
 
         # mpileup get the number of spliced reads at circle end position and (end+1) position.
         print(("\t=> running mpileup 1 for end positions [%s]" % bamfile))
-        mpileup_end = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_end_coor_1')
+        mpileup_end = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_end_coor')
 
         print(("\t=> running mpileup 2 for end positions [%s]" % bamfile))
-        mpileup_end_1 = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_end_coor_2')
+        mpileup_end_1 = pysam.mpileup(bamfile, '-f', ref, '-l', self.tmp_dir + 'tmp_end_coor_1')
 
         # get count
 

@@ -53,8 +53,9 @@ class CircTools(object):
                quickcheck:   circular RNA sequencing library quick checks
                circtest:     circular RNA statistical testing
                primex:       circular RNA primer design tool
+               nanopore:     circular RNA detection from Oxford Nanopore data
                padlock:      circular RNA padlock probe design tool
-               sirna:        circular RNA sirna design tool
+               sirna:        circular RNA siRNA design tool
                reconstruct:  circular RNA reconstruction
                enrich:       circular RNA RBP enrichment scan
                exon:         circular RNA alternative exon analysis
@@ -1371,6 +1372,109 @@ class CircTools(object):
         import reconstruct.reconstruct
         reconstruct_instance = reconstruct.reconstruct.Reconstruct(args, program_name, version)
         reconstruct_instance.run_module()
+
+    @staticmethod
+    def nanopore():
+        parser = argparse.ArgumentParser(
+            description="circular RNA detection in Oxford Nanopore data")
+        # NOT prefixing the argument with -- means it's not optional
+
+        ######################################################
+
+        group = parser.add_mutually_exclusive_group(required=True)
+
+        group.add_argument("-r",
+                           "--run",
+                           dest="run",
+                           action="store_true",
+                           help="Run the analysis"
+                           )
+
+        group.add_argument("-c",
+                           "--check",
+                           dest="check",
+                           action="store_true",
+                           help="Check the installation for required software."
+                           )
+
+        group.add_argument("-d",
+                           "--download",
+                           dest="download",
+                           action="store_true",
+                           help="Download third-party data, such as "
+                                "genomes, required for the analysis.",
+                           )
+
+        group = parser.add_argument_group("Options")
+
+        group.add_argument('-s',
+                            '--sample',
+                            help="Provide a sample input .fq.gz file"
+                                 " that should be processed.",
+                            dest="sample"
+        )
+        group.add_argument(
+                            '-R',
+                            '--reference-path',
+                            default="./data",
+                            help="Provide a path for where the reference "
+                                 "data is located. Default is './data'.",
+                            dest="reference_path"
+        )
+        group.add_argument(
+                            '-O',
+                            '--output',
+                            help="Provide a path for where the "
+                                 "output data is stored.",
+                            dest="output_path"
+        )
+        group.add_argument("-C",
+                           "--config",
+                           dest="config",
+                           choices=['hg19', 'hg38',
+                                    'mm9', 'mm10',
+                                    'rn6', 'rn7',
+                                    'susScr11',
+                                    'canFam6'],
+                           help="Required. Select which genome build "
+                                "the sample that is from, and specify which "
+                                "genome reference files should be used.",
+        )
+        group.add_argument(
+                            '-t',
+                            '--threads',
+                            default=4,
+                            type=int,
+                            dest="threads",
+                            help="Number of threads for parallel steps. "
+                                 "Default: 4."
+        )
+        group.add_argument(
+                            '-D',
+                            '--dry-run',
+                            action="store_true",
+                            help="Perform all of the input checks without "
+                                 "starting the detection scripts.",
+                            dest="dry_run"
+
+        )
+        group.add_argument(
+                            '-k',
+                            '--keep-temp',
+                            action="store_true",
+                            dest="keep_temp",
+                            default=False,
+                            help="Keep all of the temporary files."
+        )
+
+        args = parser.parse_args(sys.argv[2:])
+
+        # make sure we can load the sub module
+        sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+        import nanopore.nanopore
+        nanopore_instance = nanopore.nanopore.Nanopore(args, program_name, version)
+        nanopore_instance.run_module()
 
 
 if __name__ == "__main__":
