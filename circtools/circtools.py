@@ -52,14 +52,14 @@ class CircTools(object):
                detect:       circular RNA detection
                quickcheck:   circular RNA sequencing library quick checks
                circtest:     circular RNA statistical testing
-               nanopore:     circular RNA detection from Oxford Nanopore data
                primex:       circular RNA primer design tool
+               nanopore:     circular RNA detection from Oxford Nanopore data
                padlock:      circular RNA padlock probe design tool
                sirna:        circular RNA siRNA design tool
                reconstruct:  circular RNA reconstruction
                enrich:       circular RNA RBP enrichment scan
                exon:         circular RNA alternative exon analysis
-               conservation: circular RNA conservation analysis
+               conservation:  circular RNA conservation analysis
             """)
         parser.add_argument("command", help="Command to run")
 
@@ -506,6 +506,12 @@ class CircTools(object):
                            help="FASTA file with genome sequence (must match annotation)",
                            required=True
                            )
+
+        group.add_argument("-C",
+                           "--config",
+                           dest="config",
+                           help="config file containing species with their IDs required for different settings",
+                           required=False)
 
         group.add_argument("-O",
                            "--organism",
@@ -1469,6 +1475,7 @@ class CircTools(object):
         import nanopore.nanopore
         nanopore_instance = nanopore.nanopore.Nanopore(args, program_name, version)
         nanopore_instance.run_module()
+
 
 if __name__ == "__main__":
     main()
