@@ -52,7 +52,7 @@ A call to ``circtools nanopore --help`` shows all available command line flags:
 
 
 
-Step 0: Check if external software is available
+Setup: Check if external software is available
 ^^^^^^^^^^^^
 
 .. note::
@@ -144,9 +144,56 @@ The file names are identical for each genome build, only the folder name indicat
 Step 2: Run the nanopore pipeline
 ^^^^^^^^^^^^
 
-To run the main workflow of the ``circtools nanopore`` module, users need to specify the reference genome (``-R reference/``), output path (``-O results/``), and the FASTQ file containing the Oxford Nanopore reads (``-s sample.fq.gz``). The ``--threads 16`` argument is optional but can be supplied to speed up processing by using multiple CPU threads:
+To run the main workflow of the ``circtools nanopore`` module, users need to specify the reference genome (``-R reference/``), output path (``-O results/``), and the FASTQ file containing the Oxford Nanopore reads (``-s human_nanopore.fastq.gz``). An example dataset consisting of `100k human brain nanopore reads is available for download <https://github.com/jakobilab/circtools/raw/refs/heads/master/tests/data/human_nanopore.fastq.gz>`_. The ``--threads 16`` argument is optional, but can be supplied to speed up processing by using multiple CPU threads, in this case 16 threads:
 
 .. code-block:: bash
 
-    circtools.py nanopore -r -s sample.fq.gz -R reference/ -C hg38 -O results/ --threads 16
+    circtools.py nanopore -r -s human_nanopore.fastq.gz -R reference/ -C hg38 -O results/ --threads 16
+
+The pipeline outputs a number of output files, specifically:
+
+.. code-block:: bash
+
+    ls -la results/
+
+    human_nanopore.circ_circRNA_exon_usage_length_of_exons.txt
+    human_nanopore.circRNA_candidates.annotated.txt
+    human_nanopore.novel.cryptic.spliced.exons.txt
+    human_nanopore.novel.exons.2reads.filter.bed
+    human_nanopore.novel.exons.2reads.phases.tab
+    human_nanopore.Potential_multi-round_circRNA.fa
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.10reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.20reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.2reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.3reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.50reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.5reads.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.bed
+    human_nanopore.scan.circRNA.psl.split.merge.flank2.allExons.notGencode.bed
+    human_nanopore.scan.Potential_multi-round_circRNA.psl.annot.bed
+    human_nanopore.scan.Potential_multi-round_circRNA.psl.annot.count.txt
+
+The files are prefixed with the sample name (input FASTQ file name minus extension) and are named intuitively. The main output file has the suffix `circRNA_candidates.annotated.txt` and contains the list of circRNAs detected in the run. Specifically, the files contains the following columns for each circRNA:
+
+.. code-block:: bash
+
+     1  internal_circRNA_name
+     2  chr
+     3  start
+     4  end
+     5  description
+     6  BSJ_reads
+     7  strand
+     8  gene
+     9  reserved
+    10  reserved
+    11  reserved
+    12  mean_read_coverage
+    13  mean_gene_coverage
+    14  mean_exon_coverage
+    15  mean_EST_coverage
+    16  mean_intron_coverage
+    17  min_exon_adjust
+    18  max_exon_adjust
+    19  mean_exon_adjust
 
