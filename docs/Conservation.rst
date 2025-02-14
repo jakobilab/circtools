@@ -1,9 +1,7 @@
 Conservation module
 ********************************************************
 
-The circtools padlock module is a specialized primer design tool tailored specifically for next-generation spatial transcriptomics technology. 
-
-``circtools padlock`` is able to design padlock probes in batches of hundreds of circRNAs and linear RNAs based on circRNAs detected with ``circtools detect``, but can also work on lists of linear RNAs or circRNA isoforms or even entirely without any preliminary data purely based on the FASTA sequence of the circRNA.
+Evolutionary conservation analysis oftentimes uncovers the potential functional relevance of circRNAs by comparing their sequence and genomic position across different organisms. We developed the conservation module to enable users to perform circRNA conservation analysis in five widely studied animal model species: mouse, human, rat, pig, and dog. The framework of the conservation module was developed with the flexibility to incorporate more species in the analysis by simply adding the species to the input config file.
 
 
 General usage

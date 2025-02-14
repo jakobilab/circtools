@@ -25,8 +25,31 @@ Documentation
 
 Click `here <https://docs.circ.tools/>`__ to access the complete documentation on Read the Docs.
 
+
 Installation
 ------------
+
+Via docker [NEW in 2.0]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Get latest circtools docker version directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
+
+.. code-block:: console
+
+    docker pull ghcr.io/jakobilab/circtools/circtools:latest
+
+We can add an bash alias to call circtools "natively" and skip the unwieldy full docker command:
+
+.. code-block:: console
+
+    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
+
+This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
+
+
+Via pip
+~~~~~~~~~~~~~~~
+
 
 The ``circtools`` package is written in Python 3 (supporting Python 3.8 - 3.12). It requires only a small number of external dependencies, namely standard bioinformatics tools:
 
@@ -41,7 +64,7 @@ required if the installation is executed with ``--user`` which will install the
 package in a user-writeable folder. The binaries should be installed
 to ``/home/$user/.local/bin/`` in case of Debian-based systems.
 
-``circtools`` was developed and tested on Debian Buster, but should also
+``circtools`` was developed and tested on Debian Bookworm, but should also
 run with any other distribution.
 
 The installation can be performed directly from Pypi:
@@ -54,6 +77,9 @@ The installation can be performed directly from Pypi:
 
     # install R packages for circtools
     circtools_install_R_dependencies
+
+Via git (development version)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Additionally, this repository offers the latest development version:
 
@@ -69,20 +95,58 @@ required can be automatically installed during the setup. Please see the
 `"Installing circtools" <http://docs.circ.tools/en/latest/Installation.html>`__
 chapter of the main circtools documentation for more detailed installation instructions.
 
+
 Modules
 -------
 
-Circtools currently offers seven modules:
+Circtools currently offers the following modules:
 
-detect `(detailed documentation) <https://docs.circ.tools/en/latest/Detect.html>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nanopore `(detailed documentation) <https://docs.circ.tools/en/latest/Nanopore.html>`__ [NEW in 2.0]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Recent advances in long-read sequencing technologies have enabled the generation of
+full-length circRNA sequences. The module is based on
+`long_read_circRNA <https://github.com/omiics-dk/long_read_circRNA>`__ and designed to specifically process the
+unique characteristics of Oxford Nanopore data, i.e. the handling of sequencing
+reads > 5kb, and provides accurate and efficient detection of circRNAs.
+
+
+padlock `(detailed documentation) <https://docs.circ.tools/en/latest/Conservation.html>`__ [NEW in 2.0]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Spatial transcriptomics emerged as a powerful technique to map the localization of
+single molecules to the level of individual cells and even offer subcellular resolution.
+Although most of the high-throughput methods were designed with linear polyadenylated
+RNAs in mind, some methods could target circRNAs as well. This module is
+specifically tailored to the Xenium platform as it offers subcellular resolution
+and an option for custom panel design. The module requires three inputs: 1)
+circRNA coordinates detected using \textit{circtools}' detect step, 2)
+a genome FASTA file, and 3) a transcriptome GTF file.
+
+
+conservation `(detailed documentation) <https://docs.circ.tools/en/latest/Conservation.html>`__ [NEW in 2.0]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Evolutionary conservation analysis oftentimes uncovers the potential
+functional relevance of circRNAs by comparing their sequence and genomic
+position across different organisms. We developed the conservation module
+to enable users to perform circRNA conservation analysis in five widely
+studied animal model species: mouse, human, rat, pig, and dog. The framework
+of the conservation module was developed with the flexibility to incorporate
+more species in the analysis by simply adding the species to the input config file.
+
+
+detect/metatool `(detailed documentation) <https://docs.circ.tools/en/latest/Detect.html>`__ [Updated in 2.0]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``detect`` command is an interface to
 `DCC <https://github.com/dieterich-lab/DCC>`__, developed at the
 Dieterich Lab. The module allows to detect circRNAs from RNA sequencing
 data. The module is the foundation of all other steps for the circtools
 work flow. All parameters supplied to circtools will be directly passed
-to DCC.
+to DCC. The detect module also performs the new metatool functionality
+added with circtools 2.0 which enables the addition of circRNA counts
+generated with `ciriquant` to further improve recall rates.
 
 quickcheck `(detailed documentation) <https://docs.circ.tools/en/latest/Quickcheck.html>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
