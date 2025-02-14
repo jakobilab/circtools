@@ -37,6 +37,9 @@ from . import LiftOver as LO
 from . import FetchRegionGeneSequence as FS
 from . import SequenceAlignment as AL
 
+import yaml
+import circtools
+
 class Conservation(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
 
@@ -56,7 +59,37 @@ class Conservation(circ_module.circ_template.CircTemplate):
         self.mm10_flag = self.cli_params.mm10_conversion
         self.hg19_flag = self.cli_params.hg19_conversion
         self.pairwise = self.cli_params.pairwise_flag
-        
+        # changes for config file addition
+        self.config = self.cli_params.config
+
+        # check if config present or is accessible
+        if self.config:
+            if os.path.isfile(self.config):
+                print("Config file detected.")
+            else:
+                print("Configuration file not accessible. Using example config file.")
+                self.config = os.path.dirname(os.path.realpath(__file__)) + "/config/example.config"
+        else:
+            print("Configuration argument not provided. Using example config file.")
+            self.config = os.path.dirname(os.path.realpath(__file__)) + "/config/example.config"
+
+        # process the available config file
+        with open(self.config, 'r') as config_file:
+            config = (yaml.safe_load(config_file))
+            dict_species_ortholog = {}
+            dict_species_liftover = {}
+            dict_species_conservation = {}
+            for each in config:
+                # dictionary for fetchOrthologs.py script
+                dict_species_ortholog[config[each]['ortho_id']] = config[each]['name']
+                # dictionary for LiftOver.py script
+                dict_species_liftover[config[each]['name']] = config[each]['id']
+                # dictionary for conservation.py scipt
+                dict_species_conservation[config[each]['input']] = config[each]['name']
+            self.dict_species_ortholog = dict_species_ortholog
+            self.dict_species_liftover = dict_species_liftover
+            self.dict_species_conservation = dict_species_conservation
+
         # gene_list file argument
         if (self.cli_params.gene_list):
             self.gene_list = self.cli_params.gene_list
@@ -165,6 +198,11 @@ class Conservation(circ_module.circ_template.CircTemplate):
             else:
                 return bed_content
 
+    def process_data(self, ):
+        # reading information from config file
+        with open(configuration, 'r') as config_file:
+            config = (yaml.safe_load(config_file))
+    
     def run_module(self):
 
         if self.id_list and os.access(self.id_list[0], os.R_OK):
@@ -189,7 +227,10 @@ class Conservation(circ_module.circ_template.CircTemplate):
         letters = string.ascii_letters
         tmp_prefix =  ''.join(random.choice(letters) for i in range(10))        # prefix for tmp files
               
-        species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
+        # species_dictionary = {"mm": "mouse", "hs": "human", "rn": "rat", "ss": "pig", "cl": "dog"}
+        species_dictionary = self.dict_species_conservation
+        dict_species_ortholog = self.dict_species_ortholog
+        dict_species_liftover = self.dict_species_liftover
 
         # call the read_annotation_file and store exons in both bed and bedtools format for linear and circRNA
         exons_bed = self.read_annotation_file(self.gtf_file, entity="exon")
@@ -225,14 +266,14 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     # if mouse and human assemblies are told, convert the the co-ordinates using liftover function
                     if self.mm10_flag:
-                        print("Before liftover:", current_line)
+                        #print("Before liftover:", current_line)
                         print("Converting mm10 coordinates to mm39 assembly")
-                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, {}, "mm10")
+                        lifted = LO.liftover("mouse", "mouse", current_line, self.temp_dir, tmp_prefix, {}, "mm10", self.dict_species_liftover)
                         current_line = lifted.parseLiftover()
                     elif self.hg19_flag:
-                        print("Before liftover:", current_line)
+                        #print("Before liftover:", current_line)
                         print("Converting hg19 coordinates to hg38 assembly") 
-                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, {}, "hg19")
+                        lifted = LO.liftover("human", "human", current_line, self.temp_dir, tmp_prefix, {}, "hg19", self.dict_species_liftover)
                         current_line = lifted.parseLiftover()
 
                     sep = "_"
@@ -331,7 +372,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     circ_sequence = exon2 + exon1       # this is the joint exon circular RNA sequence to use for alignment
                     fasta_out_string = fasta_out_string + ">" + self.organism + "(" + current_line[0] + ":" + current_line[1] + "-" + current_line[2] + ")" + "\n" + circ_sequence + "\n"  
 
-                    print("All exons circle: ", all_exons_circle[name])
+                    #print("All exons circle: ", all_exons_circle[name])
                     # fetch the information about first/last circle that contributes to the BSJ
                     print("extracting flanking exons for circRNA #", circ_rna_number, name, end="\n", flush=True)
 
@@ -352,9 +393,9 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
                     host_gene = current_line[3]
-                    fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism])
+                    fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism], self.dict_species_ortholog)
                     ortho_dict = fetchOrtho.parse_json()
-                    print(ortho_dict)
+                    #print(ortho_dict)
                     # check if each target species is present in the dictionary and remove if not
                     for each_species in self.target_species:
                         species_name = species_dictionary[each_species]
@@ -366,17 +407,17 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         print("No species found to perform conservation analysis.")
                         sys.exit()
 
-                    print(current_line)
+                    #print(current_line)
 
                     for each_target_species in self.target_species:
-                        print(each_target_species)             
+                        print("Processing target species: ",each_target_species)             
                     
                         # take these flanking exons per circle and perform liftover 
                         if "first_exon" in locals():
                             # liftover first exon
                             print("*** Lifting over first exon ***")
                             first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
-                            lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other")
+                            lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other", self.dict_species_liftover)
                             first_exon_liftover = lifted.find_lifted_exons()
                             if (first_exon_liftover == None):
                                 print("No lifted co-ordinates found for first exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")
@@ -384,7 +425,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         
                         print("*** Lifting over BSJ exon ***")
                         bsj_line = [current_line[0], bsj_exon[0], bsj_exon[1], current_line[3], current_line[4], current_line[5]]
-                        lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other")
+                        lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], bsj_line, self.temp_dir, tmp_prefix+"_BSJ", ortho_dict, "other", self.dict_species_liftover)
                         bsj_exon_liftover = lifted.find_lifted_exons()
                         if (bsj_exon_liftover == None):
                             print("No lifted co-ordinates found for BSJ exon. Skipping " + species_dictionary[each_target_species] + "for further analysis.")
@@ -395,7 +436,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         if "first_exon" in locals():
                             first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
                             bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
-                            print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
+                            #print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
                             lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
                             if current_line[5] == "+":
                                 circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
@@ -406,7 +447,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         else:
                             bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
                             circ_sequence_target = str(bsj_exon_seq.fetch_sequence())
-                            print("Lifted over coordinates:", bsj_exon_liftover)
+                            #print("Lifted over coordinates:", bsj_exon_liftover)
                             lifted_circle = bsj_exon_liftover
 
                         lifted_circle = list(map(str, lifted_circle))
@@ -418,12 +459,12 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         # writing into fasta file for alignments
                         fasta_out_string = fasta_out_string + ">" + each_target_species + "(" + lifted_circle[0] + ":" + lifted_circle[1] + "-" + lifted_circle[2] + ")" + "\n" + circ_sequence_target + "\n" 
                         
-                    fasta_file_alignment = self.temp_dir + "/alignment_" + name + ".fasta"
+                    fasta_file_alignment = self.output_dir + "/alignment_" + name + ".fasta"
                     with open(fasta_file_alignment, "w") as fasta_out:
                         fasta_out.write(fasta_out_string)
 
                     # call multiple sequencce alignment function
-                    align = AL.Alignment(fasta_file_alignment, self.organism, name)
+                    align = AL.Alignment(fasta_file_alignment, self.organism, name, self.output_dir)
                     align.draw_phylo_tree()
                     # if pairwise alignment flag is turned on, run the pairwise alignment function
                     if (self.pairwise):

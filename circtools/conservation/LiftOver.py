@@ -7,7 +7,7 @@ import pybedtools
 
 class liftover(object):
 
-    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, orthologs, flag) -> None:
+    def __init__(self, from_species, to_species, bed_coord, tmpdir, prefix, orthologs, flag, dict_species_liftover) -> None:
         self.from_species = from_species
         self.to_species = to_species
         self.from_coord = bed_coord     # BED coordinates in form of a list of chr, start and stop, score and strand
@@ -16,12 +16,13 @@ class liftover(object):
         self.prefix = prefix
         self.flag = flag
         self.ortho_dict = orthologs
+        self.dict_species_liftover = dict_species_liftover
 
     def call_liftover_binary(self):
         # encapsulated liftover binary call
 
         # liftover command
-        liftover_utility = "/home/skulkarni/liftOver"
+        liftover_utility = os.path.dirname(os.path.realpath(__file__)) + "/liftOver"
         command = liftover_utility + " " + self.liftover_input_file + " " + self.chain_file + " " + self.liftover_output_file + " " + self.liftover_unlifted_file + "  -multiple -minMatch=0.1"
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -47,7 +48,8 @@ class liftover(object):
             open(tmp_from_bed, 'w').close()             # erase old contents
         
         elif self.flag == "other":
-            species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6", "rat":"rn7"}
+            #species_IDs_dict = {"mouse":"mm39", "human":"hg38", "pig":"susScr11", "dog":"canFam6", "rat":"rn7"}
+            species_IDs_dict = self.dict_species_liftover
             self.from_id = species_IDs_dict[self.from_species]
             self.to_id = species_IDs_dict[self.to_species]
             tmp_from_bed = self.tmpdir + self.prefix + "_liftover.tmp"
@@ -110,10 +112,10 @@ class liftover(object):
             else:
                 # somehow the lifted coordinates are split into two. 
                 for line in lines:
-                    print(line)
+                    print("Lifted coordinates are splitted into two regions", line)
             
             lifted_coordinates[0] = lifted_coordinates[0].replace("chr", "")
-            print("Lifted coordinates:", lifted_coordinates)
+            #print("Lifted coordinates:", lifted_coordinates)
             return(lifted_coordinates)
     
     def parse_gff_rest(self, output):
@@ -161,7 +163,7 @@ class liftover(object):
         
         # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
-        print("Lifted exons:", lifted_exons)
+        #print("Lifted exons:", lifted_exons)
 
         # now perform bedtools operation to find out the correct exon boundaries
         lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
@@ -180,7 +182,7 @@ class liftover(object):
 
             # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
             final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
-            print("Final:", final_exon)
+            #print("Final:", final_exon)
 
             return(final_exon)                  # the sequences will be extracted for this exon
         else:
@@ -218,7 +220,7 @@ class liftover(object):
             region_bed = pybedtools.BedTool(region, from_string = True)
             closest_exon = region_bed.closest(exon_bed_all, sortout=True)
             final_exon = str(closest_exon).strip().split("\t")[-3:]
-            print("Closest exon:",   final_exon)
+            #print("Closest exon:",   final_exon)
 
             return(final_exon)
 

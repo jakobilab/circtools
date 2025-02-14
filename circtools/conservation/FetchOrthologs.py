@@ -6,13 +6,14 @@ import requests
 
 class fetch(object):
 
-    def __init__(self, gene_symbol, from_species) -> None:
+    def __init__(self, gene_symbol, from_species, dict_species_ortholog) -> None:
         self.gene_symbol = gene_symbol
         self.from_species = from_species
+        self.dict_species_ortholog = dict_species_ortholog
 
     def fetch_info(self):
         # define the species for which you are finding orthologs
-        species = ["mouse", "human", "rat", "pig", "dog"]
+        species = list(self.dict_species_ortholog.values())
         to_species = list(set(species)-set([self.from_species]))
         to_species = ["target_species="+str(i) for i in to_species]
         str_to_species = ";".join(to_species)
@@ -35,8 +36,9 @@ class fetch(object):
 
     def parse_json(self):
         ortho_dict = {}
-        species_dict = {"canis_lupus_familiaris": "dog", "mus_musculus": "mouse", "homo_sapiens": "human",
-                        "sus_scrofa": "pig", "rattus_norvegicus": "rat"}
+        # species_dict = {"canis_lupus_familiaris": "dog", "mus_musculus": "mouse", "homo_sapiens": "human",
+        #                "sus_scrofa": "pig", "rattus_norvegicus": "rat"}
+        species_dict = self.dict_species_ortholog
         # this function takes JSON output from REST API and parses the ortholog information
         out_string = self.fetch_info().json()
         original_species_gene_id = out_string['data'][0]["id"]
