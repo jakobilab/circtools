@@ -44,7 +44,10 @@ Table of contents
 
    Installation.rst
    Detect.rst
+   Nanopore.rst
    Reconstruct.rst
+   Conservation.rst
+   Padlock.rst
    Quickcheck.rst
    Circtest.rst
    Enrichment.rst
