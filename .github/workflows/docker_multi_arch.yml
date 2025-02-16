@@ -7,10 +7,17 @@ on:
     types:
       - completed
 
+
+
 jobs:
-  build-and-push-docker-image:
-    name: Build Docker image and push to repositories
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
