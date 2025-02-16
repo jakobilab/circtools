@@ -1,4 +1,4 @@
-Padlock probe design module
+Padlock probe design module [New in 2.0]
 ********************************************************
 
 The circtools padlock module is a specialized primer design tool tailored specifically for next-generation spatial transcriptomics technology. 
