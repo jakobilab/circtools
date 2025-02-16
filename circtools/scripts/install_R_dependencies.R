@@ -96,6 +96,7 @@ if (
     || ( majorVersion == 3 && minorVersion >= 6 )
 ){
     if (!requireNamespace("BiocManager", quietly = TRUE))
+        install.packages("ggplot2")
         install.packages("BiocManager")
 
 
