@@ -60,7 +60,7 @@ The ``circtools`` package is written in Python 3 (supporting Python 3.8 - 3.12).
 
 Installation is managed through ``pip3 install circtools`` or ``python3 setup.py
 install`` when installed from the cloned GitHub repository. No sudo access is
-required if the installation is executed with ``--user`` which will install the
+required if the installation is executed in an virtual environment which will install the
 package in a user-writeable folder. The binaries should be installed
 to ``/home/$user/.local/bin/`` in case of Debian-based systems.
 
@@ -71,8 +71,14 @@ The installation can be performed directly from PyPi:
 
 .. code-block:: console
 
+    # create virtual environment
+    python3 -m venv circtools
+
+    # activate virtual environment
+    source circtools/bin/activate
+
     # install circtools
-    pip install numpy # required for HTSeq, a dependency of circtools
+    pip install numpy # required for HTSeq, dependency of circtools
     pip install circtools
 
     # install R packages for circtools
