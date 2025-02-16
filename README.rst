@@ -38,7 +38,7 @@ The latest circtools docker version will be downloaded directly from GitHub. The
 
     docker pull ghcr.io/jakobilab/circtools/circtools:latest
 
-We can add an bash alias to call circtools "natively" and skip the unwieldy full docker command:
+An bash alias to call circtools "natively" and skip the unwieldy full docker command is recommended:
 
 .. code-block:: console
 

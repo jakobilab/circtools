@@ -10,22 +10,40 @@ Installation is performed via `pip install circtools` or `python3 setup.py insta
 Supported operating systems
 -----------------------------------
 
-``circtools`` was developed and tested on Debian Buster (10) and Ubuntu Jammy Jellyfish (22.04). macOS is supported, but still in development. However, macOS functionality cannot be fully guaranteed yet.
+``circtools`` was developed and tested on Debian Bookworm (12), Ubuntu Jammy Jellyfish (22.04), and Ubuntu Noble Numba (24.04). macOS is supported via docker installation. However, macOS functionality running the pip installation method cannot be fully guaranteed yet.
+
+Installation via docker
+-----------------------------------
+
+The latest circtools docker version will be downloaded directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
+
+.. code-block:: console
+
+    docker pull ghcr.io/jakobilab/circtools/circtools:latest
+
+An bash alias to call circtools "natively" and skip the unwieldy full docker command is recommended:
+
+.. code-block:: console
+
+    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
+
+This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
+
 
 Installation via PyPi
 -----------------------------------
 
-The default installation will install everything needed to run circtools *except R, STAR, or Stringtie* (see below). If you like you may install circtools locally (first call) or globally (second call, SU required).
+The default installation will install everything needed to run circtools *except R, STAR, or Stringtie* (see below).  We recommend to install circtools in a virtual environment (venv) to separate dependencies from other packages as well as the OS.
 
 .. code-block:: bash
 
-    python3 -m pip install circtools --user # will install only for the current user
+    python3 -m venv circtools # create virtual environment
+    source circtools/bin/activate # activate virtual environment
+    python3 -m pip install circtools # install latest circtools version from pypy
 
-Please note:
+.. note::
 
-* The required R libraries will be installed in the default location in your home directory - unless you set enviromnet variable $R_LIBS_USER.
-* In case want to install globally or into a dedicated 'venv' drop the --user option.
-
+    The required R libraries will be installed in the default location in the home directory - unless the environment variable $R_LIBS_USER is set.
 
 
 Installation via GitHub
@@ -37,7 +55,9 @@ The GitHub installation will install the most recent version directly from the s
 
     git clone https://github.com/jakobilab/circtools.git
     cd circtools
-    python3 -m pip install . --user
+    python3 -m venv circtools_venv # create virtual environment
+    source circtools_venv/bin/activate # activate virtual environment
+    python3 -m pip install . # install latest circtools version
 
 
 Installation of R dependencies
@@ -78,22 +98,7 @@ A simple command to install all of these libraries on an Ubuntu/Debian system wo
 
 The command above only installs the minimal required packages, no other recommend packages are installed to keep the system lean.
 
-Installation via docker
------------------------------------
 
-The latest circtools docker version will be downloaded directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
-
-.. code-block:: console
-
-    docker pull ghcr.io/jakobilab/circtools/circtools:latest
-
-We can add an bash alias to call circtools "natively" and skip the unwieldy full docker command:
-
-.. code-block:: console
-
-    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
-
-This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
 
 Updating circtools
 --------------------------
