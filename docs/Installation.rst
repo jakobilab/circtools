@@ -2,7 +2,7 @@ Installation
 ********************************************************
 
 
-**circtools** is written in Python 3 (>=3.7) for most of the data processing code and R (>=4.0.0) for plotting and statistical analyses. The tool has a number of external dependencies, mostly standard bioinformatics tools and packages. The installation will, by default, try to install all required dependencies.
+**circtools** is written in Python 3 (>=3.8) for most of the data processing code and R (>=4.0.0) for plotting and statistical analyses. The tool has a number of external dependencies, mostly standard bioinformatics tools and packages. The installation will, by default, try to install all required dependencies.
 
 Installation is performed via `pip install circtools` or `python3 setup.py install`. No sudo access is required if the installation is suffixed with ``--user`` which will install the package in a user-writeable folder. In this case, the binaries should be installed to ``/home/$USER/.local/bin/`` (for Debian-based systems).
 
