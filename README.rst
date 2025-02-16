@@ -32,7 +32,7 @@ Installation
 Via docker [NEW in 2.0]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Get latest circtools docker version directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
+The latest circtools docker version will be downloaded directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
 
 .. code-block:: console
 

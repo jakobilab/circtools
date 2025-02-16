@@ -81,19 +81,19 @@ The command above only installs the minimal required packages, no other recommen
 Installation via docker
 -----------------------------------
 
-Docker can be used as a simple alternative to install **circtools**, taking care of all Python and R dependencies, thus making it well-suited for novice users. The only requirement is a working docker installation. The following command will install the latest stable version of **circtools**:
+The latest circtools docker version will be downloaded directly from GitHub. The container contains `all` dependencies required to run `circtools` except STAR and Bowtie.
 
-.. code-block:: bash
+.. code-block:: console
 
-    docker pull jakobilab/circtools
+    docker pull ghcr.io/jakobilab/circtools/circtools:latest
 
-Subsequently, **circtools** can be run via
+We can add an bash alias to call circtools "natively" and skip the unwieldy full docker command:
 
-.. code-block:: bash
+.. code-block:: console
 
-    docker run circtools [insert arguments here]
+    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
 
-Other than the additional command `docker run circtools` vs. just `circtools` all commands remain unchanged.
+This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
 
 Updating circtools
 --------------------------
