@@ -39,7 +39,7 @@ The default installation will install everything needed to run circtools *except
 
     python3 -m venv circtools # create virtual environment
     source circtools/bin/activate # activate virtual environment
-    python3 -m pip install circtools # install latest circtools version from pypy
+    python3 -m pip install circtools # install latest circtools version from PyPi
 
 .. note::
 

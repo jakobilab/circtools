@@ -67,7 +67,7 @@ to ``/home/$user/.local/bin/`` in case of Debian-based systems.
 ``circtools`` was developed and tested on Debian Bookworm, but should also
 run with any other distribution.
 
-The installation can be performed directly from Pypi:
+The installation can be performed directly from PyPi:
 
 .. code-block:: console
 
