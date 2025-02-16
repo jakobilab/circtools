@@ -223,15 +223,10 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
 
-.. |docker_arm64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml/badge.svg?branch=master
-    :alt: Docker Build ARM64
+.. |docker_arm64| image:: https://github.com/jakobilab/circtools/actions/workflows/docker_multi_arch.yml/badge.svg?branch=master
+    :alt: Docker Images
     :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml
-
-.. |docker_amd64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml/badge.svg?branch=master
-    :alt: Docker Build AMD64
-    :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml
+    :target: https://github.com/jakobilab/circtools/actions/workflows/docker_multi_arch.yml
 
 .. |zenodo| image:: https://zenodo.org/badge/498448368.svg
     :alt: Zenodo DOI link
