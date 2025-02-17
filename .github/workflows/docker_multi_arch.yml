@@ -1,6 +1,6 @@
 name: Multi-arch Docker Container
 
-# on:
+on:
 #   push:
 #   workflow_run:
 #     workflows: ["circtools CI"]
