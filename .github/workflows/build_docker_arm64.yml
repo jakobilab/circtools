@@ -1,6 +1,6 @@
 name: Docker arm64
 
-# on:
+on:
 #   push:
 #   workflow_run:
 #     workflows: ["circtools CI"]
