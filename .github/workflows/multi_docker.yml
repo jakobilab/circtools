@@ -1,4 +1,4 @@
-name: New multi-arch docker container
+name: Multi-arch docker container
 
 on:
   push:
