@@ -119,7 +119,8 @@ jobs:
   merge:
     runs-on: ubuntu-20.04
     needs:
-      - build
+      - build_arm
+      - build_amd
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
