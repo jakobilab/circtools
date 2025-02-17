@@ -6,8 +6,6 @@
 .. figure:: https://raw.githubusercontent.com/jakobilab/circtools/master/docs/img/circtools_200px.png
    :alt: circtools
 
-|docs| |build| |docker| |zenodo| |downloads| |pypi|
-
 Introduction
 -------------
 
@@ -223,10 +221,10 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
 
-.. |docker| image:: https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master
+.. |docker| image:: https://github.com/jakobilab/circtools/actions/workflows/docker_multi_arch.yml/badge.svg?branch=master
     :alt: Docker Images
     :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml
+    :target: https://github.com/jakobilab/circtools/actions/workflows/docker_multi_arch.yml
 
 .. |zenodo| image:: https://zenodo.org/badge/498448368.svg
     :alt: Zenodo DOI link

@@ -1,4 +1,4 @@
-Conservation module
+Conservation module [New in 2.0]
 ********************************************************
 
 Evolutionary conservation analysis oftentimes uncovers the potential functional relevance of circRNAs by comparing their sequence and genomic position across different organisms. We developed the conservation module to enable users to perform circRNA conservation analysis in five widely studied animal model species: mouse, human, rat, pig, and dog. The framework of the conservation module was developed with the flexibility to incorporate more species in the analysis by simply adding the species to the input config file.

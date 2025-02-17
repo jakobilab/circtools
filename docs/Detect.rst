@@ -1,4 +1,4 @@
-Detect module
+Detect / metatool module [New in 2.0]
 =========================================
 
 The circRNA detection module of circtools is based on DCC, built to detect and quantify circRNAs with high specificity. DCC works with the STAR (Dobin et al., 2013) ``Chimeric.out.junction`` files which contains chimerically aligned reads including circRNA junction spanning reads.

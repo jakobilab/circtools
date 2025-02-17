@@ -1,4 +1,4 @@
-name: Docker arm64
+name: Multi-arch Docker Container
 
 on:
 #   push:
@@ -7,11 +7,17 @@ on:
 #     types:
 #       - completed
 
-jobs:
-  build-and-push-docker-image:
-    runs-on: ubuntu-24.04-arm
-    name: Docker arm64
 
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,6 +30,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.3.0
       - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v6.13.0
         with:
@@ -31,7 +39,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
-          platforms: linux/arm64
           outputs: type=image,name=target
           tags: |
             ghcr.io/jakobilab/circtools/circtools:latest

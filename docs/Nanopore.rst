@@ -1,4 +1,4 @@
-Nanopore module
+Nanopore module [New in 2.0]
 ********************************************************
 
 The circtools nanopore module is designed to process

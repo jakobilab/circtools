@@ -1,11 +1,11 @@
 name: Docker amd64
 
 on:
-  push:
-  workflow_run:
-    workflows: ["circtools CI"]
-    types:
-      - completed
+#   push:
+#   workflow_run:
+#     workflows: ["circtools CI"]
+#     types:
+#       - completed
 
 jobs:
   build-and-push-docker-image:
