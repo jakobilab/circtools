@@ -507,7 +507,7 @@ class Nanopore(circ_module.circ_template.CircTemplate):
         #ext = re.sub(r'\.\w+\.\w+$', "",self.sample_name)
 
         # Create a regex pattern with groups for name and age
-        pattern = r'(\w+)\.(\w+\.\w+)$'
+        pattern = r'([a-zA-Z0-9_-]+)\.(\w+\.\w+)$'
 
         # Find a match in the text
         match = re.search(pattern, self.sample_name)
