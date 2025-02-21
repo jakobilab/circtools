@@ -27,7 +27,7 @@ If you are using **circtools** in your work, **please cite the following publica
 
 `Jakobi, T., Uvarovskii, A., & Dieterich, C. (2019). circtools — a one-stop software solution for circular RNA research. Bioinformatics, 35(13), 2326-2328. <https:/doi.org/10.1093/bioinformatics/bty948>`_
 
-If you are using functionality introduced with circtools 2.0 please cite the preprint on bioRxiv:
+If you are using functionality introduced with circtools 2.0, please cite the preprint on bioRxiv:
 
 `Kulkarni, S. R., Dieterich C. & Jakobi T. (2025). Extending scope and power of circular RNA research with circtools 2.0. bioRxiv 2025.02.16.638209, DOI: 10.1101/2025.02.16.638209 <https://doi.org/10.1101/2025.02.16.638209>`_
 
