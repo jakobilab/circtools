@@ -25,7 +25,7 @@ gencode_exon:
     postprocess: gencode
 
 gencode_intron:
-    url: https://genome.ucsc.edu/cgi-bin/hgTables?clade=mammal&org=mouse&db=mm10&hgta_group=genes&hgta_track=wgEncodeGencodeV34lift37&hgta_table=0&hgta_regionType=genome&hgta_outFileName=test.gz.gz&hgta_ctVis=pack&hgta_ctUrl=&fbUpBases=200&fbExonBases=0&fbQual=intron&fbIntronBases=0&fbDownBases=200&hgta_doGetBed=get+BED&hgta_compressType=gzip
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?clade=mammal&org=mouse&db=mm10&hgta_group=genes&hgta_track=wgEncodeGencodeVM25&hgta_table=0&hgta_regionType=genome&hgta_outFileName=test.gz.gz&hgta_ctVis=pack&hgta_ctUrl=&fbUpBases=200&fbExonBases=0&fbQual=intron&fbIntronBases=0&fbDownBases=200&hgta_doGetBed=get+BED&hgta_compressType=gzip
     type: gz
     name: gencode_intron.bed.gz
 
