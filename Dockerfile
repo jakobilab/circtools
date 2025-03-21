@@ -99,7 +99,7 @@ RUN python3 -m venv /circtools && \
     pip install numpy && \
     pip install circtools/ --verbose && \
     cd /build/ && \
-    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
+#    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
     pip install nanofilt -v &&\
     pip cache purge && \
     apt-get purge python3-dev -y && \
