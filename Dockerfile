@@ -94,7 +94,6 @@ ADD . /build/circtools/
 
 RUN cd /build/ && \
     pip install numpy && \
-    pip install setuptools==75.5.0 && \
     pip install circtools/ --verbose && \
     cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
