@@ -93,7 +93,7 @@ ADD . /build/circtools/
 
 
 RUN cd /build/ && \
-    python3 -m pip install -U setuptools numpy && \
+    python3 -m pip install numpy && \
     python3 -m pip install circtools/ && \
     cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
