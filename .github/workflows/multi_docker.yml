@@ -7,6 +7,9 @@ on:
     types:
       - completed
 
+concurrency:
+  cancel-in-progress: true
+
 
 env:
   GHCR_REPO:  ghcr.io/jakobilab/circtools
