@@ -38,6 +38,6 @@ if __name__ == "__main__":
     user_paths = sys.argv[1:]
     modified_paths = process_paths(user_paths)
 
-    modified_paths.insert(0,'circtools')
+    modified_paths.insert(0,'. /circtools/bin/activate && circtools')
 
     subprocess.run(modified_paths)
