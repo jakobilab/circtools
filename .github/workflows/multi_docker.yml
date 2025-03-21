@@ -6,6 +6,8 @@ on:
     workflows: ["circtools CI"]
     types:
       - completed
+  schedule:
+    - cron: '0 10 * * *'
 
 concurrency:
   group: docker-${{ github.ref }}-1
