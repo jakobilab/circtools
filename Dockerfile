@@ -94,7 +94,7 @@ ADD . /build/circtools/
 
 
 RUN python3 -m venv /circtools && \
-#    cd /build/ && \
+    cd /build/ && \
     . /circtools/bin/activate && \
     pip install numpy && \
     pip install circtools/ --verbose && \
