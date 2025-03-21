@@ -54,28 +54,28 @@ RUN apt-get update && \
 RUN mkdir /build/
 
 # Download and install BEDTools
-#RUN cd /build/ && \
-#    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
-#    tar zxvf bedtools-2.31.1.tar.gz && \
-#    cd bedtools2 && \
-#    make -j4 && \
-#    cp bin/* /usr/local/bin/ && \
-#    cd /build/ && \
-#    git clone --depth=1 https://github.com/icebert/pblat.git && \
-#    cd pblat && \
-#    make && \
-#    cp pblat /usr/local/bin/ &&\
-#    cd /build/ && \
-#    wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
-#    tar xvf samtools-1.21.tar.bz2 && \
-#    cd samtools-1.21 && \
-#    make && \
-#    make install &&\
-#    cd /build/ && \
-#    git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
-#    cd kent/src/ && \
-#    make userApps && \
-#    cp ~/bin/`uname -m`/liftOver /usr/local/bin
+RUN cd /build/ && \
+    wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
+    tar zxvf bedtools-2.31.1.tar.gz && \
+    cd bedtools2 && \
+    make -j4 && \
+    cp bin/* /usr/local/bin/ && \
+    cd /build/ && \
+    git clone --depth=1 https://github.com/icebert/pblat.git && \
+    cd pblat && \
+    make && \
+    cp pblat /usr/local/bin/ &&\
+    cd /build/ && \
+    wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
+    tar xvf samtools-1.21.tar.bz2 && \
+    cd samtools-1.21 && \
+    make && \
+    make install &&\
+    cd /build/ && \
+    git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
+    cd kent/src/ && \
+    make userApps && \
+    cp ~/bin/`uname -m`/liftOver /usr/local/bin
 
 # Download and install circtools
 ADD . /build/circtools/
@@ -99,7 +99,7 @@ RUN python3 -m venv /circtools && \
     pip install numpy && \
     pip install circtools/ --verbose && \
     cd /build/ && \
-#    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
+    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
     pip install nanofilt -v &&\
     pip cache purge && \
     apt-get purge python3-dev -y && \
