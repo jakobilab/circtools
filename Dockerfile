@@ -93,8 +93,8 @@ ADD . /build/circtools/
 
 
 RUN cd /build/ && \
-    python3 -m pip install numpy && \
-    python3 -m pip install circtools/ && \
+    pip install numpy && \
+    pip install circtools/ --verbose && \
     cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
     pip install nanofilt -v &&\
