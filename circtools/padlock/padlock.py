@@ -18,6 +18,7 @@
 import circ_module.circ_template
 
 import os
+import circtools.scripts
 import sys
 import string
 import random
@@ -37,6 +38,12 @@ var = os.system('module load blast/2.3.0+')       # for running blastn command-l
 print(var)
 #cmd = subprocess.Popen('module load blast/2.3.0+', shell = True)
 #exec(cmd)
+
+#R file path
+R_SCRIPT_PATH = os.path.join(
+    circtools.scripts.__path__[0],
+    "circtools_padlockprobe_formatter.R"
+)
 
 class Padlock(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -961,7 +968,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
-        primer_script = 'circtools_padlockprobe_formatter.R'
+        primer_script = R_SCRIPT_PATH
 
         # ------------------------------------ run formatter script and write output to various files -----------------------
         # for formatter command

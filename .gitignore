@@ -130,3 +130,5 @@ ENV/
 
 .Rproj.user
 circtools/conservation/conservation.py
+circtools/.DS_Store
+.DS_Store

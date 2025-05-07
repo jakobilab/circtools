@@ -1,23 +1,9 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2025 Tobias Jakobi
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 import sys
 import subprocess
+import shlex
 
 def process_paths(paths):
     modified_paths_int = []
@@ -33,11 +19,14 @@ def process_paths(paths):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
+        print("✅ Patched version: no arguments provided.")
         sys.exit(1)
 
     user_paths = sys.argv[1:]
     modified_paths = process_paths(user_paths)
 
-    modified_paths.insert(0,'. /circtools/bin/activate && circtools')
+    args_str = ' '.join([shlex.quote(arg) for arg in modified_paths])
+    command = f'. /circtools/bin/activate && circtools {args_str}'
 
-    subprocess.run(modified_paths)
+    print(f"✅ Running: {command}")
+    subprocess.run(command, shell=True)
