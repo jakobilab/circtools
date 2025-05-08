@@ -1,3 +1,4 @@
+
 FROM ubuntu:22.04
 
 LABEL stage=builder
@@ -96,16 +97,29 @@ ADD . /build/circtools/
 RUN python3 -m venv /circtools && \
     cd /build/ && \
     . /circtools/bin/activate && \
-    pip install numpy && \
+    pip install --upgrade pip setuptools wheel && \
+    pip install Cython && \
+    pip install numpy \
+                primer3-py \
+                "biopython>=1.71" && \
     pip install circtools/ --verbose && \
     cd /build/ && \
-    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ &&\
-    pip install nanofilt -v &&\
+    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ && \
+    R -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager'); \
+          BiocManager::install(c('primex', 'ballgown', 'ggbio', 'edgeR', 'GenomicRanges', 'GenomicFeatures'))" && \
+    R -e "install.packages(c( \
+      'ggplot2', 'ggrepel', 'plyr', 'ggfortify', 'openxlsx', \
+      'formattable', 'kableExtra', 'dplyr', 'RColorBrewer', \
+      'colortools', 'data.table', 'reshape2', 'gridExtra' \
+    ), repos='https://cloud.r-project.org')" && \
+    pip install nanofilt -v && \
     pip cache purge && \
     apt-get purge python3-dev -y && \
     apt-get autoremove -y && \
     apt-get autoclean -y && \
-    rm /build/ /var/lib/apt/lists/ -rf
+    rm -rf /build/ /var/lib/apt/lists/*
+
+
 
 # add script to bend absolute path names for circtools inside docker
 ADD docker_path_wrapper.py /usr/local/bin/
