@@ -34,8 +34,8 @@ from Bio.Graphics import GenomeDiagram
 
 import primer3                  # for padlock probe designing
 
-var = os.system('module load blast/2.3.0+')       # for running blastn command-line
-print(var)
+# var = os.system('module load blast/2.3.0+')       # for running blastn command-line
+# print(var)
 #cmd = subprocess.Popen('module load blast/2.3.0+', shell = True)
 #exec(cmd)
 

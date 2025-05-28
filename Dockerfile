@@ -106,7 +106,7 @@ RUN python3 -m venv /circtools && \
     cd /build/ && \
     Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ && \
     R -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager'); \
-          BiocManager::install(c('primex', 'ballgown', 'ggbio', 'edgeR', 'GenomicRanges', 'GenomicFeatures'))" && \
+          BiocManager::install(c('ballgown', 'ggbio', 'edgeR', 'GenomicRanges', 'GenomicFeatures'))" && \
     R -e "install.packages(c( \
       'ggplot2', 'ggrepel', 'plyr', 'ggfortify', 'openxlsx', \
       'formattable', 'kableExtra', 'dplyr', 'RColorBrewer', \

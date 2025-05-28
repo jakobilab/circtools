@@ -19,7 +19,7 @@ def process_paths(paths):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("✅ Patched version: no arguments provided.")
+        print("No arguments provided.")
         sys.exit(1)
 
     user_paths = sys.argv[1:]
@@ -28,5 +28,4 @@ if __name__ == "__main__":
     args_str = ' '.join([shlex.quote(arg) for arg in modified_paths])
     command = f'. /circtools/bin/activate && circtools {args_str}'
 
-    print(f"✅ Running: {command}")
     subprocess.run(command, shell=True)
