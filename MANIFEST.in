@@ -9,3 +9,4 @@ include DESCRIPTION.rst
 recursive-include circtools/scripts *
 recursive-include circtools/contrib *
 recursive-include circtools/nanopore *
+recursive-include circtools/conservation *
