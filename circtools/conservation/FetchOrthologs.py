@@ -25,7 +25,8 @@ class fetch(object):
             r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
         except requests.exceptions.RequestException as e:
             raise SystemExit(e)
- 
+
+        print(r)
         if not r.ok:
             r.raise_for_status()
             print("Could not fetch ortholog information from ENSEMBL. Exiting!")

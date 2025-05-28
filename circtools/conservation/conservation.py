@@ -32,10 +32,18 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
 # Loading the functionalities defined in other scripts as modules
-from . import FetchOrthologs as FO 
-from . import LiftOver as LO
-from . import FetchRegionGeneSequence as FS
-from . import SequenceAlignment as AL
+
+# for now silence these warnings
+from Bio import BiopythonDeprecationWarning
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", BiopythonDeprecationWarning)
+    from . import FetchOrthologs as FO
+    from . import LiftOver as LO
+    from . import FetchRegionGeneSequence as FS
+    from . import SequenceAlignment as AL
+
 
 import yaml
 import circtools
@@ -139,7 +147,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
         try:
             file_handle = open(annotation_file)
-        except PermissionError:
+        except (PermissionError, FileNotFoundError):
             message = ("Input file " + str(annotation_file) + " cannot be read, exiting.")
             sys.exit(message)
         else:
@@ -384,6 +392,7 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             bsj_exon = all_exons_circle[name][-1]
                             first_exon = all_exons_circle[name][0]
                         elif current_line[5] == "-":
+                            print(all_exons_circle[name])
                             bsj_exon = all_exons_circle[name][0]
                             first_exon = all_exons_circle[name][-1]
                         else:
