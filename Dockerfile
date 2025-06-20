@@ -51,32 +51,180 @@ RUN apt-get update && \
     libncurses-dev \
     libjpeg-dev
 
+
 # make build dir
 RUN mkdir /build/
 
-# Download and install BEDTools
-RUN cd /build/ && \
+ADD . /build/circtools/
+
+# Install Git
+RUN apt-get update && apt-get install -y git
+
+# Step 1: Install Git
+RUN apt-get update && apt-get install -y git
+
+# Step 2: Install BiocManager
+RUN Rscript -e "\
+  cat('>>> Installing BiocManager...\n'); \
+  if (!requireNamespace('BiocManager', quietly = TRUE)) \
+    install.packages('BiocManager', repos='https://cloud.r-project.org'); \
+  stopifnot(requireNamespace('BiocManager')); \
+  cat('>>> BiocManager installed ✅\n')"
+
+
+# Install math libraries needed by lme4, car, etc.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libgmp-dev \
+    libmpfr-dev \
+    libnlopt-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+
+# Step 3: Install CRAN deps for GGally, Hmisc, and ggstats
+# Step A: Core packages
+RUN Rscript -e "\
+  install.packages(c('forcats', 'reshape', 'remotes', 'tibble', 'rlang', 'stringr'), \
+                   repos='https://cloud.r-project.org')"
+
+# Step B: Heavy deps (after system libs)
+RUN Rscript -e "\
+  install.packages(c('ggplot2', 'scales', 'survey', 'car', 'vcd'), \
+                   repos='https://cloud.r-project.org')"
+
+
+
+RUN Rscript -e "\
+  cat('>>> Installing CRAN packages: Formula, latticeExtra, htmlTable, viridis...\n'); \
+  install.packages(c('Formula', 'latticeExtra', 'htmlTable', 'viridis'), repos='https://cloud.r-project.org'); \
+  stopifnot(all(c('Formula', 'latticeExtra', 'htmlTable', 'viridis') %in% rownames(installed.packages()))); \
+  cat('>>> Core CRAN packages installed ✅\n')"
+
+# Step 4: Install archived Hmisc (ensure data.table is present first)
+RUN Rscript -e "\
+  cat('>>> Installing data.table (needed by Hmisc)...\n'); \
+  install.packages('data.table', repos='https://cloud.r-project.org'); \
+  stopifnot('data.table' %in% rownames(installed.packages())); \
+  cat('>>> data.table installed ✅\n')"
+
+RUN Rscript -e "\
+  cat('>>> Installing archived Hmisc...\n'); \
+  install.packages('https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz', \
+                   repos=NULL, type='source'); \
+  stopifnot('Hmisc' %in% rownames(installed.packages())); \
+  cat('>>> Hmisc installed ✅\n')"
+
+
+# Step: Install ggstats dependencies
+RUN Rscript -e "\
+  cat('>>> Installing ggstats dependencies: broom.helpers, dplyr, tidyr...\n'); \
+  install.packages(c('broom.helpers', 'dplyr', 'tidyr'), repos = 'https://cloud.r-project.org'); \
+  cat('>>> Dependencies installed ✅\n')"
+
+# Step: Install archived ggstats 0.3.0
+RUN Rscript -e "\
+  cat('>>> Installing archived ggstats 0.3.0...\n'); \
+  install.packages('https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz', \
+                   repos = NULL, type = 'source'); \
+  stopifnot('ggstats' %in% rownames(installed.packages())); \
+  cat('>>> ggstats 0.3.0 installed ✅\n')"
+
+
+# Step 6: Install archived GGally
+RUN Rscript -e "\
+  cat('>>> Installing archived GGally...\n'); \
+  install.packages('https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz', repos=NULL, type='source'); \
+  stopifnot('GGally' %in% rownames(installed.packages())); \
+  cat('>>> GGally installed ✅\n')"
+
+# Step 7: Install Bioconductor base packages for ggbio
+RUN Rscript -e "\
+  cat('>>> Installing Bioconductor base packages...\n'); \
+  BiocManager::install(c('S4Vectors', 'IRanges', 'GenomicRanges', 'Biostrings', \
+                         'BSgenome', 'GenomicFeatures', 'edgeR', 'ballgown'), \
+                         ask=FALSE, update=FALSE); \
+  stopifnot('IRanges' %in% rownames(installed.packages())); \
+  cat('>>> Bioconductor base installed ✅\n')"
+
+# Step 8: Install biovizBase
+RUN Rscript -e "\
+  cat('>>> Installing biovizBase...\n'); \
+  BiocManager::install('biovizBase', ask=FALSE, update=FALSE); \
+  stopifnot('biovizBase' %in% rownames(installed.packages())); \
+  cat('>>> biovizBase installed ✅\n')"
+
+# Step 9: Install ggbio and verify
+RUN Rscript -e "\
+  cat('>>> Installing ggbio...\n'); \
+  BiocManager::install('ggbio', ask=FALSE, update=FALSE); \
+  stopifnot('ggbio' %in% rownames(installed.packages())); \
+  cat('>>> ggbio installed and verified ✅\n')"
+
+
+
+# Step 6a: Install devtools (needed for GitHub installs)
+RUN Rscript -e "\
+  cat('>>> Installing devtools (for GitHub packages)...\n'); \
+  install.packages('devtools', repos='https://cloud.r-project.org'); \
+  cat('>>> devtools installed ✅\n')"
+
+# Step 6: Install circtools extras from GitHub
+RUN Rscript -e "\
+  cat('>>> Installing circTest and primex from GitHub...\n'); \
+  devtools::install_github('dieterich-lab/CircTest'); \
+  devtools::install_github('dieterich-lab/primex'); \
+  cat('>>> circTest and primex installed ✅\n')"
+
+
+
+RUN apt-get update && apt-get install -y \
+    libz-dev \
+    libpthread-stubs0-dev \
+    build-essential
+
+# pblat
+RUN cd /build && \
+    git clone --depth=1 https://github.com/icebert/pblat.git && \
+    cd pblat && \
+    unset MAKEFLAGS && \
+    make -j1 && \
+    cp pblat /usr/local/bin/
+
+
+# BEDTools
+RUN cd /build && \
     wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
     tar zxvf bedtools-2.31.1.tar.gz && \
     cd bedtools2 && \
-    make -j4 && \
-    cp bin/* /usr/local/bin/ && \
-    cd /build/ && \
-    git clone --depth=1 https://github.com/icebert/pblat.git && \
-    cd pblat && \
     make && \
-    cp pblat /usr/local/bin/ &&\
-    cd /build/ && \
+    cp bin/* /usr/local/bin/
+
+
+
+# samtools
+RUN cd /build && \
     wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
     tar xvf samtools-1.21.tar.bz2 && \
     cd samtools-1.21 && \
     make && \
-    make install &&\
-    cd /build/ && \
-    git clone --depth=1 https://github.com/ucscGenomeBrowser/kent.git && \
-    cd kent/src/ && \
-    make userApps && \
-    cp ~/bin/`uname -m`/liftOver /usr/local/bin
+    make install
+
+# UCSC liftOver binary (precompiled, avoids `make` failure on ARM/M1)
+RUN apt-get update && apt-get install -y curl && \
+    curl -LO https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver && \
+    chmod +x liftOver && \
+    mv liftOver /usr/local/bin/
+
+
+#primer docker build
+RUN cd /build/ && \
+    git clone https://github.com/primer3-org/primer3.git && \
+    cd primer3/src && \
+    make && \
+    mkdir -p /usr/local/lib/R/site-library/primex/primer3 && \
+    cp primer3_core /usr/local/lib/R/site-library/primex/primer3/primer3_core_Linux_64 && \
+    chmod +x /usr/local/lib/R/site-library/primex/primer3/primer3_core_Linux_64
+
 
 # Download and install circtools
 ADD . /build/circtools/
@@ -94,30 +242,50 @@ ADD . /build/circtools/
 #    rm /build/ /var/lib/apt/lists/ -rf
 
 
+# Create circtools environment and install dependencies
 RUN python3 -m venv /circtools && \
-    cd /build/ && \
     . /circtools/bin/activate && \
     pip install --upgrade pip setuptools wheel && \
-    pip install Cython && \
-    pip install numpy \
-                primer3-py \
-                "biopython>=1.71" && \
-    pip install circtools/ --verbose && \
-    cd /build/ && \
-    Rscript circtools/circtools/scripts/install_R_dependencies.R circtools/circtools/ && \
-    R -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager'); \
-          BiocManager::install(c('ballgown', 'ggbio', 'edgeR', 'GenomicRanges', 'GenomicFeatures'))" && \
-    R -e "install.packages(c( \
-      'ggplot2', 'ggrepel', 'plyr', 'ggfortify', 'openxlsx', \
-      'formattable', 'kableExtra', 'dplyr', 'RColorBrewer', \
-      'colortools', 'data.table', 'reshape2', 'gridExtra' \
-    ), repos='https://cloud.r-project.org')" && \
+    pip install Cython numpy matplotlib "biopython>=1.71" primer3-py
+
+
+# Install circtools
+RUN . /circtools/bin/activate && \
+    pip install /build/circtools/ --verbose
+
+# Install StringTie from binary
+RUN cd /build && \
+    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz && \
+    tar -xvzf stringtie-2.2.1.Linux_x86_64.tar.gz && \
+    cp stringtie-2.2.1.Linux_x86_64/stringtie /usr/local/bin/ && \
+    chmod +x /usr/local/bin/stringtie
+
+
+
+
+
+
+
+
+
+RUN R -e "install.packages(c( \
+  'ggplot2', 'ggrepel', 'plyr', 'ggfortify', 'openxlsx', \
+  'formattable', 'kableExtra', 'dplyr', 'RColorBrewer', \
+  'colortools', 'data.table', 'reshape2', 'gridExtra' \
+), repos='https://cloud.r-project.org')"
+
+# Install remaining Python tools and cleanup
+RUN . /circtools/bin/activate && \
     pip install nanofilt -v && \
-    pip cache purge && \
-    apt-get purge python3-dev -y && \
+    pip cache purge
+
+RUN apt-get purge python3-dev -y && \
     apt-get autoremove -y && \
     apt-get autoclean -y && \
     rm -rf /build/ /var/lib/apt/lists/*
+
+
+
 
 
 
