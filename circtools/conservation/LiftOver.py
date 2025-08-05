@@ -4,6 +4,7 @@ import os, sys
 import subprocess
 import requests
 import pybedtools
+import platform
 
 class liftover(object):
 
@@ -19,14 +20,39 @@ class liftover(object):
         self.dict_species_liftover = dict_species_liftover
 
     def call_liftover_binary(self):
-        # encapsulated liftover binary call
+        # Determine OS and architecture
+        system = platform.system()
+        machine = platform.machine()
 
-        # liftover command
-        liftover_utility = os.path.dirname(os.path.realpath(__file__)) + "/liftOver"
-        command = liftover_utility + " " + self.liftover_input_file + " " + self.chain_file + " " + self.liftover_output_file + " " + self.liftover_unlifted_file + "  -multiple -minMatch=0.1"
+        # Identify correct liftOver subfolder
+        if system == "Darwin":
+            if machine == "x86_64":
+                platform_dir = "AMD64"
+            elif machine == "arm64":
+                platform_dir = "ARM64"
+            else:
+                raise RuntimeError(f"Unsupported Mac architecture: {machine}")
+        elif system == "Linux":
+            platform_dir = "linux"
+        else:
+            raise RuntimeError(f"Unsupported operating system: {system}")
+
+        # Construct path to liftOver binary
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+        liftover_utility = os.path.join(parent_dir, "contrib", "liftOver", platform_dir, "liftOver")
+        print(liftover_utility)
+
+        if not os.path.isfile(liftover_utility):
+            raise FileNotFoundError(f"liftOver binary not found at: {liftover_utility}")
+
+        # Command to run
+        command = f"{liftover_utility} {self.liftover_input_file} {self.chain_file} {self.liftover_output_file} {self.liftover_unlifted_file} -multiple -minMatch=0.1"
+
+        # Run subprocess
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        return(p)
+        return p
 
     
     def lifting(self):
