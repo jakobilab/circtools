@@ -255,14 +255,14 @@ class Padlock(circ_module.circ_template.CircTemplate):
             if (int(hetero.tm) > melt_tmp_5):
                 warnings.append("Potential Heterodimer")
 
-            if len(warnings) == 0:
-                print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
-            else:
-                print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction, ",".join(warnings)) 
+            # if len(warnings) == 0:
+            #     print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction)
+            # else:
+            #     print(gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction, ",".join(warnings))
                 
             output_list.append([gene_string, rbd5, rbd3, melt_tmp_5, melt_tmp_3, melt_tmp_full, gc_rbd5, gc_rbd3, junction])
             
-            return(output_list)
+            return output_list
 
         # function to run blast on every probe
         def probes_blast(probes_for_blast, blast_xml_tmp_file):
@@ -579,7 +579,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         #print(exons_bed_list)
         # create a "virtual" BED file for circular RNA bedtools intersect
         virtual_bed_file = pybedtools.BedTool(exons_bed, from_string=True)
-        print("Start merging GTF file outside the function")
+
         #virtual_bed_file.saveas('exons_hs.bed')
         # we trust that bedtools >= 2.27 is installed. Otherwise this merge will probably fail
         exons = virtual_bed_file.sort().merge(s=True,  # strand specific
@@ -633,7 +633,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
                     list_exons_seq.append(seq)
                     each_line = "\t".join([each_element[i] for i in [0,1,2,5]])     # this entry is for final HTML report chr, start, end, gene
-                    print("Check each_line", each_line)
+                    # print("Check each_line", each_line)
                     list_exons_pos.append(each_line)
 
                 with open(exon_storage_linear_tmp, 'a') as data_store:
@@ -641,7 +641,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                
                 # for every gene, extract from every exon, the first and last 25bp 
                 for i in range(0, len(list_exons_seq)):
-                    if (i == len(list_exons_seq)-1):
+                    if i == len(list_exons_seq)-1:
                         break
                     # find out start and end of probes
                     pos = list_exons_pos[i]     # details about coordinates of these exons -> required for HTML output
@@ -879,12 +879,12 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         # this is a single exon circle so take first 25 and last 25
                         # bases from its sequence to create a scan sequence
                         scan_sequence = exon_cache[each_circle][1][-25:] + exon_cache[each_circle][1][:25]
-                        print(each_circle, exon_cache[each_circle][1][-25:], exon_cache[each_circle][1][:25])
+                        #print(each_circle, exon_cache[each_circle][1][-25:], exon_cache[each_circle][1][:25])
                     else:
                         # this is a multiple exon circular RNA. Take last 25 bases of
                         # last exon and first 25 bases of first exon as a scan sequence
                         scan_sequence = exon_cache[each_circle][2][-25:] + exon_cache[each_circle][1][:25]
-                        print(each_circle, exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25])
+                        #print(each_circle, exon_cache[each_circle][2][-25:], exon_cache[each_circle][1][:25])
                     if (len(exon_dict_circle_bed12[each_circle]) == 1):
                         #print("CHECK if SINGLE-EXON or SOMETHING ELSE", each_circle, exon_dict_circle_bed12[each_circle])
                         circle_exon = exon_dict_circle_bed12[each_circle][0]
