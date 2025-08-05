@@ -296,7 +296,11 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     #circrna_length = int(current_line[2]) - int(current_line[1])
 
-                   
+                    # check for intronic circles.
+                    if (current_line[6] == "intron-intron"):
+                        print("Warning!!! This is an intronic circle. The conservation will not be checked.")
+                        continue
+
                     sep = "\t"
                     bed_string = sep.join([current_line[0],
                                             current_line[1],
@@ -308,7 +312,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     result = exons.intersect(virtual_bed_file, s=True)
                     fasta_bed_line_start = ""
                     fasta_bed_line_stop = ""
-
                     start = 0
                     stop = 0
 
@@ -352,6 +355,8 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
                     virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
                     virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file, s=True)
+
+                    # print("Virtual bed start and stop", virtual_bed_file_start, virtual_bed_file_stop)
 
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
@@ -404,7 +409,6 @@ class Conservation(circ_module.circ_template.CircTemplate):
                     host_gene = current_line[3]
                     fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism], self.dict_species_ortholog)
                     ortho_dict = fetchOrtho.parse_json()
-                    #print(ortho_dict)
                     # check if each target species is present in the dictionary and remove if not
                     for each_species in self.target_species:
                         species_name = species_dictionary[each_species]
