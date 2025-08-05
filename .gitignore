@@ -132,3 +132,4 @@ ENV/
 circtools/conservation/conservation.py
 circtools/.DS_Store
 .DS_Store
+circtools/scripts/p_r_sig.py
