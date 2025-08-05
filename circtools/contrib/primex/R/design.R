@@ -190,10 +190,11 @@ pickPrimer3Exec <- function(file) {
       Linux =  list(x86_64 = "primer3_core_Linux_64",
                     i686   = "primer3_core_Linux_32"),
       Darwin = list(x86_64 = "primer3_core_Darwin_64",
+                    arm64  = "primer3_core_Darwin_arm64",
                     i686   = NULL) #"primer3_core_Linux_i686"),
     )
     info <- as.list(Sys.info())
-    machine <- ifelse(grepl("64", info$machine), "x86_64", "i686")
+    machine <- info$machine
     file <- executables[[info$sysname]][[machine]]
     pkgDir <- find.package('primex', .libPaths())
     file <- normalizePath(file.path(pkgDir, "primer3", file))
