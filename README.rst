@@ -6,7 +6,7 @@
 .. figure:: https://raw.githubusercontent.com/jakobilab/circtools/master/docs/img/circtools_200px.png
    :alt: circtools
 
-|docs| |build| |docker| |zenodo| |downloads| |pypi|
+|docs| |build| |docker_amd64| |docker_arm64| |zenodo| |downloads| |pypi|
 
 Introduction
 -------------
@@ -28,7 +28,7 @@ Click `here <https://docs.circ.tools/>`__ to access the complete documentation o
 Installation
 ------------
 
-The ``circtools`` package is written in Python 3 (supporting Python 3.7 - 3.10). It requires only a small number of external dependencies, namely standard bioinformatics tools:
+The ``circtools`` package is written in Python 3 (supporting Python 3.8 - 3.12). It requires only a small number of external dependencies, namely standard bioinformatics tools:
 
 -  `bedtools (>= 2.27.1) <https://bedtools.readthedocs.io/en/latest/content/installation.html>`__
    [RBP enrichment module, installed automatically]
@@ -153,10 +153,15 @@ for follow up wet lab experiments to verify circRNA candidates.
     :scale: 100%
     :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
 
-.. |docker| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml/badge.svg?branch=master
-    :alt: Docker Build
+.. |docker_arm64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml/badge.svg?branch=master
+    :alt: Docker Build ARM64
     :scale: 100%
-    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker.yml
+    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_arm64.yml
+
+.. |docker_amd64| image:: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml/badge.svg?branch=master
+    :alt: Docker Build AMD64
+    :scale: 100%
+    :target: https://github.com/jakobilab/circtools/actions/workflows/build_docker_amd64.yml
 
 .. |zenodo| image:: https://zenodo.org/badge/498448368.svg
     :alt: Zenodo DOI link

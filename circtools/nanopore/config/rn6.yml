@@ -1,0 +1,24 @@
+---
+dataset:
+    rn6
+
+fasta:
+    url: https://hgdownload.soe.ucsc.edu/goldenPath/rn6/bigZips/rn6.fa.gz
+    type: gz
+    name: genome.fa.gz
+
+chrom_size:
+    url: https://hgdownload.soe.ucsc.edu/goldenPath/rn6/bigZips/rn6.chrom.sizes
+    type: plain
+    name: genome.chrom.sizes
+
+ref_flat:
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?jsh_pageVertPos=0&clade=mammal&org=rat&db=rn6&hgta_group=allTables&hgta_track=rn6&hgta_table=refFlat&hgta_regionType=genome&hgta_outputType=primaryTable&boolshad.sendToGalaxy=0&boolshad.sendToGreat=0&hgta_outFileName=foo.gz&hgta_outSep=tab&hgta_compressType=gzip&hgta_doTopSubmit=Get+output
+    type: gz-no-unpack
+    name: refFlat.csv.gz
+    postprocess: refFlat
+
+est:
+    url: https://genome.ucsc.edu/cgi-bin/hgTables?hgta_ctName=tb_all_est&hgta_ctUrl=&fbUpBases=200&fbQual=exon&fbExonBases=0&fbIntronBases=0&fbDownBases=200&hgta_doGetBed=get+BED&clade=mammal&org=rat&db=rn6&hgta_group=allTracks&hgta_track=intronEst&hgta_table=all_est&hgta_regionType=genome&hgta_outputType=bed&hgta_outFileName=test3.gz&hgta_compressType=gzip
+    type: gz
+    name: est.bed.gz
