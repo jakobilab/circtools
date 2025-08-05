@@ -115,6 +115,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
             blast_db = self.rattus_norvegicus_blast_db
         elif organism == "ss":
             blast_db = self.sus_scrofa_blast_db
+        else:
+            print("Organism not recognized. Make sure -O is supplied.")
 
         return_handle = NCBIWWW.qblast("blastn",
                                        blast_db,
