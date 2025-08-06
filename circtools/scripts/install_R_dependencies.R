@@ -18,114 +18,68 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-# we need these packages
 pkgs <- c(
-    "aod",
-    "amap",
-    "ballgown",
-    "devtools",
-    "biomaRt",
-    "data.table",
-    "edgeR",
-    "GenomicFeatures",
-    "GenomicRanges",
-    "ggbio",
-    "ggfortify",
-    "ggplot2",
-    "gplots",
-    "ggrepel",
-    "gridExtra",
-    "openxlsx",
-    "plyr",
-    "Hmisc",
-    "reshape2",
-    "devtools",
-    "kableExtra",
-    "formattable",
-    "dplyr",
-    "RColorBrewer",
-    "devtools",
-    'GenomicRanges',
-    'ggplot2',
-    'BSgenome',
-    'IRanges',
-    'S4Vectors',
-    'Biostrings',
-    "openxlsx",
-    "ggrepel",
-    "aod",
-    "plyr"
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
+  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
+  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
+  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings"
 )
 
-countdown <- function(from)
-{
-  cat(from)
-  while(from!=0)
-  {
-    Sys.sleep(1)
-    from <- from - 1
-    cat("\r",from)
-  }
-}
-message("")
-
-# check if devtools is already installed
-pkgs <- pkgs[!pkgs %in% installed.packages()[,1]]
+# Remove already installed packages
+pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
 
 minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
 majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
 
 message("")
-message("This script will automatically install R packages required by circtools.")
-message("")
-
+message("This script will automatically install R packages required by circtools.\n")
 message(paste("Detected R version ", majorVersion, ".", version[['minor']], "\n", sep=""))
-
 message("Detected library paths:")
-for (path in .libPaths()){
-    message(paste0("-> ",path))
-}
+for (path in .libPaths()) message(paste0("-> ", path))
 message("")
 
-for (package in pkgs){
-    message(paste("Need to install package", package))
+for (package in pkgs) {
+  message(paste("Need to install package", package))
 }
 
-if (
-    majorVersion >= 4
-    || ( majorVersion == 3 && minorVersion >= 6 )
-){
-    if (!requireNamespace("BiocManager", quietly = TRUE))
-        install.packages("ggplot2")
-        install.packages("BiocManager")
-
-
-        if (length(pkgs) > 0)
-            BiocManager::install(pkgs)
-
+if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager", repos="https://cloud.r-project.org")
+  }
+  
+  if (length(pkgs) > 0) {
+    BiocManager::install(pkgs, ask = FALSE, update = FALSE)
+  }
+  
 } else {
-    source("https://bioconductor.org/biocLite.R")
-    biocLite()
-
-
-    if (length(pkgs) > 0)
-        biocLite(pkgs)
+  source("https://bioconductor.org/biocLite.R")
+  biocLite()
+  if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# load devtools library
+# --- Archive packages ---
+message("\nInstalling archived R packages...")
+
+install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
+                 repos = NULL, type = "source")
+install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
+                 repos = NULL, type = "source")
+install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
+                 repos = NULL, type = "source")
+
+# --- GitHub packages ---
+message("\nInstalling GitHub R packages (circTest and primex)...")
+
 library(devtools)
 
-message("")
-message("Now installing R CircTest and primex R packages.")
-message("")
+devtools::install_github("dieterich-lab/CircTest")
+devtools::install_github("dieterich-lab/primex")
 
-install.packages(paste0(base_path,"/contrib/primex"),
-                         repos = NULL,
-                          type = "source")
+# --- Local source installs ---
+message("\nInstalling local R packages (primex, circtest)...")
 
+install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
+install.packages(paste0(base_path, "/contrib/circtest"), repos = NULL, type = "source")
 
-install.packages(paste0(base_path,"/contrib/circtest"),
-                         repos = NULL,
-                          type = "source")
-
-
+message("\n✅ All R dependencies for circtools are installed.")
