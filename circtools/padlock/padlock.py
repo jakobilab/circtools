@@ -308,9 +308,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # check if we have to blast
             if not self.no_blast and blast_input_file:
                 
-                '''
-                # this part has been commented because could not sent BLAST querries to NCBI
-                # Thus, run the local installation of BLAST and write output in an XML file
                 try:
                     print("Sending " + str(len(blast_object_cache)) + " primers to BLAST")
                     print("This may take a few minutes, please be patient.")
@@ -324,6 +321,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                 result_handle.close()
                 '''
+                ## this is the local installation running part for BLAST. Commented later for the release.
+                
                 # save the blast input fasta file into a temp file
                 blast_fasta_file = blast_xml_tmp_file.replace("results.xml", "input.fa")
                 with open(blast_fasta_file, "w") as out_handle:
@@ -342,6 +341,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 except Exception as exc:
                     print(exc)
                     print(-1)
+                '''
 
                 result_handle = open(blast_xml_tmp_file)
                 run_blast = 1
