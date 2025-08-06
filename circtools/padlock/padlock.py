@@ -18,6 +18,7 @@
 import circ_module.circ_template
 
 import os
+import circtools.scripts
 import sys
 import string
 import random
@@ -33,10 +34,16 @@ from Bio.Graphics import GenomeDiagram
 
 import primer3                  # for padlock probe designing
 
-var = os.system('module load blast/2.3.0+')       # for running blastn command-line
-print(var)
+# var = os.system('module load blast/2.3.0+')       # for running blastn command-line
+# print(var)
 #cmd = subprocess.Popen('module load blast/2.3.0+', shell = True)
 #exec(cmd)
+
+#R file path
+R_SCRIPT_PATH = os.path.join(
+    circtools.scripts.__path__[0],
+    "circtools_padlockprobe_formatter.R"
+)
 
 class Padlock(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -299,9 +306,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
             # check if we have to blast
             if not self.no_blast and blast_input_file:
                 
-                '''
-                # this part has been commented because could not sent BLAST querries to NCBI
-                # Thus, run the local installation of BLAST and write output in an XML file
                 try:
                     print("Sending " + str(len(blast_object_cache)) + " primers to BLAST")
                     print("This may take a few minutes, please be patient.")
@@ -315,6 +319,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
 
                 result_handle.close()
                 '''
+                ## this is the local installation running part for BLAST. Commented later for the release.
+                
                 # save the blast input fasta file into a temp file
                 blast_fasta_file = blast_xml_tmp_file.replace("results.xml", "input.fa")
                 with open(blast_fasta_file, "w") as out_handle:
@@ -333,6 +339,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 except Exception as exc:
                     print(exc)
                     print(-1)
+                '''
 
                 result_handle = open(blast_xml_tmp_file)
                 run_blast = 1
@@ -961,7 +968,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
         
         # need to define path top R wrapper
         primer_script = 'circtools_primex_formatter'
-        primer_script = 'circtools_padlockprobe_formatter.R'
+        primer_script = R_SCRIPT_PATH
 
         # ------------------------------------ run formatter script and write output to various files -----------------------
         # for formatter command
