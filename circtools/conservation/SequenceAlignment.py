@@ -8,6 +8,7 @@ from Bio import SeqIO,  Align
 from Bio.Seq import Seq
 from Bio.Align import *
 import os
+import platform
 
 class Alignment(object):
 
@@ -31,10 +32,31 @@ class Alignment(object):
     def run_mafft(self):
         # on the input fasta sequence file, run mafft commandline
         # that stores tree and alignedment in clustalw format
+        system = platform.system()
+        machine = platform.machine()
+
+        # Identify correct liftOver subfolder
+        if system == "Darwin":
+            if machine == "x86_64":
+                platform_dir = "AMD64"
+            elif machine == "arm64":
+                platform_dir = "AMD64"
+            else:
+                raise RuntimeError(f"Unsupported Mac architecture: {machine}")
+        elif system == "Linux":
+            platform_dir = "linux"
+        else:
+            raise RuntimeError(f"Unsupported operating system: {system}")
+
+        # Construct path to liftOver binary
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+        mafft_utility = os.path.join(parent_dir, "contrib", "mafft", platform_dir, "mafft.bat")
+        print(f"Running MAFFT from: {mafft_utility}")
 
         self.out_fasta = self.fasta_file + ".aligned"
 
-        mafft_cline = MafftCommandline(input=self.fasta_file, clustalout=True, treeout=True)
+        mafft_cline = MafftCommandline(mafft_utility,input=self.fasta_file, clustalout=True, treeout=True)
         stdout, stderr = mafft_cline()
 
         with open(self.out_fasta, "w") as handle:
