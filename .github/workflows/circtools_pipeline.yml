@@ -29,12 +29,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
 
-    - name: Install Python dependencies
+    - name: Install system & Python dependencies
       run: |
-        python -m pip install -U pip setuptools
-        python -m pip install numpy wheel Cython
-        sudo apt-get update && sudo apt-get install -y libblas-dev libatlas-base-dev liblapack-dev
+        sudo apt-get update
+        sudo apt-get install -y \
+          libblas-dev libatlas-base-dev liblapack-dev \
+          libgsl-dev libreadline-dev libffi-dev libgfortran5
+        python -m pip install -U pip setuptools wheel
+        python -m pip install numpy Cython
         python -m pip install ./
+
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
@@ -48,6 +52,16 @@ jobs:
         extra-packages: |
           local::circtools/contrib/circtest
           local::circtools/contrib/primex
+    - name: Install BEDTools from source (v2.31.1)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make g++ zlib1g-dev wget
+        wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+        tar zxvf bedtools-2.31.1.tar.gz
+        cd bedtools2
+        make -j4
+        sudo cp bin/* /usr/local/bin/
+
 
     - name: Check R library loading
       run: Rscript -e 'library(primex)'
