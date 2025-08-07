@@ -29,6 +29,9 @@ from Bio.Blast import NCBIXML
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
+import ssl
+import certifi
+ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
 
 class Primex(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
