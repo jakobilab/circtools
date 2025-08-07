@@ -70,7 +70,6 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-        mkdir circtools_example
         tar xvf ./tests/data/circtools_example.tar.bz2
     - name: Running circtools detect with minimal data set
       run: |
