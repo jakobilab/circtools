@@ -1,0 +1,132 @@
+name: circtools circtest
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 11 * * *'
+
+concurrency:
+  group: ci-tests-${{ github.ref }}-1
+  cancel-in-progress: false
+
+jobs:
+  Main:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        R: ['4.4.0']
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+
+    - name: Install system & Python dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libblas-dev libatlas-base-dev liblapack-dev \
+          libgsl-dev libreadline-dev libffi-dev libgfortran5
+        python -m pip install -U pip setuptools wheel
+        python -m pip install numpy Cython
+        python -m pip install ./
+
+
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+
+    - name: Set up R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        extra-packages: |
+          local::circtools/contrib/circtest
+          local::circtools/contrib/primex
+    - name: Install BEDTools from source (v2.31.1)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make g++ zlib1g-dev wget
+        wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+        tar zxvf bedtools-2.31.1.tar.gz
+        cd bedtools2
+        make -j4
+        sudo cp bin/* /usr/local/bin/
+
+
+    - name: Check R library loading
+      run: Rscript -e 'library(primex)'
+
+    - name: Check circtools is callable
+      run: |
+        circtools --version
+        which circtools
+
+    - name: Download test data
+      run: |
+        tar xvf circtools_example.tar.bz2
+
+    - name: Fix missing Strand column (if needed)
+      run: |
+        cd circtools_example/circtools_ci
+        if [ "$(head -n1 LinearCount | awk -F'\t' '{sum=0; for(i=1;i<=NF;i++) if($i=="Strand") sum++; print sum}')" -eq 0 ]; then
+          echo "➕ Adding missing Strand column..."
+          awk 'BEGIN {OFS=FS="\t"}
+               NR==1 {
+                 for (i=1; i<=NF; i++) {
+                   if (i==4) printf "Strand%s", OFS;
+                   printf "%s%s", $i, (i<NF ? OFS : ORS)
+                 }
+                 next
+               }
+               {
+                 for (i=1; i<=NF; i++) {
+                   if (i==4) printf "+%s", OFS;
+                   printf "%s%s", $i, (i<NF ? OFS : ORS)
+                 }
+               }' LinearCount > LinearCount_fixed && mv LinearCount_fixed LinearCount
+        else
+          echo "✅ Strand column already exists — skipping."
+        fi
+
+    - name: Run circtest
+      run: |
+        cd circtools_example
+        circtools circtest \
+          -d ./circtools_ci_master/ \
+          -c 5,6,7 \
+          -g 2,1,1 \
+          -l control,treatment \
+          -r 3 \
+          -f 0.9 \
+          -p 0.01 \
+          -s 1 \
+          -C 1 \
+          -o ./circtest_output \
+          -n test_output \
+          -M bw
+
+    - name: Checking generated output against master output
+      run: |
+         cd circtools_example
+         cd circtest_output
+         ls -la
+         wc -l *
+         diff ../circtest_output_master/test_output.csv test_output.csv
+         if [ "$RUNNER_OS" == "Linux" ]; then
+           sha1sum -c ../circtest_output_master/sha1sums.txt
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+           shasum -c ../circtools_ci_master/sha1sums.txt
+         fi
+
+    runs-on: ${{ matrix.os }}
+
