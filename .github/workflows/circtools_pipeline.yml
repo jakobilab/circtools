@@ -64,8 +64,15 @@ jobs:
     - name: Run circtools detect
       run: |
         cd circtools_example
-        circtools detect @samplesheet -ss -T 2 -D \
-          -an annotation.gtf -A genome.fa -B @bam_files.txt -M -Nr 5 6 -G -F -L 20 -O circtools_ci -k
+        circtools detect \
+          @samplesheet \
+          -ss -T 2 -D \
+          -an annotation.gtf \
+          -A genome.fa \
+          -B @bam_files.txt \
+          -D -M -G \
+          -Nr 5 6 \
+          -O ./circtools_ci -k
 
     - name: Fix missing Strand column (if needed)
       run: |
