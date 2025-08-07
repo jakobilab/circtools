@@ -65,7 +65,7 @@ jobs:
       run: |
         cd circtools_example
         circtools detect @samplesheet -ss -T 2 -D \
-          -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 5 6 -G -F -L 20 -O circtools_ci -k
+          -an annotation.gtf -A genome.fa -B @bam_files.txt -M -Nr 5 6 -G -F -L 20 -O circtools_ci -k
 
     - name: Fix missing Strand column (if needed)
       run: |
@@ -113,8 +113,8 @@ jobs:
         mkdir -p conservation/temp
         circtools conservation \
           -d ./circtools_ci/CircCoordinates \
-          -f ./chr1.fa \
-          -g ./chr1.gtf \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
           -O mm \
           -G Map3k5 \
           -o ./conservation/ \
@@ -127,8 +127,8 @@ jobs:
         cd circtools_example
         mkdir -p padlock_output
         circtools padlock \
-          -f ./chr1.fa \
-          -g ./chr1.gtf \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
           -O mm \
           -G Slc16a9 \
           -T Slc16a9_padlock_design \
@@ -142,8 +142,8 @@ jobs:
         mkdir -p primer_output
         circtools primex \
           -d ./circtools_ci/CircCoordinates \
-          -f ./chr1.fa \
-          -g ./chr1.gtf \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
           -O mm \
           -G Slc16a9 \
           -T "Slc16a9_primer" \
