@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Phoenix
 ENV PATH="/circtools/bin:$PATH"
 
+
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     wget git gpg ca-certificates make bzip2 rsync g++ gfortran \
@@ -29,23 +30,29 @@ ADD . /build/circtools/
 RUN python3 -m venv /circtools && \
     . /circtools/bin/activate && \
     pip install --upgrade pip setuptools wheel && \
+    pip install \
+        Cython numpy matplotlib "biopython>=1.71" primer3-py \
+        pandas scipy statsmodels openpyxl seaborn pysam nanofilt \
+        numdifftools Bio && \
     pip install /build/circtools/ --verbose && \
-    pip cache purge
+    pip cache purge && \
+    Rscript /build/circtools/circtools/scripts/install_R_dependencies.R /build/circtools/
 
-RUN cd /build/ && \
+RUN cd /build && \
     wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
     tar zxvf bedtools-2.31.1.tar.gz && \
     cd bedtools2 && make -j4 && cp bin/* /usr/local/bin/ && \
-    cd /build/ && \
+    cd /build && \
     git clone --depth=1 https://github.com/icebert/pblat.git && \
     cd pblat && make && cp pblat /usr/local/bin/ && \
-    cd /build/ && \
+    cd /build && \
     wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 && \
     tar xvf samtools-1.21.tar.bz2 && \
     cd samtools-1.21 && make && make install && \
-    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz && \
-    tar -xvzf stringtie-2.2.1.Linux_x86_64.tar.gz && \
-    cp stringtie-2.2.1.Linux_x86_64/stringtie /usr/local/bin/ && chmod +x /usr/local/bin/stringtie
+    apt-get purge python3-dev -y && \
+    apt-get autoremove -y && \
+    apt-get autoclean -y && \
+    rm -rf /build/ /var/lib/apt/lists/*
 
 
 ADD docker_path_wrapper.py /usr/local/bin/

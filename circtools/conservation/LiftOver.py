@@ -18,6 +18,28 @@ class liftover(object):
         self.flag = flag
         self.ortho_dict = orthologs
         self.dict_species_liftover = dict_species_liftover
+        
+    def get_chain_file(self, from_id, to_id, dest_dir):
+        tmp_name_species = to_id[0].upper() + to_id[1:]
+        chain_filename = f"{from_id}To{tmp_name_species}.over.chain.gz"
+        chain_path = os.path.join(dest_dir, chain_filename)
+
+        if not os.path.exists(chain_path):
+            # Try to download from UCSC
+            url = f"https://hgdownload.cse.ucsc.edu/goldenPath/{from_id}/liftOver/{chain_filename}"
+            print(f"Downloading chain file from {url} ...")
+            response = requests.get(url, stream=True)
+            if response.status_code == 200:
+                os.makedirs(dest_dir, exist_ok=True)
+                with open(chain_path, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                print(f"Downloaded chain file to {chain_path}")
+            else:
+                raise FileNotFoundError(f"Could not download chain file: {url}")
+
+        return chain_path
+
 
     def call_liftover_binary(self):
         # Determine OS and architecture
@@ -89,9 +111,10 @@ class liftover(object):
         with open(tmp_from_bed, 'a') as data_store:
             data_store.write("chr" + "\t".join(self.from_coord) + "\n")
         # chain file
-        tmp_name_species = self.to_id[0].upper() + self.to_id[1:]
-        chain_file = self.from_id + "To" + tmp_name_species + ".over.chain.gz"
-        self.chain_file = chain_file
+        self.chain_file = self.get_chain_file(self.from_id, self.to_id, os.path.join(self.tmpdir, "chain_files"))
+
+
+
         
         tmp_to_bed = tmp_from_bed + ".out"              # output file
         open(tmp_to_bed, 'a').close()                   # erase old contents

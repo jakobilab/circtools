@@ -132,3 +132,4 @@ ENV/
 circtools/conservation/conservation.py
 circtools/.DS_Store
 .DS_Store
+pyvenv.cfg
