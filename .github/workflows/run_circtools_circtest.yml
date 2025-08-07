@@ -73,11 +73,12 @@ jobs:
 
     - name: Download test data
       run: |
-        tar xvf circtools_example.tar.bz2
+        mkdir circtools_example
+        tar xvf ./tests/data/circtools_example.tar.bz2
 
     - name: Fix missing Strand column (if needed)
       run: |
-        cd circtools_example/circtools_ci
+        cd circtools_example/circtools_ci_master
         if [ "$(head -n1 LinearCount | awk -F'\t' '{sum=0; for(i=1;i<=NF;i++) if($i=="Strand") sum++; print sum}')" -eq 0 ]; then
           echo "➕ Adding missing Strand column..."
           awk 'BEGIN {OFS=FS="\t"}
@@ -125,7 +126,7 @@ jobs:
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../circtest_output_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then
-           shasum -c ../circtools_ci_master/sha1sums.txt
+           shasum -c ../circtest_output_master/sha1sums.txt
          fi
 
     runs-on: ${{ matrix.os }}

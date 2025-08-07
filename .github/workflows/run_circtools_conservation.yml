@@ -79,7 +79,8 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-         tar xvf circtools_example.tar.bz2
+        mkdir circtools_example
+        tar xvf ./tests/data/circtools_example.tar.bz2
     - name: Run conservation
       run: |
         cd circtools_example
