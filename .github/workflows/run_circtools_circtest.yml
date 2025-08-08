@@ -7,7 +7,7 @@ on:
     - cron: '0 11 * * *'
 
 concurrency:
-  group: ci-tests-${{ github.ref }}-1
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -113,6 +113,14 @@ jobs:
           -o ./circtest_output \
           -n test_output \
           -M bw
+          
+    - name: Upload test outputs
+      if: always()  # runs even if previous steps fail
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-output
+        path: |
+          circtools_example/circtest_output/test_output.csv
 
     - name: Checking generated output against master output
       run: |
