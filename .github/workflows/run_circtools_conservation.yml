@@ -99,8 +99,6 @@ jobs:
       run: |
         set -x
         cd circtools_example/conservation
-        ls -la
-        wc -l *
         
         echo "🔍 Running diff..."
         diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned ../conservation_master/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned || echo "⚠️ diff found differences"
