@@ -89,7 +89,7 @@ jobs:
          cd primer_output
          ls -la
          wc -l *
-         diff ../primer_output_master/Slc16a9_primer.html Slc16a9_primer.html
+         diff Slc16a9_primer.html ../primer_output_master/Slc16a9_primer.html
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../primer_output_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then

@@ -90,7 +90,7 @@ jobs:
          cd padlock_output
          ls -la
          wc -l *
-         diff ../padlock_output_master/Slc16a9_padlock_design_linear_FSJ.csv Slc16a9_padlock_design_linear_FSJ.csv
+         diff Slc16a9_padlock_design_linear_FSJ.csv ../padlock_output_master/Slc16a9_padlock_design_linear_FSJ.csv
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../padlock_output_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then

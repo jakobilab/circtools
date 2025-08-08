@@ -125,7 +125,7 @@ jobs:
          cd circtest_output
          ls -la
          wc -l *
-         diff ../circtest_output_master/test_output.csv test_output.csv
+         diff test_output.csv ../circtest_output_master/test_output.csv
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../circtest_output_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then

@@ -100,7 +100,7 @@ jobs:
          cd conservation
          ls -la
          wc -l *
-         diff ../conservation_master/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned alignment_Map3k5_10_20000698_20007954_+.fasta.aligned
+         diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned ../conservation_master/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../conservation_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then
