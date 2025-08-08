@@ -49,13 +49,13 @@ class liftover(object):
         # Identify correct liftOver subfolder
         if system == "Darwin":
             if machine == "x86_64":
-                platform_dir = "AMD64"
+                platform_dir = "AMD64/mac"
             elif machine == "arm64":
-                platform_dir = "ARM64"
+                platform_dir = "ARM64/mac"
             else:
                 raise RuntimeError(f"Unsupported Mac architecture: {machine}")
         elif system == "Linux":
-            platform_dir = "linux"
+            platform_dir = "AMD64/linux"
         else:
             raise RuntimeError(f"Unsupported operating system: {system}")
 
