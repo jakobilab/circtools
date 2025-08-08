@@ -111,14 +111,6 @@ jobs:
           -n test_output \
           -M bw
 
-    - name: Upload test outputs
-      if: always()  # runs even if previous steps fail
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-output
-        path: |
-          circtools_example/circtest_output/test_output.csv
-
     - name: Checking generated output against master output
       run: |
          cd circtools_example
