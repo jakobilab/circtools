@@ -89,7 +89,7 @@ jobs:
          cd circtools_ci
          ls -la
          wc -l *
-         diff LinearCount ../circtools_ci_master/LinearCount
+         diff CircRNACount ../circtools_ci_master/CircRNACount
          if [ "$RUNNER_OS" == "Linux" ]; then
            sha1sum -c ../circtools_ci_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then
