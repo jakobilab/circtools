@@ -94,6 +94,14 @@ jobs:
           -t ./conservation/temp/ \
           -TS hs \
           -pairwise
+
+    - name: Upload test outputs
+      if: always()  # runs even if previous steps fail
+      uses: actions/upload-artifact@v4
+      with:
+        name: conservation-output
+        path: |
+          circtools_example/conservation/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned
     - name: Checking generated output against master output
       run: |
          cd circtools_example
