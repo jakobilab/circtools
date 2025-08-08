@@ -21,9 +21,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
 
     - name: Set up Python
       uses: actions/setup-python@v5
+      with:
+       ref: wjm2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
@@ -113,7 +116,7 @@ jobs:
           -o ./circtest_output \
           -n test_output \
           -M bw
-          
+
     - name: Upload test outputs
       if: always()  # runs even if previous steps fail
       uses: actions/upload-artifact@v4
