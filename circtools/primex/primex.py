@@ -29,6 +29,11 @@ from Bio.Blast import NCBIXML
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Graphics import GenomeDiagram
 
+import ssl
+import certifi
+original_ssl_context = ssl._create_default_https_context
+
+ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
 
 class Primex(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
@@ -418,6 +423,7 @@ class Primex(circ_module.circ_template.CircTemplate):
                 print("This may take a few minutes, please be patient.")
                 result_handle = self.call_blast(blast_input_file, self.organism)
                 run_blast = 1
+                ssl._create_default_https_context = original_ssl_context
             except Exception as exc:
                 print(exc)
                 exit(-1)
