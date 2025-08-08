@@ -15,38 +15,46 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04, ubuntu-24.04]
-        R: ['4.4.0']
+#         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-12, macos-13]
+#        R: ['4.2.0', '4.3.0', '4.4.0' ]
+        R:  ['4.4.0' ]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+        #os: [ubuntu-22.04]
+        #os: [ macos-11]
+        #R: ['4.2.0' ]
+#        python-version: ["3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
-    - name: Checkout code
+    - name: Create files
       uses: actions/checkout@v4
-      
-
+      with:
+       ref: wjm2
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-       ref: wjm2
-      with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
-
-    - name: Install system & Python dependencies
+    - name: Updating setuptools
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libblas-dev libatlas-base-dev liblapack-dev \
-          libgsl-dev libreadline-dev libffi-dev libgfortran5
-        python -m pip install -U pip setuptools wheel
-        python -m pip install numpy Cython
-        python -m pip install ./
-
-
+         python3 -m pip install -U pip setuptools
+    - name: Installing circtools & Python dependencies
+      run: |
+         python3 -m pip install numpy wheel Cython
+         if [ "$RUNNER_OS" == "ubuntu-22.04"]; then
+            apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
+         fi
+         if [ "$RUNNER_OS" == "macOS"]; then
+            export SYSTEM_VERSION_COMPAT=1
+            sudo rm -rf /Library/Developer/CommandLineTools
+            sudo xcode-select --install
+            python3 -m pip install ./
+         else
+            python3 -m pip install ./
+         fi
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: ${{ matrix.R }}
-
     - name: Set up R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
@@ -54,29 +62,15 @@ jobs:
         extra-packages: |
           local::circtools/contrib/circtest
           local::circtools/contrib/primex
-    - name: Install BEDTools from source (v2.31.1)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y make g++ zlib1g-dev wget
-        wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-        tar zxvf bedtools-2.31.1.tar.gz
-        cd bedtools2
-        make -j4
-        sudo cp bin/* /usr/local/bin/
-
-
-    - name: Check R library loading
+    - name: Checking library loading
       run: Rscript -e 'library(primex)'
-
-    - name: Check circtools is callable
+    - name: Check if circtools starts
       run: |
-        circtools --version
-        which circtools
-
-    - name: Download test data
+         circtools --version
+         which circtools
+    - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
-
     - name: Fix missing Strand column (if needed)
       run: |
         cd circtools_example/circtools_ci_master
