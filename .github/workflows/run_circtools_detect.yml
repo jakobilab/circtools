@@ -1,4 +1,4 @@
-name: circtools CI
+name: circtools detect
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     - cron: '0 11 * * *'
 
 concurrency:
-  group: ci-tests-${{ github.ref }}-1
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -70,23 +70,30 @@ jobs:
          which circtools
     - name: Downloading circtools detect test data
       run: |
-         wget https://links.jakobilab.org/circtools_github_test_data -O circtools_detect_ci_input_data.tar.bz2
-         tar xvf circtools_detect_ci_input_data.tar.bz2
+        tar xvf ./tests/data/circtools_example.tar.bz2
     - name: Running circtools detect with minimal data set
       run: |
-         cd circtools_detect_ci_input_data
-         circtools detect @samplesheet -ss -T 2 -D -an chr1.gtf -A chr1.fa -B @bam_files.txt -M -Nr 2 2 -fg -G -F -L 20 -O circtools_ci -k
+        cd circtools_example
+        circtools detect \
+          @samplesheet \
+          -ss -T 2 -D \
+          -an annotation.gtf \
+          -A genome.fa \
+          -B @bam_files.txt \
+          -D -M -G \
+          -Nr 5 6 \
+          -O ./circtools_ci -k
     - name: Checking generated output against master output
       run: |
-         cd circtools_detect_ci_input_data
+         cd circtools_example
          cd circtools_ci
          ls -la
          wc -l *
-         diff ../circtools_master/LinearCount LinearCount
+         diff CircRNACount ../circtools_ci_master/CircRNACount
          if [ "$RUNNER_OS" == "Linux" ]; then
-           sha1sum -c ../circtools_master/sha1sums.txt
+           sha1sum -c ../circtools_ci_master/sha1sums.txt
          elif [ "$RUNNER_OS" == "macOS" ]; then
-           shasum -c ../circtools_master/sha1sums.txt
+           shasum -c ../circtools_ci_master/sha1sums.txt
          fi
 
     runs-on: ${{ matrix.os }}
