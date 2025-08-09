@@ -30,10 +30,6 @@ ADD . /build/circtools/
 RUN python3 -m venv /circtools && \
     . /circtools/bin/activate && \
     pip install --upgrade pip setuptools wheel && \
-    pip install \
-        Cython numpy matplotlib "biopython>=1.71" primer3-py \
-        pandas scipy statsmodels openpyxl seaborn pysam nanofilt \
-        numdifftools Bio && \
     pip install /build/circtools/ --verbose && \
     pip cache purge && \
     Rscript /build/circtools/circtools/scripts/install_R_dependencies.R /build/circtools/

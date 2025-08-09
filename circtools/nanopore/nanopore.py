@@ -544,10 +544,11 @@ class Nanopore(circ_module.circ_template.CircTemplate):
 
         # Check if the output path exists
         if not os.path.exists(output_path):
-            print("Error: Output_path '{}' does not exist!".format(self.output_path))
-            exit(-1)
+            os.mkdir(output_path)
+            print("Output_path '{}' does not exist, "
+                  "creating directory.".format(self.output_path))
 
-        output_path = os.path.join(self.output_path, self.sample_name)
+        #output_path = os.path.join(self.output_path, self.sample_name)
 
         print("Starting process with the following settings")
         print("Sample name: {}".format(sample_name))
