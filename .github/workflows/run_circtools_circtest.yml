@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        os: [ubuntu-24.04, macos]
 #         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-12, macos-13]
 #        R: ['4.2.0', '4.3.0', '4.4.0' ]
         R:  ['4.4.0' ]
@@ -39,8 +39,7 @@ jobs:
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
-         python3 -m pip install numpy wheel Cython
-         if [ "$RUNNER_OS" == "ubuntu-22.04"]; then
+         if [ "$RUNNER_OS" == "Linux"]; then
             apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
          fi
          if [ "$RUNNER_OS" == "macOS"]; then
