@@ -27,7 +27,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: 'x64'
     - name: Updating setuptools
       run: |
          python3 -m pip install -U pip setuptools
