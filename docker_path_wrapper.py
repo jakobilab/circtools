@@ -26,6 +26,6 @@ if __name__ == "__main__":
     modified_paths = process_paths(user_paths)
 
     args_str = ' '.join([shlex.quote(arg) for arg in modified_paths])
-    command = f'. /circtools/bin/activate && circtools {args_str}'
+    command = f'source /circtools/bin/activate && circtools {args_str}'
 
     subprocess.run(command, shell=True)
