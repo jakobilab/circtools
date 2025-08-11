@@ -12,28 +12,51 @@ class fetch(object):
         self.dict_species_ortholog = dict_species_ortholog
 
     def fetch_info(self):
-        # define the species for which you are finding orthologs
+    # define the species for which you are finding orthologs
         species = list(self.dict_species_ortholog.values())
-        to_species = list(set(species)-set([self.from_species]))
-        to_species = ["target_species="+str(i) for i in to_species]
+        to_species = list(set(species) - set([self.from_species]))
+        to_species = ["target_species=" + str(i) for i in to_species]
         str_to_species = ";".join(to_species)
 
         server = "https://rest.ensembl.org"
-        ext = "/homology/symbol/" + self.from_species + "/" + self.gene_symbol + "?format=condensed;type=orthologues;" + str_to_species
+        ext = (
+            "/homology/symbol/"
+            + self.from_species
+            + "/"
+            + self.gene_symbol
+            + "?format=condensed;type=orthologues;"
+            + str_to_species
+        )
+        url = server + ext
 
-        try:
-            r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
-        except requests.exceptions.RequestException as e:
-            raise SystemExit(e)
+        # Retry loop without importing Retry/HTTPAdapter
+        max_attempts = 5
+        backoff = 2
+        for attempt in range(1, max_attempts + 1):
+            try:
+                r = requests.get(
+                    url,
+                    headers={"Content-Type": "application/json"},
+                    timeout=(10, 60)  # 10s connect, 60s read
+                )
+                if r.ok:
+                    break
+                else:
+                    print(f"Attempt {attempt}: HTTP {r.status_code}, retrying in {backoff}s...")
+            except requests.exceptions.RequestException as e:
+                print(f"Attempt {attempt} failed: {e}, retrying in {backoff}s...")
+            if attempt < max_attempts:
+                import time
+                time.sleep(backoff)
+                backoff *= 2  # exponential backoff
+        else:
+            print("Could not fetch ortholog information from ENSEMBL after retries. Exiting!")
+            sys.exit(1)
 
-        print(r)
-        if not r.ok:
-            r.raise_for_status()
-            print("Could not fetch ortholog information from ENSEMBL. Exiting!")
-            sys.exit() 
+        remaining = r.headers.get("X-RateLimit-Remaining", "?")
+        print(f"WARNING! {remaining} REST API requests remaining!")
+        return r
 
-        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
-        return(r)
 
     def parse_json(self):
         ortho_dict = {}

@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [  macos-13 ]
+        os: [ macos-13, macos-15,ubuntu-24.04 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -97,12 +97,6 @@ jobs:
           -G Slc16a9 \
           -T "Slc16a9_primer" \
           -o ./primer_output/
-
-    - name: Upload primer HTML artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: primex-Slc16a9_primer-${{ matrix.os }}-${{ matrix.R }}-py${{ matrix.python-version }}
-        path: circtools_example/primer_output/Slc16a9_primer.html
 
     - name: Checking generated output against master output
       run: |
