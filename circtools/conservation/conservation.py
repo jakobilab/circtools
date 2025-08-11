@@ -406,19 +406,31 @@ class Conservation(circ_module.circ_template.CircTemplate):
                             first_exon = all_exons_circle[name][0]
 
                     # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
+                    # call exon fetchorthologs function to store orthologs which then will be sent to liftover function
                     host_gene = current_line[3]
+                    print(f"[DEBUG] Fetching orthologs for host_gene: {host_gene}", flush=True)
                     fetchOrtho = FO.fetch(host_gene, species_dictionary[self.organism], self.dict_species_ortholog)
+
                     ortho_dict = fetchOrtho.parse_json()
-                    # check if each target species is present in the dictionary and remove if not
+                    print(f"[DEBUG] ortho_dict keys: {list(ortho_dict.keys())}", flush=True)
+
+                    # Safely filter target_species without modifying in-place during iteration
+                    valid_species = []
                     for each_species in self.target_species:
                         species_name = species_dictionary[each_species]
-                        if species_name not in ortho_dict.keys():
-                            print("No ortholog found in species" + species_name + ". Removing this species for further analysis.")
-                            self.target_species.remove(each_species)
-                    # after removing this species, check if there are any species left to perform the analysis
-                    if len(self.target_species) == 0:
-                        print("No species found to perform conservation analysis.")
+                        if species_name in ortho_dict:
+                            valid_species.append(each_species)
+                        else:
+                            print(f"No ortholog found in species {species_name}. Removing this species for further analysis.", flush=True)
+
+                    self.target_species = valid_species
+                    print(f"[DEBUG] Remaining target_species: {self.target_species}", flush=True)
+
+                    # After filtering, check if any remain
+                    if not self.target_species:
+                        print("No species found to perform conservation analysis.", flush=True)
                         sys.exit()
+
 
                     #print(current_line)
 
