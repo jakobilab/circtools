@@ -4,13 +4,13 @@ Installation
 
 **circtools** is written in Python 3 (>=3.8) for most of the data processing code and R (>=4.0.0) for plotting and statistical analyses. The tool has a number of external dependencies, mostly standard bioinformatics tools and packages. The installation will, by default, try to install all required dependencies.
 
-Installation is performed via `pip install circtools` or `python3 setup.py install`. No sudo access is required if the installation is suffixed with ``--user`` which will install the package in a user-writeable folder. In this case, the binaries should be installed to ``/home/$USER/.local/bin/`` (for Debian-based systems).
+Installation is performed via `pip install circtools`. No sudo access is required if the installation is suffixed with ``--user`` or performed in an virtual environemnt (venv) which will install the package in a user-writeable folder. In this case, the binaries should be installed to ``/home/$USER/.local/bin/`` (for Debian-based systems).
 
 
 Supported operating systems
 -----------------------------------
 
-``circtools`` was developed and tested on Debian Bookworm (12), Ubuntu Jammy Jellyfish (22.04), and Ubuntu Noble Numba (24.04). macOS is supported via docker installation. However, macOS functionality running the pip installation method cannot be fully guaranteed yet.
+``circtools`` was developed and tested on Debian Bookworm (12), Ubuntu Jammy Jellyfish (22.04), and Ubuntu Noble Numba (24.04). macOS is supported and tested for version 13-15.
 
 Installation via docker
 -----------------------------------
@@ -19,13 +19,13 @@ The latest circtools docker version will be downloaded directly from GitHub. The
 
 .. code-block:: console
 
-    docker pull ghcr.io/jakobilab/circtools/circtools:latest
+    docker pull ghcr.io/jakobilab/circtools:master
 
 An bash alias to call circtools "natively" and skip the unwieldy full docker command is recommended:
 
 .. code-block:: console
 
-    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
+    alias circtools='docker run --rm -v "`pwd`":/host_rel/ -v /:/host_os/ ghcr.io/jakobilab/circtools:master'
 
 This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
 
