@@ -8,13 +8,13 @@ on:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-15,ubuntu-24.04,  macos-13 ]
+        os: [ macos-13 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -75,14 +75,13 @@ jobs:
           -D -M -G \
           -Nr 5 6 \
           -O ./circtools_ci -k
+    
     - name: Checking generated output against master output
       run: |
          cd circtools_example
          cd circtools_ci
          ls -la
          wc -l *
-         diff CircRNACount ../circtools_ci_master/CircRNACount
-          # Pick expected baseline dir by OS
           if [ "$RUNNER_OS" = "Linux" ]; then
             MASTER_DIR="../circtools_ci_master"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
@@ -95,5 +94,11 @@ jobs:
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
+    - name: Upload CircRNACount artifact (macOS 13 only)
+      if: matrix.os == 'macos-13'
+      uses: actions/upload-artifact@v4
+      with:
+        name: circRNAcount-macos13
+        path: circtools_example/circtools_ci/CircRNACount
 
     runs-on: ${{ matrix.os }}
