@@ -17,6 +17,7 @@ def process_paths(paths):
             # is yes, we have to fix the absolute path and insert /host_mnt/
             # i.e. /host_os/Users/tjakobi/tmp becomes
             #      /host_os/host_mnt/Users/tjakobi/tmp
+            print(platform.uname().system)
             if platform.uname().system == 'Darwin':
                 print("Running on macOS")
 
