@@ -50,6 +50,8 @@ RUN cd /build && \
     apt-get autoclean -y && \
     rm -rf /build/ /var/lib/apt/lists/*
 
+# set standard shell to bash fource source to work
+SHELL ["/bin/bash", "-c"]
 
 ADD docker_path_wrapper.py /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker_path_wrapper.py && mkdir /host_os/
