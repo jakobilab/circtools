@@ -18,7 +18,7 @@ def process_paths(paths):
             # i.e. /host_os/Users/tjakobi/tmp becomes
             #      /host_os/host_mnt/Users/tjakobi/tmp
             print(platform.uname().system)
-            if platform.uname().system == 'Darwin':
+            if os.path.isdir("/host_os/host_mnt/Users/"):
                 print("Running on macOS")
 
                 # this is only necessary for Users and Volume paths
