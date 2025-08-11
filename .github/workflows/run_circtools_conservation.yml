@@ -106,8 +106,6 @@ jobs:
       run: |
         set -x
         cd circtools_example/conservation
-        ls -la
-        wc -l *
 
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../conservation_master"
