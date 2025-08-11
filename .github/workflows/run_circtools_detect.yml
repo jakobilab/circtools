@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: master
+       ref: wjm2
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -82,10 +82,18 @@ jobs:
          ls -la
          wc -l *
          diff CircRNACount ../circtools_ci_master/CircRNACount
-         if [ "$RUNNER_OS" == "Linux" ]; then
-           sha1sum -c ../circtools_ci_master/sha1sums.txt
-         elif [ "$RUNNER_OS" == "macOS" ]; then
-           shasum -c ../circtools_ci_master/sha1sums.txt
-         fi
+          # Pick expected baseline dir by OS
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            MASTER_DIR="../circtools_ci_master"
+            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            sha1sum -c "$MASTER_DIR/sha1sums.txt"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            MASTER_DIR="../circtools_ci_master_mac"
+            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+          else
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
+          fi
 
     runs-on: ${{ matrix.os }}

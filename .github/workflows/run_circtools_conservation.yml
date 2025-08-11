@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: master
+       ref: wjm2
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -58,11 +58,26 @@ jobs:
           local::circtools/contrib/primex
     - name: Install BEDTools from source (v2.31.1)
       run: |
-        wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-        tar zxvf bedtools-2.31.1.tar.gz
-        cd bedtools2
-        make -j4
-        sudo cp bin/* /usr/local/bin/
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
@@ -91,15 +106,23 @@ jobs:
       run: |
         set -x
         cd circtools_example/conservation
-        
-        echo "🔍 Running diff..."
-        diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned ../conservation_master/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned || echo "⚠️ diff found differences"
+        ls -la
+        wc -l *
 
-        echo "🔍 Running sha1sum..."
         if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c ../conservation_master/sha1sums.txt || echo "⚠️ sha1sum mismatch"
+          MASTER_DIR="../conservation_master"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+              "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          shasum -c ../conservation_master/sha1sums.txt || echo "⚠️ shasum mismatch"
+          MASTER_DIR="../conservation_master_mac"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+              "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
         fi
+
 
     runs-on: ${{ matrix.os }}

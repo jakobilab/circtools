@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: master
+       ref: wjm2
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -105,16 +105,24 @@ jobs:
 
     - name: Checking generated output against master output
       run: |
-         cd circtools_example
-         cd circtest_output
-         ls -la
-         wc -l *
-         diff test_output.csv ../circtest_output_master/test_output.csv
-         if [ "$RUNNER_OS" == "Linux" ]; then
-           sha1sum -c ../circtest_output_master/sha1sums.txt
-         elif [ "$RUNNER_OS" == "macOS" ]; then
-           shasum -c ../circtest_output_master/sha1sums.txt
-         fi
+        cd circtools_example
+        cd circtest_output
+        ls -la
+        wc -l *
+
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          MASTER_DIR="../circtest_output_master"
+          diff test_output.csv "$MASTER_DIR/test_output.csv"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          MASTER_DIR="../circtest_output_master_mac"
+          diff test_output.csv "$MASTER_DIR/test_output.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+
 
     runs-on: ${{ matrix.os }}
 
