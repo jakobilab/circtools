@@ -4,7 +4,7 @@ import os
 import sys
 import subprocess
 import shlex
-import psutil
+import platform
 
 def process_paths(paths):
     modified_paths_int = []
@@ -17,9 +17,9 @@ def process_paths(paths):
             # is yes, we have to fix the absolute path and insert /host_mnt/
             # i.e. /host_os/Users/tjakobi/tmp becomes
             #      /host_os/host_mnt/Users/tjakobi/tmp
-            host_os = psutil.__platform__
-            if host_os == 'darwin':
+            if platform.uname().system == 'Darwin':
                 print("Running on macOS")
+
                 # this is only necessary for Users and Volume paths
                 modified_path = modified_path.replace("/host_os/Users/", "/host_os/host_mnt/Users/")
                 modified_path = modified_path.replace("/host_os/Volumes/", "/host_os/host_mnt/Volumes/")
