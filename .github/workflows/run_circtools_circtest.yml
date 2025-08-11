@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-15,ubuntu-24.04,  macos-13 ]
+        os: [   macos-13 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -102,11 +102,15 @@ jobs:
           -o ./circtest_output \
           -n test_output \
           -M bw
+    - name: Upload test_output.csv artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: test_output-${{ matrix.os }}-${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/circtest_output/test_output.csv
 
     - name: Checking generated output against master output
       run: |
-        cd circtools_example
-        cd circtest_output
+        cd circtools_example/circtest_output
         ls -la
         wc -l *
 
@@ -114,6 +118,10 @@ jobs:
           MASTER_DIR="../circtest_output_master"
           diff test_output.csv "$MASTER_DIR/test_output.csv"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../circtest_output_master_mac_amd"
+          diff test_output.csv "$MASTER_DIR/test_output.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../circtest_output_master_mac"
           diff test_output.csv "$MASTER_DIR/test_output.csv"

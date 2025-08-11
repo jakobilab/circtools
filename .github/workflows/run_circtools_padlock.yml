@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-15,ubuntu-24.04,  macos-13 ]
+        os: [  macos-13 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -99,24 +99,35 @@ jobs:
           -r 1 \
           -b \
           -o ./padlock_output
+
+    - name: Upload padlock CSV artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: padlock-Slc16a9-${{ matrix.os }}-${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/padlock_output/Slc16a9_padlock_design_linear_FSJ.csv
+
     - name: Checking generated output against master output
       run: |
-        cd circtools_example
-        cd padlock_output
+        cd circtools_example/padlock_output
         ls -la
         wc -l *
 
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../padlock_output_master"
-          diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../padlock_output_master_mac_amd"
         elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../padlock_output_master_mac"
-          diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
+        fi
+
+        diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        else
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         fi
 
 

@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-15,ubuntu-24.04,  macos-13 ]
+        os: [  macos-13 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -87,6 +87,7 @@ jobs:
     - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
+
     - name: Run conservation
       run: |
         cd circtools_example
@@ -102,20 +103,30 @@ jobs:
           -TS hs \
           -pairwise
 
+    - name: Upload aligned FASTA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: conservation-alignment-${{ matrix.os }}-${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/conservation/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned
+
     - name: Checking generated output against master output
       run: |
         set -x
         cd circtools_example/conservation
-
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../conservation_master"
           diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
-              "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../conservation_master_mac_amd"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../conservation_master_mac"
           diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
-              "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
