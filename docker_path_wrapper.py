@@ -4,28 +4,29 @@ import os
 import sys
 import subprocess
 import shlex
-import platform
 
 def process_paths(paths):
     modified_paths_int = []
     for path in paths:
-        if os.path.isabs(path):
+        if os.path.isabs(path) or (path.startswith("@") and os.path.isabs(path.replace("@",""))):
             # Prefix absolute path with "/host_os"
-            modified_path = os.path.join("/host_os", path.lstrip("/"))
+            modified_path = os.path.join("/host_os", path.replace("@","").lstrip("/"))
 
             # check if macOS system
             # is yes, we have to fix the absolute path and insert /host_mnt/
             # i.e. /host_os/Users/tjakobi/tmp becomes
             #      /host_os/host_mnt/Users/tjakobi/tmp
-            print(platform.uname().system)
             if os.path.isdir("/host_os/host_mnt/Users/"):
-                print("Running on macOS")
 
                 # this is only necessary for Users and Volume paths
                 modified_path = modified_path.replace("/host_os/Users/", "/host_os/host_mnt/Users/")
                 modified_path = modified_path.replace("/host_os/Volumes/", "/host_os/host_mnt/Volumes/")
 
-            modified_paths_int.append(modified_path)
+            if path.startswith("@"):
+                modified_paths_int.append("@"+modified_path)
+            else:
+                modified_paths_int.append(modified_path)
+
         # not an (absolut) path, add unmodified
         else:
             modified_paths_int.append(path)
