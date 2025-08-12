@@ -14,7 +14,7 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-13, macos-15,ubuntu-24.04 ]
+        os: [ macos-15]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -102,6 +102,14 @@ jobs:
           -o ./circtest_output \
           -n test_output \
           -M bw
+
+    - name: Upload circtest CSV artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: test_output-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/circtest_output/test_output.csv
+        if-no-files-found: error
+
 
     - name: Checking generated output against master output
       run: |
