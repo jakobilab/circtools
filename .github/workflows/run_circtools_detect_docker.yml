@@ -1,0 +1,67 @@
+name: circtools detect (docker)
+
+on:
+  workflow_run:
+    workflows: ["Multi-arch docker container"]
+    types: [completed]
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GHCR_IMAGE: ghcr.io/jakobilab/circtools:master
+
+jobs:
+  run-detect-docker:
+    name: circtools detect (Docker)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Pull image
+        run: |
+          docker pull "${GHCR_IMAGE}"
+
+      - name: Unpack test dataset
+        run: |
+          tar xvf ./tests/data/circtools_example.tar.bz2
+          ls -la circtools_example
+
+      - name: Run circtools detect (Docker AMD64)
+        run: |
+          cd circtools_example
+          docker run --rm --platform linux/amd64 \
+            -v "$(pwd):/host_rel/" \
+            -v /:/host_os/ \
+            -w /host_rel \
+            "${GHCR_IMAGE}" \
+            detect \
+              @samplesheet \
+              -ss -T 2 -D \
+              -an annotation.gtf \
+              -A genome.fa \
+              -B @bam_files.txt \
+              -D -M -G \
+              -Nr 5 6 \
+              -O ./circtools_ci -k
+
+
+      - name: Inspect output
+        run: |
+          set -euo pipefail
+          cd circtools_example/circtools_ci
+          ls -la
+          wc -l *
+
+      - name: Compare against master output (Linux)
+        run: |
+          set -euo pipefail
+          cd circtools_example
+          MASTER_DIR="./circtools_ci_master"
+          diff circtools_ci/CircRNACount "${MASTER_DIR}/CircRNACount"
+          (cd circtools_ci && sha1sum -c "../circtools_ci_master/sha1sums.txt")
