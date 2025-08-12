@@ -27,7 +27,7 @@ jobs:
         with:
           ref: docker_teests
 
-      - name: Pull image
+      - name: Pull AMD64 image
         run: |
           docker pull "${GHCR_IMAGE}"
 
@@ -36,23 +36,24 @@ jobs:
           tar xvf ./tests/data/circtools_example.tar.bz2
           ls -la circtools_example
 
-      - name: Run circtools detect (Docker AMD64) using alias
+      - name: Run circtools detect (Docker AMD64)
         run: |
-          alias circtools='docker run --rm --platform linux/amd64 \
-            -v "${{ github.workspace }}:/host_rel/" \
+          cd circtools_example
+          docker run --rm --platform linux/amd64 \
+            -v "$(pwd):/host_rel/" \
             -v /:/host_os/ \
-            -w /host_rel/circtools_example \
-            "${GHCR_IMAGE}"'
+            -w /host_rel \
+            "${GHCR_IMAGE}" \
+            detect \
+              @samplesheet \
+              -ss -T 2 -D \
+              -an annotation.gtf \
+              -A genome.fa \
+              -B @bam_files.txt \
+              -D -M -G \
+              -Nr 5 6 \
+              -O ./circtools_ci -k
 
-          circtools detect \
-            @samplesheet \
-            -ss -T 2 -D \
-            -an annotation.gtf \
-            -A genome.fa \
-            -B @bam_files.txt \
-            -D -M -G \
-            -Nr 5 6 \
-            -O ./circtools_ci -k
 
       - name: Inspect output
         run: |
