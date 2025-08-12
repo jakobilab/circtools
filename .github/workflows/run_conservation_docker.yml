@@ -1,10 +1,9 @@
 name: circtools conservation (docker)
 
 on:
-  push:
-  pull_request:
-  schedule:
-    - cron: '0 10 * * *'
+  workflow_run:
+    workflows: ["Multi-arch docker container"]
+    types: [completed]
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
