@@ -431,16 +431,15 @@ class Conservation(circ_module.circ_template.CircTemplate):
                         print("No species found to perform conservation analysis.", flush=True)
                         sys.exit()
 
-
                     #print(current_line)
 
                     for each_target_species in self.target_species:
-                        print("Processing target species: ",each_target_species)             
+                        print(f"[DEBUG] Entered loop for {each_target_species}", flush=True)    
                     
                         # take these flanking exons per circle and perform liftover 
                         if "first_exon" in locals():
                             # liftover first exon
-                            print("*** Lifting over first exon ***")
+                            print("[DEBUG] About to run liftover for first exon", flush=True)
                             first_line = [current_line[0], first_exon[0], first_exon[1], current_line[3], current_line[4], current_line[5]]
                             lifted = LO.liftover(species_dictionary[self.organism], species_dictionary[each_target_species], first_line, self.temp_dir, tmp_prefix+"_first", ortho_dict, "other", self.dict_species_liftover)
                             first_exon_liftover = lifted.find_lifted_exons()
