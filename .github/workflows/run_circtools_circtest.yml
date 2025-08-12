@@ -147,77 +147,72 @@ jobs:
 
           # ---------- Tolerant CSV comparison (annotates with warnings, but never fails) ----------
           python - <<'PY'
-import csv, math, os, sys
+          import csv, math, os, sys
 
-ATOL = 1e-6
-RTOL = 1e-9
-MAX_REPORT = 20
+          ATOL = 1e-6
+          RTOL = 1e-9
+          MAX_REPORT = 20
 
-def is_float(s):
-    try:
-        float(s); return True
-    except Exception:
-        return False
+          def is_float(s):
+              try:
+                  float(s)
+                  return True
+              except Exception:
+                  return False
 
-def rows_equal(a, b, atol=ATOL, rtol=RTOL):
-    if len(a) != len(b):
-        return False, "different column count"
-    for idx, (x, y) in enumerate(zip(a, b), 1):
-        if is_float(x) and is_float(y):
-            fx, fy = float(x), float(y)
-            if not math.isclose(fx, fy, rel_tol=rtol, abs_tol=atol):
-                return False, f"numeric mismatch col {idx}: {fx} vs {fy}"
-        else:
-            if x != y:
-                return False, f"string mismatch col {idx}: '{x}' vs '{y}'"
-    return True, ""
+          def rows_equal(a, b, atol=ATOL, rtol=RTOL):
+              if len(a) != len(b):
+                  return False, "different column count"
+              for idx, (x, y) in enumerate(zip(a, b), 1):
+                  if is_float(x) and is_float(y):
+                      fx, fy = float(x), float(y)
+                      if not math.isclose(fx, fy, rel_tol=rtol, abs_tol=atol):
+                          return False, f"numeric mismatch col {idx}: {fx} vs {fy}"
+                  else:
+                      if x != y:
+                          return False, f"string mismatch col {idx}: '{x}' vs '{y}'"
+              return True, ""
 
-md = os.environ["MASTER_DIR"]
-test_p = "test_output.csv"
-gold_p = os.path.join(md, "test_output.csv")
+          md = os.environ["MASTER_DIR"]
+          test_p = "test_output.csv"
+          gold_p = os.path.join(md, "test_output.csv")
 
-mismatches = 0
-reported = 0
+          mismatches = 0
+          reported = 0
 
-with open(test_p, newline='') as f1, open(gold_p, newline='') as f2:
-    r1, r2 = csv.reader(f1, delimiter='\t'), csv.reader(f2, delimiter='\t')
-    for i, (a, b) in enumerate(zip(r1, r2), start=1):
-        eq, why = rows_equal(a, b)
-        if not eq:
-            mismatches += 1
-            if reported < MAX_REPORT:
-                # GitHub Actions warning annotation:
-                print(f"::warning::CSV diff at line {i}: {why}")
-                print(f"::warning::  test: {a}")
-                print(f"::warning::  gold: {b}")
-                reported += 1
+          with open(test_p, newline='') as f1, open(gold_p, newline='') as f2:
+              r1, r2 = csv.reader(f1, delimiter='\t'), csv.reader(f2, delimiter='\t')
+              for i, (a, b) in enumerate(zip(r1, r2), start=1):
+                  eq, why = rows_equal(a, b)
+                  if not eq:
+                      mismatches += 1
+                      if reported < MAX_REPORT:
+                          print(f"::warning::CSV diff at line {i}: {why}")
+                          print(f"::warning::  test: {a}")
+                          print(f"::warning::  gold: {b}")
+                          reported += 1
 
-# extra / missing lines
-test_lines = sum(1 for _ in open(test_p, 'r'))
-gold_lines = sum(1 for _ in open(gold_p, 'r'))
-if test_lines != gold_lines:
-    print(f"::warning::CSV line count differs: test={test_lines}, gold={gold_lines}")
-    mismatches += abs(test_lines - gold_lines)
+          test_lines = sum(1 for _ in open(test_p, 'r'))
+          gold_lines = sum(1 for _ in open(gold_p, 'r'))
+          if test_lines != gold_lines:
+              print(f"::warning::CSV line count differs: test={test_lines}, gold={gold_lines}")
+              mismatches += abs(test_lines - gold_lines)
 
-# Write a brief summary for the job summary tab
-with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as s:
-    if mismatches == 0:
-        s.write(f"✅ CSV matches within tolerance (abs≤{ATOL}, rel≤{RTOL}).\\n")
-    else:
-        s.write(f"⚠️ CSV has {mismatches} line-level differences (reported up to {MAX_REPORT}); allowing pass.\\n")
+          with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as s:
+              if mismatches == 0:
+                  s.write(f"✅ CSV matches within tolerance (abs≤{ATOL}, rel≤{RTOL}).\\n")
+              else:
+                  s.write(f"⚠️ CSV has {mismatches} line-level differences (reported up to {MAX_REPORT}); allowing pass.\\n")
 
-# Always pass even if there were tolerant diffs
-sys.exit(0)
-PY
+          sys.exit(0)
+          PY
 
           # ---------- Strict hashes for non-CSV artifacts only ----------
           if [ -f "$MASTER_DIR/sha1sums.txt" ]; then
             TMP_SHA="$(mktemp)"
-            # drop any CSV hash lines
             grep -v ' test_output\.csv$' "$MASTER_DIR/sha1sums.txt" > "$TMP_SHA" || true
             if [ -s "$TMP_SHA" ]; then
               echo "Verifying hashes for non-CSV artifacts:"
-              # shellcheck disable=SC2086
               $HASH_TOOL -c "$TMP_SHA"
             else
               echo "No non-CSV hashes to verify."
