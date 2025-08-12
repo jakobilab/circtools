@@ -132,6 +132,8 @@ jobs:
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+        
+        export MASTER_DIR HASG_TOOL
 
         # ---------- Tolerant CSV comparison ----------
         python - <<'PY'
