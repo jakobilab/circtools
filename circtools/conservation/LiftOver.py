@@ -219,94 +219,109 @@ class liftover(object):
         return(exon_list)
 
     def find_lifted_exons(self):
-        # function to see if the lifted coordinates are exons. If not, take nearby exons
+        print(f"[DEBUG] Starting find_lifted_exons for {self.from_species} -> {self.to_species}", flush=True)
 
         lifted = self.parseLiftover()
-        if lifted == None:
-            return(None)
+        if lifted is None:
+            print("[DEBUG] parseLiftover returned None", flush=True)
+            return None
+
         chr = str(lifted[0])
         start = str(lifted[1])
         end = str(lifted[2])
-
-        #print("To be lifted coordinates: ", self.from_coord)
+        print(f"[DEBUG] Lifted coordinates: chr{chr}:{start}-{end}", flush=True)
 
         target_geneid = self.ortho_dict[self.to_species]
-        #print("Extracting exons for : ", target_geneid)
+        print(f"[DEBUG] Target gene ID: {target_geneid}", flush=True)
+
+        # First Ensembl request
         server = "https://rest.ensembl.org"
-        ext = "/overlap/region/" + self.to_species + "/" + chr + ":" + start + "-" + end + "?feature=gene;feature=exon"
+        ext = f"/overlap/region/{self.to_species}/{chr}:{start}-{end}?feature=gene;feature=exon"
+        print(f"[DEBUG] Fetching exon overlaps from: {server+ext}", flush=True)
 
         try:
-            r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+            r = requests.get(
+                server+ext,
+                headers={"Content-Type": "text/x-gff3"},
+                timeout=(10, 60)  # 10s connect, 60s read
+            )
         except requests.exceptions.RequestException as e:
-            raise SystemExit(e)
-        
-        if not r.ok:
-            r.raise_for_status()
-            sys.exit()
-        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
-        
-        # call above gff parsing function on this output
-        lifted_exons = self.parse_gff_rest(r.text)
-        #print("Lifted exons:", lifted_exons)
+            print(f"[ERROR] First exon fetch failed: {e}", flush=True)
+            return None
 
-        # now perform bedtools operation to find out the correct exon boundaries
+        print(f"[DEBUG] First exon fetch HTTP status: {r.status_code}", flush=True)
+        if not r.ok:
+            print(f"[ERROR] Ensembl returned error {r.status_code}", flush=True)
+            r.raise_for_status()
+            sys.exit(1)
+
+        print("WARNING! " + r.headers.get("X-RateLimit-Remaining", "?") + " REST API requests remaining!", flush=True)
+
+        lifted_exons = self.parse_gff_rest(r.text)
+        print(f"[DEBUG] Parsed {len(lifted_exons)} lifted exons", flush=True)
+
         lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
-        exon_bed = pybedtools.BedTool(lifted_exons_string, from_string = True)
-        region = "\t".join([chr, start, end])
-        region_bed = pybedtools.BedTool(region, from_string = True)
-        intersect_exon = exon_bed.intersect(region_bed, wao=True)
-        #print("Intersect:", str(intersect_exon))
+        try:
+            print("[DEBUG] Creating exon BedTool...", flush=True)
+            exon_bed = pybedtools.BedTool(lifted_exons_string, from_string=True)
+            region = "\t".join([chr, start, end])
+            region_bed = pybedtools.BedTool(region, from_string=True)
+            print("[DEBUG] Running exon_bed.intersect(region_bed)...", flush=True)
+            intersect_exon = exon_bed.intersect(region_bed, wao=True)
+            print("[DEBUG] Intersect completed", flush=True)
+        except Exception as e:
+            print(f"[ERROR] pybedtools intersect failed: {e}", flush=True)
+            return None
+
         ortho_gene = self.ortho_dict[self.to_species]
 
-        if (intersect_exon != ""):
-            # parse the above information to keep the longest overlapping exon
+        if str(intersect_exon).strip():
             intersect_out = [i.split("\t") for i in str(intersect_exon).strip().split("\n")]
+            print(f"[DEBUG] Found {len(intersect_out)} intersecting exon entries", flush=True)
             intersect_out = [list(map(int, i)) for i in intersect_out]
-            #print(intersect_out)
-
-            # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
             final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
-            #print("Final:", final_exon)
-
-            return(final_exon)                  # the sequences will be extracted for this exon
+            print(f"[DEBUG] Selected final exon: {final_exon}", flush=True)
+            return final_exon
         else:
-            # no intersecting exons found. In this case, fetch orthologs for this species and extract exon information
-            # and intersect with exons to take the closest exon information
-            print("No nearby exon found. Trying for neaby exon search using orthology information.")
-
-            # fetch the exon information for this genee
-
-            server = "https://rest.ensembl.org"
-            ext = "/overlap/id/" + ortho_gene + "?feature=exon"
-            #print(server+ext)
+            print("[DEBUG] No intersecting exons found, fetching all exons for ortholog...", flush=True)
+            ext = f"/overlap/id/{ortho_gene}?feature=exon"
+            print(f"[DEBUG] Fetching all exons from: {server+ext}", flush=True)
             try:
-                r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+                r = requests.get(
+                    server+ext,
+                    headers={"Content-Type": "text/x-gff3"},
+                    timeout=(10, 60)
+                )
             except requests.exceptions.RequestException as e:
-                raise SystemExit(e)
-            
+                print(f"[ERROR] All exon fetch failed: {e}", flush=True)
+                return None
+
+            print(f"[DEBUG] All exon fetch HTTP status: {r.status_code}", flush=True)
             if not r.ok:
                 r.raise_for_status()
-                sys.exit()
-            print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
-            #print("All exons for gene id "+ ortho_gene)
-            #print(r.text)
-            
-            # call above gff parsing function on this output
+                sys.exit(1)
+            print("WARNING! " + r.headers.get("X-RateLimit-Remaining", "?") + " REST API requests remaining!", flush=True)
+
             all_exons = self.parse_gff_rest(r.text)
+            print(f"[DEBUG] Parsed {len(all_exons)} total exons", flush=True)
             all_exons.sort(key=lambda x: x[1])
 
-            # now perform bedtools operation to find out the correct exon boundaries
-            all_exons_string = "\n".join(["\t".join(i) for i in all_exons])
-            #print("All exons for closest:", all_exons_string)
-            exon_bed_all = pybedtools.BedTool(all_exons_string, from_string = True)
-            region = "\t".join([chr, start, end])
-            #print("To  find closest region from :", region)
-            region_bed = pybedtools.BedTool(region, from_string = True)
-            closest_exon = region_bed.closest(exon_bed_all, sortout=True)
-            final_exon = str(closest_exon).strip().split("\t")[-3:]
-            #print("Closest exon:",   final_exon)
+            try:
+                all_exons_string = "\n".join(["\t".join(i) for i in all_exons])
+                exon_bed_all = pybedtools.BedTool(all_exons_string, from_string=True)
+                region = "\t".join([chr, start, end])
+                region_bed = pybedtools.BedTool(region, from_string=True)
+                print("[DEBUG] Running closest exon search...", flush=True)
+                closest_exon = region_bed.closest(exon_bed_all, sortout=True)
+                print("[DEBUG] Closest exon search completed", flush=True)
+            except Exception as e:
+                print(f"[ERROR] pybedtools closest failed: {e}", flush=True)
+                return None
 
-            return(final_exon)
+            final_exon = str(closest_exon).strip().split("\t")[-3:]
+            print(f"[DEBUG] Selected closest exon: {final_exon}", flush=True)
+            return final_exon
+
 
 if __name__ == "__main__":
     lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
