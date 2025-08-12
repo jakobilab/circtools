@@ -48,8 +48,9 @@ jobs:
       - name: Run circtools detect (Docker AMD64)
         run: |
           docker run --rm --platform linux/amd64 \
-            -v "${{ github.workspace }}/circtools_example:/data" \
-            -w /data \
+            -v "${{ github.workspace }}:/host_rel/" \
+            -v /:/host_os/ \
+            -w /host_rel/circtools_example \
             "${GHCR_IMAGE}" \
             detect \
               @samplesheet \
@@ -60,6 +61,7 @@ jobs:
               -D -M -G \
               -Nr 5 6 \
               -O ./circtools_ci -k
+
 
 
       - name: Inspect output
