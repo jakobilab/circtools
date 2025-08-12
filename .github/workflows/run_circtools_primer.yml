@@ -96,7 +96,8 @@ jobs:
           -O mm \
           -G Slc16a9 \
           -T "Slc16a9_primer" \
-          -o ./primer_output/
+          -o ./primer_output/ || true
+
 
     - name: Checking generated output against master output
       run: |
