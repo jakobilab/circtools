@@ -18,16 +18,16 @@ env:
 
 jobs:
   run-detect-docker:
-    name: circtools detect (Docker AMD64)
+    name: circtools detect (Docker)
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: docker_teests
+          ref: ${{ github.ref_name }}
 
-      - name: Pull AMD64 image
+      - name: Pull image
         run: |
           docker pull "${GHCR_IMAGE}"
 

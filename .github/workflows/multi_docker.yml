@@ -2,10 +2,6 @@ name: Multi-arch docker container
 
 on:
   push:
-  workflow_run:
-    workflows: ["circtools CI"]
-    types:
-      - completed
   schedule:
     - cron: '0 10 * * *'
 

@@ -1,0 +1,71 @@
+name: circtools conservation (docker)
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 10 * * *'
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GHCR_IMAGE: ghcr.io/jakobilab/circtools:master
+
+jobs:
+  run-conservation-docker:
+    name: circtools conservation (Docker)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Pull image
+        run: |
+          docker pull "${GHCR_IMAGE}"
+          docker image inspect "${GHCR_IMAGE}" --format '{{json .RepoTags}}'
+
+      - name: Unpack test dataset
+        run: |
+          tar xvf ./tests/data/circtools_example.tar.bz2
+          ls -la circtools_example
+
+      - name: Run circtools conservation (Docker)
+        run: |
+          cd circtools_example
+          mkdir -p conservation conservation/temp
+          docker run --rm \
+            -v "$(pwd):/host_rel/" \
+            -v /:/host_os/ \
+            -w /host_rel \
+            "${GHCR_IMAGE}" \
+            conservation \
+              -d ./circtools_ci_master/CircCoordinates \
+              -f ./genome.fa \
+              -g ./annotation.gtf \
+              -O mm \
+              -G Map3k5 \
+              -o ./conservation/ \
+              -t ./conservation/temp/ \
+              -TS hs \
+              -pairwise
+
+      - name: Inspect output
+        run: |
+          set -euo pipefail
+          cd circtools_example/conservation
+          ls -la
+          wc -l *
+
+      - name: Check outputs against master (Linux)
+        run: |
+          set -euo pipefail
+          cd circtools_example/conservation
+          MASTER_DIR="../conservation_master"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+               "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
