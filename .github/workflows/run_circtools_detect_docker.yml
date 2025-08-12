@@ -1,6 +1,8 @@
 name: circtools detect (docker)
 
 on:
+  push:
+  pull_request:
   #workflow_run:
     #workflows: ["Multi-arch docker container"]
     #types: [completed]
