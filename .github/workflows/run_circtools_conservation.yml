@@ -87,12 +87,37 @@ jobs:
     - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
+    - name: Enable safe matplotlib show in CI
+      run: |
+        cat <<'EOF' > safe_show.py
+        import matplotlib
+        import matplotlib.pyplot as plt
+        import builtins
+        import time
+        import sys
+
+        def safe_show(*args, **kwargs):
+            gui_backends = {"Qt5Agg", "QtAgg", "TkAgg", "GTK3Agg", "WXAgg", "MacOSX"}
+            backend = matplotlib.get_backend()
+            if backend not in gui_backends:
+                print(f"[CI PATCH] No GUI backend ({backend}) — skipping plt.show()", file=sys.stderr)
+                return
+            print(f"[CI PATCH] Displaying plot with backend {backend}, will auto-close in 60 seconds...", file=sys.stderr)
+            plt.show(block=False)
+            plt.pause(60)
+            plt.close('all')
+            print("[CI PATCH] Plot closed after timeout.", file=sys.stderr)
+
+        plt.show = safe_show
+        EOF
+
 
     - name: Run conservation
       run: |
         cd circtools_example
         mkdir -p conservation/temp
-        circtools conservation \
+        python -c "import safe_show; import circtools.__main__ as m; m.main()" \
+          conservation \
           -d ./circtools_ci_master/CircCoordinates \
           -f ./genome.fa \
           -g ./annotation.gtf \
@@ -102,6 +127,7 @@ jobs:
           -t ./conservation/temp/ \
           -TS hs \
           -pairwise
+
 
     - name: Upload aligned FASTA artifact
       uses: actions/upload-artifact@v4

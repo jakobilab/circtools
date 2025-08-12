@@ -42,11 +42,9 @@ class liftover(object):
 
 
     def call_liftover_binary(self):
-    # Determine OS and architecture
+        # Determine OS and architecture
         system = platform.system()
         machine = platform.machine()
-
-        print(f"[DEBUG] Detected platform: {system} / {machine}", flush=True)
 
         # Identify correct liftOver subfolder
         if system == "Darwin":
@@ -65,51 +63,18 @@ class liftover(object):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
         liftover_utility = os.path.join(parent_dir, "contrib", "liftOver", platform_dir, "liftOver")
-        print(f"[DEBUG] liftOver binary path: {liftover_utility}", flush=True)
+        print(liftover_utility)
 
         if not os.path.isfile(liftover_utility):
             raise FileNotFoundError(f"liftOver binary not found at: {liftover_utility}")
 
-        # Build command
-        command = [
-            liftover_utility,
-            self.liftover_input_file,
-            self.chain_file,
-            self.liftover_output_file,
-            self.liftover_unlifted_file,
-            "-multiple",
-            "-minMatch=0.1"
-        ]
-        print(f"[DEBUG] Running liftOver command: {' '.join(command)}", flush=True)
+        # Command to run
+        command = f"{liftover_utility} {self.liftover_input_file} {self.chain_file} {self.liftover_output_file} {self.liftover_unlifted_file} -multiple -minMatch=0.1"
 
-        try:
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except Exception as e:
-            print(f"[ERROR] Failed to start liftOver process: {e}", flush=True)
-            raise
+        # Run subprocess
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        try:
-            out, err = p.communicate(timeout=60)  # 60s timeout to avoid infinite hang
-        except subprocess.TimeoutExpired:
-            p.kill()
-            print(f"[ERROR] liftOver command timed out after 60s for {self.from_species} -> {self.to_species}", flush=True)
-            return None
-
-        p_status = p.wait()
-        print(f"[DEBUG] liftOver exit code: {p_status}", flush=True)
-
-        if out:
-            print(f"[STDOUT]\n{out.decode(errors='replace')}", flush=True)
-        if err:
-            print(f"[STDERR]\n{err.decode(errors='replace')}", flush=True)
-
-        if p_status != 0:
-            print(f"[ERROR] liftOver failed with exit code {p_status}", flush=True)
-            return None
-
-        print(f"[DEBUG] liftOver completed successfully for {self.from_species} -> {self.to_species}", flush=True)
         return p
-
 
     
     def lifting(self):
@@ -219,109 +184,94 @@ class liftover(object):
         return(exon_list)
 
     def find_lifted_exons(self):
-        print(f"[DEBUG] Starting find_lifted_exons for {self.from_species} -> {self.to_species}", flush=True)
+        # function to see if the lifted coordinates are exons. If not, take nearby exons
 
         lifted = self.parseLiftover()
-        if lifted is None:
-            print("[DEBUG] parseLiftover returned None", flush=True)
-            return None
-
+        if lifted == None:
+            return(None)
         chr = str(lifted[0])
         start = str(lifted[1])
         end = str(lifted[2])
-        print(f"[DEBUG] Lifted coordinates: chr{chr}:{start}-{end}", flush=True)
+
+        #print("To be lifted coordinates: ", self.from_coord)
 
         target_geneid = self.ortho_dict[self.to_species]
-        print(f"[DEBUG] Target gene ID: {target_geneid}", flush=True)
-
-        # First Ensembl request
+        #print("Extracting exons for : ", target_geneid)
         server = "https://rest.ensembl.org"
-        ext = f"/overlap/region/{self.to_species}/{chr}:{start}-{end}?feature=gene;feature=exon"
-        print(f"[DEBUG] Fetching exon overlaps from: {server+ext}", flush=True)
+        ext = "/overlap/region/" + self.to_species + "/" + chr + ":" + start + "-" + end + "?feature=gene;feature=exon"
 
         try:
-            r = requests.get(
-                server+ext,
-                headers={"Content-Type": "text/x-gff3"},
-                timeout=(10, 60)  # 10s connect, 60s read
-            )
+            r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
         except requests.exceptions.RequestException as e:
-            print(f"[ERROR] First exon fetch failed: {e}", flush=True)
-            return None
-
-        print(f"[DEBUG] First exon fetch HTTP status: {r.status_code}", flush=True)
+            raise SystemExit(e)
+        
         if not r.ok:
-            print(f"[ERROR] Ensembl returned error {r.status_code}", flush=True)
             r.raise_for_status()
-            sys.exit(1)
-
-        print("WARNING! " + r.headers.get("X-RateLimit-Remaining", "?") + " REST API requests remaining!", flush=True)
-
+            sys.exit()
+        print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
+        
+        # call above gff parsing function on this output
         lifted_exons = self.parse_gff_rest(r.text)
-        print(f"[DEBUG] Parsed {len(lifted_exons)} lifted exons", flush=True)
+        #print("Lifted exons:", lifted_exons)
 
+        # now perform bedtools operation to find out the correct exon boundaries
         lifted_exons_string = "\n".join(["\t".join(i) for i in lifted_exons])
-        try:
-            print("[DEBUG] Creating exon BedTool...", flush=True)
-            exon_bed = pybedtools.BedTool(lifted_exons_string, from_string=True)
-            region = "\t".join([chr, start, end])
-            region_bed = pybedtools.BedTool(region, from_string=True)
-            print("[DEBUG] Running exon_bed.intersect(region_bed)...", flush=True)
-            intersect_exon = exon_bed.intersect(region_bed, wao=True)
-            print("[DEBUG] Intersect completed", flush=True)
-        except Exception as e:
-            print(f"[ERROR] pybedtools intersect failed: {e}", flush=True)
-            return None
-
+        exon_bed = pybedtools.BedTool(lifted_exons_string, from_string = True)
+        region = "\t".join([chr, start, end])
+        region_bed = pybedtools.BedTool(region, from_string = True)
+        intersect_exon = exon_bed.intersect(region_bed, wao=True)
+        #print("Intersect:", str(intersect_exon))
         ortho_gene = self.ortho_dict[self.to_species]
 
-        if str(intersect_exon).strip():
+        if (intersect_exon != ""):
+            # parse the above information to keep the longest overlapping exon
             intersect_out = [i.split("\t") for i in str(intersect_exon).strip().split("\n")]
-            print(f"[DEBUG] Found {len(intersect_out)} intersecting exon entries", flush=True)
             intersect_out = [list(map(int, i)) for i in intersect_out]
-            final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
-            print(f"[DEBUG] Selected final exon: {final_exon}", flush=True)
-            return final_exon
-        else:
-            print("[DEBUG] No intersecting exons found, fetching all exons for ortholog...", flush=True)
-            ext = f"/overlap/id/{ortho_gene}?feature=exon"
-            print(f"[DEBUG] Fetching all exons from: {server+ext}", flush=True)
-            try:
-                r = requests.get(
-                    server+ext,
-                    headers={"Content-Type": "text/x-gff3"},
-                    timeout=(10, 60)
-                )
-            except requests.exceptions.RequestException as e:
-                print(f"[ERROR] All exon fetch failed: {e}", flush=True)
-                return None
+            #print(intersect_out)
 
-            print(f"[DEBUG] All exon fetch HTTP status: {r.status_code}", flush=True)
+            # sort the above list based on 7th element i.e. overlap bases and take the exon corresponding to the maximum overlap
+            final_exon = sorted(intersect_out, key=lambda x: x[6], reverse=True)[0][:3]
+            #print("Final:", final_exon)
+
+            return(final_exon)                  # the sequences will be extracted for this exon
+        else:
+            # no intersecting exons found. In this case, fetch orthologs for this species and extract exon information
+            # and intersect with exons to take the closest exon information
+            print("No nearby exon found. Trying for neaby exon search using orthology information.")
+
+            # fetch the exon information for this genee
+
+            server = "https://rest.ensembl.org"
+            ext = "/overlap/id/" + ortho_gene + "?feature=exon"
+            #print(server+ext)
+            try:
+                r = requests.get(server+ext, headers={ "Content-Type" : "text/x-gff3"})
+            except requests.exceptions.RequestException as e:
+                raise SystemExit(e)
+            
             if not r.ok:
                 r.raise_for_status()
-                sys.exit(1)
-            print("WARNING! " + r.headers.get("X-RateLimit-Remaining", "?") + " REST API requests remaining!", flush=True)
-
+                sys.exit()
+            print("WARNING! "+ r.headers["X-RateLimit-Remaining"] + " REST API requests remaining!")
+            #print("All exons for gene id "+ ortho_gene)
+            #print(r.text)
+            
+            # call above gff parsing function on this output
             all_exons = self.parse_gff_rest(r.text)
-            print(f"[DEBUG] Parsed {len(all_exons)} total exons", flush=True)
             all_exons.sort(key=lambda x: x[1])
 
-            try:
-                all_exons_string = "\n".join(["\t".join(i) for i in all_exons])
-                exon_bed_all = pybedtools.BedTool(all_exons_string, from_string=True)
-                region = "\t".join([chr, start, end])
-                region_bed = pybedtools.BedTool(region, from_string=True)
-                print("[DEBUG] Running closest exon search...", flush=True)
-                closest_exon = region_bed.closest(exon_bed_all, sortout=True)
-                print("[DEBUG] Closest exon search completed", flush=True)
-            except Exception as e:
-                print(f"[ERROR] pybedtools closest failed: {e}", flush=True)
-                return None
-
+            # now perform bedtools operation to find out the correct exon boundaries
+            all_exons_string = "\n".join(["\t".join(i) for i in all_exons])
+            #print("All exons for closest:", all_exons_string)
+            exon_bed_all = pybedtools.BedTool(all_exons_string, from_string = True)
+            region = "\t".join([chr, start, end])
+            #print("To  find closest region from :", region)
+            region_bed = pybedtools.BedTool(region, from_string = True)
+            closest_exon = region_bed.closest(exon_bed_all, sortout=True)
             final_exon = str(closest_exon).strip().split("\t")[-3:]
-            print(f"[DEBUG] Selected closest exon: {final_exon}", flush=True)
-            return final_exon
+            #print("Closest exon:",   final_exon)
 
+            return(final_exon)
 
 if __name__ == "__main__":
     lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
