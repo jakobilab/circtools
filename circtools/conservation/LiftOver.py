@@ -42,9 +42,11 @@ class liftover(object):
 
 
     def call_liftover_binary(self):
-        # Determine OS and architecture
+    # Determine OS and architecture
         system = platform.system()
         machine = platform.machine()
+
+        print(f"[DEBUG] Detected platform: {system} / {machine}", flush=True)
 
         # Identify correct liftOver subfolder
         if system == "Darwin":
@@ -63,18 +65,51 @@ class liftover(object):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
         liftover_utility = os.path.join(parent_dir, "contrib", "liftOver", platform_dir, "liftOver")
-        print(liftover_utility)
+        print(f"[DEBUG] liftOver binary path: {liftover_utility}", flush=True)
 
         if not os.path.isfile(liftover_utility):
             raise FileNotFoundError(f"liftOver binary not found at: {liftover_utility}")
 
-        # Command to run
-        command = f"{liftover_utility} {self.liftover_input_file} {self.chain_file} {self.liftover_output_file} {self.liftover_unlifted_file} -multiple -minMatch=0.1"
+        # Build command
+        command = [
+            liftover_utility,
+            self.liftover_input_file,
+            self.chain_file,
+            self.liftover_output_file,
+            self.liftover_unlifted_file,
+            "-multiple",
+            "-minMatch=0.1"
+        ]
+        print(f"[DEBUG] Running liftOver command: {' '.join(command)}", flush=True)
 
-        # Run subprocess
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception as e:
+            print(f"[ERROR] Failed to start liftOver process: {e}", flush=True)
+            raise
 
+        try:
+            out, err = p.communicate(timeout=60)  # 60s timeout to avoid infinite hang
+        except subprocess.TimeoutExpired:
+            p.kill()
+            print(f"[ERROR] liftOver command timed out after 60s for {self.from_species} -> {self.to_species}", flush=True)
+            return None
+
+        p_status = p.wait()
+        print(f"[DEBUG] liftOver exit code: {p_status}", flush=True)
+
+        if out:
+            print(f"[STDOUT]\n{out.decode(errors='replace')}", flush=True)
+        if err:
+            print(f"[STDERR]\n{err.decode(errors='replace')}", flush=True)
+
+        if p_status != 0:
+            print(f"[ERROR] liftOver failed with exit code {p_status}", flush=True)
+            return None
+
+        print(f"[DEBUG] liftOver completed successfully for {self.from_species} -> {self.to_species}", flush=True)
         return p
+
 
     
     def lifting(self):
