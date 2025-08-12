@@ -1,9 +1,9 @@
 name: circtools detect (docker)
 
 on:
-  workflow_run:
-    workflows: ["Multi-arch docker container"]
-    types: [completed]
+  #workflow_run:
+    #workflows: ["Multi-arch docker container"]
+    #types: [completed]
   schedule:
     - cron: '0 11 * * *'
 
