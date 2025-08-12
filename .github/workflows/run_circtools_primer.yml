@@ -98,6 +98,13 @@ jobs:
           -T "Slc16a9_primer" \
           -o ./primer_output/ || true
 
+    - name: Upload primer  artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: test_output-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/primer_output/Slc16a9_primer.html
+        if-no-files-found: error
+
 
     - name: Checking generated output against master output
       run: |
