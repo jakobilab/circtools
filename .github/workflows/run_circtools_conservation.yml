@@ -1,4 +1,4 @@
-name: circtools conservation (pip)
+name: circtools conservation
 
 on:
   push:
@@ -87,36 +87,39 @@ jobs:
     - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
-    - name: Enable safe matplotlib show in CI
+
+
+    - name: Run conservation with safe show
       run: |
         cd circtools_example
+        mkdir conservation
+        mkdir conservation/temp
+        # Patch matplotlib BEFORE running circtools
         cat <<'EOF' > safe_show.py
         import matplotlib
+        matplotlib.use('Agg')  # Force non-GUI backend
         import matplotlib.pyplot as plt
         import sys
 
         def safe_show(*args, **kwargs):
-            gui_backends = {"Qt5Agg", "QtAgg", "TkAgg", "GTK3Agg", "WXAgg", "MacOSX"}
-            backend = matplotlib.get_backend()
-            if backend not in gui_backends:
-                print(f"[CI PATCH] No GUI backend ({backend}) — skipping plt.show()", file=sys.stderr)
-                return
-            print(f"[CI PATCH] Displaying plot with backend {backend}, will auto-close in 60 seconds...", file=sys.stderr)
-            plt.show(block=False)
-            plt.pause(60)
-            plt.close('all')
-            print("[CI PATCH] Plot closed after timeout.", file=sys.stderr)
+            print(f"[CI PATCH] Headless mode — skipping plt.show()", file=sys.stderr)
 
         plt.show = safe_show
         EOF
 
-
-
-    - name: Run conservation
-      run: |
-        cd circtools_example
-        python -c "import safe_show; import sys; from circtools.__main__ import main; sys.argv=['circtools','conservation','-d','./circtools_ci_master/CircCoordinates','-f','./genome.fa','-g','./annotation.gtf','-O','mm','-G','Map3k5','-o','./conservation/','-t','./conservation/temp/','-TS','hs','-pairwise']; main()"
-
+        export PYTHONPATH="$PWD:$PYTHONPATH"
+        python -c "import safe_show; import sys, subprocess; sys.exit(subprocess.call([
+            'circtools', 'conservation',
+            '-d', './circtools_ci_master/CircCoordinates',
+            '-f', './genome.fa',
+            '-g', './annotation.gtf',
+            '-O', 'mm',
+            '-G', 'Map3k5',
+            '-o', './conservation/',
+            '-t', './conservation/temp/',
+            '-TS', 'hs',
+            '-pairwise'
+        ]))"
 
 
     - name: Upload aligned FASTA artifact
