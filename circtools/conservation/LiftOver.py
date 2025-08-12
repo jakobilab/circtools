@@ -277,3 +277,4 @@ if __name__ == "__main__":
     lifted = liftover("human", "dog", ['2', '106145189', '106145475', 'UXS1', '0', '-'], "/scratch/circtools2/circtools/sample_data/temp", "test", 
                     {'dog': 'ENSCAFG00845009273', 'human': 'ENSG00000115652'}, "other")
     first_exon_liftover = lifted.find_lifted_exons()
+    

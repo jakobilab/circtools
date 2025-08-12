@@ -2,8 +2,6 @@ from Bio import AlignIO
 from Bio.Align.Applications import MafftCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use("Agg")
 from Bio import Phylo
 from itertools import combinations
 from Bio import SeqIO,  Align

@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: wjm2
+       ref: ${{ github.ref_name }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

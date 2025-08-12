@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: wjm2
+       ref: ${{ github.ref_name }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -102,14 +102,6 @@ jobs:
           -o ./circtest_output \
           -n test_output \
           -M bw
-
-    - name: Upload circtest CSV artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: test_output-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
-        path: circtools_example/circtest_output/test_output.csv
-        if-no-files-found: error
-
 
     - name: Check outputs (tolerant CSV + strict hashes for non-CSV)
       shell: bash
