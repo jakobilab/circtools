@@ -1,4 +1,4 @@
-name: circtools conservation
+name: circtools conservation (pip)
 
 on:
   push:
