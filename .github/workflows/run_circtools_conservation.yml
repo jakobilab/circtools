@@ -89,37 +89,24 @@ jobs:
         tar xvf ./tests/data/circtools_example.tar.bz2
 
 
-    - name: Run conservation with safe show
+    - name: Run conservation with PDF output
+      env:
+        MPLBACKEND: pdf
+        MPLCONFIGDIR: ${{ github.workspace }}/.mplconfig
       run: |
         cd circtools_example
-        mkdir conservation
-        mkdir conservation/temp
-        # Patch matplotlib BEFORE running circtools
-        cat <<'EOF' > safe_show.py
-        import matplotlib
-        matplotlib.use('Agg')  # Force non-GUI backend
-        import matplotlib.pyplot as plt
-        import sys
+        mkdir -p conservation/temp "$MPLCONFIGDIR"
+        circtools conservation \
+          -d ./circtools_ci_master/CircCoordinates \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
+          -O mm \
+          -G Map3k5 \
+          -o ./conservation/ \
+          -t ./conservation/temp/ \
+          -TS hs \
+          -pairwise
 
-        def safe_show(*args, **kwargs):
-            print(f"[CI PATCH] Headless mode — skipping plt.show()", file=sys.stderr)
-
-        plt.show = safe_show
-        EOF
-
-        export PYTHONPATH="$PWD:$PYTHONPATH"
-        python -c "import safe_show; import sys, subprocess; sys.exit(subprocess.call([
-            'circtools', 'conservation',
-            '-d', './circtools_ci_master/CircCoordinates',
-            '-f', './genome.fa',
-            '-g', './annotation.gtf',
-            '-O', 'mm',
-            '-G', 'Map3k5',
-            '-o', './conservation/',
-            '-t', './conservation/temp/',
-            '-TS', 'hs',
-            '-pairwise'
-        ]))"
 
     - name: Checking generated output against master output
       run: |
