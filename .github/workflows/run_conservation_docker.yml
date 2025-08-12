@@ -54,13 +54,6 @@ jobs:
               -TS hs \
               -pairwise
 
-      - name: Inspect output
-        run: |
-          set -euo pipefail
-          cd circtools_example/conservation
-          ls -la
-          wc -l *
-
       - name: Check outputs against master (Linux)
         run: |
           set -euo pipefail
