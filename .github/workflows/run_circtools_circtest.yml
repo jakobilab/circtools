@@ -1,4 +1,4 @@
-name: circtools circtest
+name: circtools circtest (pip)
 
 on:
   push:

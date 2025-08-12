@@ -1,4 +1,4 @@
-name: circtools primex
+name: circtools primex (pip)
 
 on:
   push:

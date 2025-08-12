@@ -1,4 +1,4 @@
-name: circtools padlock
+name: circtools padlock (pip)
 
 on:
   push:

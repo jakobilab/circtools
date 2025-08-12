@@ -1,20 +1,21 @@
-name: circtools detect
+name: circtools detect (docker)
 
 on:
-  push:
-  pull_request:
-  schedule:
-    - cron: '0 11 * * *'
+  workflow_run:
+    workflows: ["Multi-arch docker container"]
+    types:
+      - completed
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  GHCR_IMAGE: ghcr.io/jakobilab/circtools:wjm2  # <- change 
+  GHCR_IMAGE: ghcr.io/jakobilab/circtools:${{ github.ref_name }}
 
 jobs:
   run-detect-docker:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: circtools detect (Docker AMD64)
     runs-on: ubuntu-24.04
 
@@ -22,9 +23,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: wjm2
+          ref: ${{ github.ref }}
 
-      - name: Login to GHCR (optional if image is public)
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -39,7 +40,6 @@ jobs:
       - name: Unpack test dataset
         run: |
           tar xvf ./tests/data/circtools_example.tar.bz2
-          ls -la circtools_example
 
       - name: Run circtools detect (Docker AMD64)
         run: |
@@ -47,7 +47,7 @@ jobs:
             -v "${{ github.workspace }}:/work" \
             -w /work/circtools_example \
             "${GHCR_IMAGE}" \
-            circtools detect \
+            detect \
               @samplesheet \
               -ss -T 2 -D \
               -an annotation.gtf \
@@ -59,16 +59,13 @@ jobs:
 
       - name: Inspect output
         run: |
-          set -euo pipefail
           cd circtools_example/circtools_ci
           ls -la
           wc -l *
 
       - name: Compare against master output (Linux)
         run: |
-          set -euo pipefail
           cd circtools_example
           MASTER_DIR="./circtools_ci_master"
           diff circtools_ci/CircRNACount "${MASTER_DIR}/CircRNACount"
-          # Verify checksums
           (cd circtools_ci && sha1sum -c "../circtools_ci_master/sha1sums.txt")

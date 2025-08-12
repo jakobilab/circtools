@@ -1,4 +1,4 @@
-name: circtools conservation
+name: circtools conservation (pip)
 
 on:
   push:
@@ -89,11 +89,10 @@ jobs:
         tar xvf ./tests/data/circtools_example.tar.bz2
     - name: Enable safe matplotlib show in CI
       run: |
+        cd circtools_example
         cat <<'EOF' > safe_show.py
         import matplotlib
         import matplotlib.pyplot as plt
-        import builtins
-        import time
         import sys
 
         def safe_show(*args, **kwargs):
@@ -112,21 +111,12 @@ jobs:
         EOF
 
 
+
     - name: Run conservation
       run: |
         cd circtools_example
-        mkdir -p conservation/temp
-        python -c "import safe_show; import circtools.__main__ as m; m.main()" \
-          conservation \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Map3k5 \
-          -o ./conservation/ \
-          -t ./conservation/temp/ \
-          -TS hs \
-          -pairwise
+        python -c "import safe_show; import sys; from circtools.__main__ import main; sys.argv=['circtools','conservation','-d','./circtools_ci_master/CircCoordinates','-f','./genome.fa','-g','./annotation.gtf','-O','mm','-G','Map3k5','-o','./conservation/','-t','./conservation/temp/','-TS','hs','-pairwise']; main()"
+
 
 
     - name: Upload aligned FASTA artifact
