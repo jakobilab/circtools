@@ -1,4 +1,4 @@
-name: circtools conservation
+name: circtools conservation (pip)
 
 on:
   push:
@@ -8,13 +8,13 @@ on:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   Main:
     strategy:
       matrix:
-        os: [ubuntu-24.04,  macos-14,  macos-13 ]
+        os: [ macos-13, macos-15,ubuntu-24.04 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: [ "3.9", "3.10", "3.11"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -22,7 +22,7 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: master
+       ref: ${{ github.ref_name }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -58,11 +58,26 @@ jobs:
           local::circtools/contrib/primex
     - name: Install BEDTools from source (v2.31.1)
       run: |
-        wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-        tar zxvf bedtools-2.31.1.tar.gz
-        cd bedtools2
-        make -j4
-        sudo cp bin/* /usr/local/bin/
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
@@ -72,34 +87,63 @@ jobs:
     - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
-    - name: Run conservation
+
+
+    - name: Run conservation with safe show
       run: |
         cd circtools_example
-        mkdir -p conservation/temp
-        circtools conservation \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Map3k5 \
-          -o ./conservation/ \
-          -t ./conservation/temp/ \
-          -TS hs \
-          -pairwise
+        mkdir conservation
+        mkdir conservation/temp
+        # Patch matplotlib BEFORE running circtools
+        cat <<'EOF' > safe_show.py
+        import matplotlib
+        matplotlib.use('Agg')  # Force non-GUI backend
+        import matplotlib.pyplot as plt
+        import sys
+
+        def safe_show(*args, **kwargs):
+            print(f"[CI PATCH] Headless mode — skipping plt.show()", file=sys.stderr)
+
+        plt.show = safe_show
+        EOF
+
+        export PYTHONPATH="$PWD:$PYTHONPATH"
+        python -c "import safe_show; import sys, subprocess; sys.exit(subprocess.call([
+            'circtools', 'conservation',
+            '-d', './circtools_ci_master/CircCoordinates',
+            '-f', './genome.fa',
+            '-g', './annotation.gtf',
+            '-O', 'mm',
+            '-G', 'Map3k5',
+            '-o', './conservation/',
+            '-t', './conservation/temp/',
+            '-TS', 'hs',
+            '-pairwise'
+        ]))"
 
     - name: Checking generated output against master output
       run: |
         set -x
         cd circtools_example/conservation
-        
-        echo "🔍 Running diff..."
-        diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned ../conservation_master/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned || echo "⚠️ diff found differences"
-
-        echo "🔍 Running sha1sum..."
         if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c ../conservation_master/sha1sums.txt || echo "⚠️ sha1sum mismatch"
+          MASTER_DIR="../conservation_master"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../conservation_master_mac_amd"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          shasum -c ../conservation_master/sha1sums.txt || echo "⚠️ shasum mismatch"
+          MASTER_DIR="../conservation_master_mac"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
         fi
+
 
     runs-on: ${{ matrix.os }}

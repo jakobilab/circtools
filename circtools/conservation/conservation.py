@@ -37,6 +37,7 @@ from Bio.Graphics import GenomeDiagram
 from Bio import BiopythonDeprecationWarning
 import warnings
 
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", BiopythonDeprecationWarning)
     from . import FetchOrthologs as FO
@@ -494,3 +495,4 @@ class Conservation(circ_module.circ_template.CircTemplate):
         os.remove(blast_storage_tmp)
         os.remove(blast_xml_tmp)
         """
+        
