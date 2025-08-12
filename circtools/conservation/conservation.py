@@ -457,42 +457,76 @@ class Conservation(circ_module.circ_template.CircTemplate):
 
 
                         # fetch sequences for both these exons now
+                        import time
+
+                        # fetch sequences for both these exons now
                         if "first_exon" in locals():
+                            print(f"[DEBUG] Creating FS.sequence() for first exon in {each_target_species}", flush=True)
                             first_exon_seq = FS.sequence(species_dictionary[each_target_species], first_exon_liftover)
+                            print(f"[DEBUG] Creating FS.sequence() for BSJ exon in {each_target_species}", flush=True)
                             bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
-                            #print("Lifted over coordinates:", first_exon_liftover, bsj_exon_liftover)
-                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
+
+                            print(f"[DEBUG] Fetching sequences for strand: {current_line[5]}", flush=True)
                             if current_line[5] == "+":
                                 circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
                             elif current_line[5] == "-":
                                 circ_sequence_target = str(first_exon_seq.fetch_sequence()) + str(bsj_exon_seq.fetch_sequence())
                             else:
                                 circ_sequence_target = str(bsj_exon_seq.fetch_sequence()) + str(first_exon_seq.fetch_sequence())
+
+                            lifted_circle = first_exon_liftover[:2] + [bsj_exon_liftover[2]]
                         else:
+                            print(f"[DEBUG] Creating FS.sequence() for only BSJ exon in {each_target_species}", flush=True)
                             bsj_exon_seq = FS.sequence(species_dictionary[each_target_species], bsj_exon_liftover)
+                            print("[DEBUG] Fetching BSJ exon sequence", flush=True)
                             circ_sequence_target = str(bsj_exon_seq.fetch_sequence())
-                            #print("Lifted over coordinates:", bsj_exon_liftover)
                             lifted_circle = bsj_exon_liftover
 
+                        print(f"[DEBUG] Lifted circle before string conversion: {lifted_circle}", flush=True)
                         lifted_circle = list(map(str, lifted_circle))
-                        print("Lifted circle in target species ", each_target_species , " is " , lifted_circle)
-                        out_bed_file = self.output_dir + "lifted_" + name + "_" +   each_target_species + ".bed"
+                        print(f"[DEBUG] Lifted circle in {each_target_species}: {lifted_circle}", flush=True)
+
+                        out_bed_file = self.output_dir + "lifted_" + name + "_" + each_target_species + ".bed"
+                        print(f"[DEBUG] Writing BED to {out_bed_file}", flush=True)
                         with open(out_bed_file, "w") as bed_out:
-                            bed_out.write("\t".join(lifted_circle)+"\n")        
+                            bed_out.write("\t".join(lifted_circle) + "\n")
 
                         # writing into fasta file for alignments
-                        fasta_out_string = fasta_out_string + ">" + each_target_species + "(" + lifted_circle[0] + ":" + lifted_circle[1] + "-" + lifted_circle[2] + ")" + "\n" + circ_sequence_target + "\n" 
-                        
-                    fasta_file_alignment = self.output_dir + "/alignment_" + name + ".fasta"
-                    with open(fasta_file_alignment, "w") as fasta_out:
-                        fasta_out.write(fasta_out_string)
+                        print(f"[DEBUG] Appending {each_target_species} sequence to FASTA output string", flush=True)
+                        fasta_out_string = (
+                            fasta_out_string
+                            + ">"
+                            + each_target_species
+                            + "("
+                            + lifted_circle[0]
+                            + ":"
+                            + lifted_circle[1]
+                            + "-"
+                            + lifted_circle[2]
+                            + ")\n"
+                            + circ_sequence_target
+                            + "\n"
+                        )
 
-                    # call multiple sequencce alignment function
-                    align = AL.Alignment(fasta_file_alignment, self.organism, name, self.output_dir)
-                    align.draw_phylo_tree()
-                    # if pairwise alignment flag is turned on, run the pairwise alignment function
-                    if (self.pairwise):
-                        align.pairwise_alignment()
+                        fasta_file_alignment = self.output_dir + "/alignment_" + name + ".fasta"
+                        print(f"[DEBUG] Writing FASTA to {fasta_file_alignment}", flush=True)
+                        with open(fasta_file_alignment, "w") as fasta_out:
+                            fasta_out.write(fasta_out_string)
+
+                        # call multiple sequence alignment function
+                        print("[DEBUG] Creating Alignment object", flush=True)
+                        align = AL.Alignment(fasta_file_alignment, self.organism, name, self.output_dir)
+
+                        print("[DEBUG] Drawing phylogenetic tree", flush=True)
+                        align.draw_phylo_tree()
+
+                        # if pairwise alignment flag is turned on, run the pairwise alignment function
+                        if self.pairwise:
+                            print("[DEBUG] Running pairwise alignment", flush=True)
+                            align.pairwise_alignment()
+
+                        print("[DEBUG] Finished processing target species loop", flush=True)
+
 
         else:
             print("Please provide Circtools detect output Coordinate file via option -d.")
