@@ -1,7 +1,6 @@
 name: circtools conservation (pip)
 
 on:
-  push:
   schedule:
     - cron: '0 11 * * *'
 

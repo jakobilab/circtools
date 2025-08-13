@@ -2,8 +2,8 @@ name: Multi-arch docker container
 
 on:
   push:
-  schedule:
-    - cron: '0 10 * * *'
+    tags:
+      - "v*"
 
 concurrency:
   group: docker-${{ github.ref }}-1

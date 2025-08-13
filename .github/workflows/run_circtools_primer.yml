@@ -1,7 +1,6 @@
 name: circtools primex (pip)
 
 on:
-  push:
   schedule:
     - cron: '0 11 * * *'
 
