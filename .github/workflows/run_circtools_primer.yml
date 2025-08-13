@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   Main:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -125,4 +126,17 @@ jobs:
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         fi
 
-    runs-on: ${{ matrix.os }}
+
+  rerun-once-if-failed:
+    if: failure() && github.run_attempt < 2
+    needs: [Main]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-run failed jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run rerun ${{ github.run_id }} --failed
+
+
+
+
