@@ -1,4 +1,4 @@
-name: circtools detect (pip)
+name: circtools run all (pip)
 
 on:
   push:
