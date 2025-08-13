@@ -14,9 +14,9 @@ jobs:
   Main:
     strategy:
       matrix:
-        os: [ macos-13, macos-15,ubuntu-24.04 ]
+        os: [ macos-13, macos-15,ubuntu-22.04, ubuntu-24.04 ]
         R:  ['4.4.0', '4.5.1' ]
-        python-version: [ "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
