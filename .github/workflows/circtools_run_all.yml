@@ -1,0 +1,45 @@
+name: circtools (merged)
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  circtest:
+    uses: ./.github/workflows/run_circtools_circtest.yml
+    with:
+      os: [macos-15, macos-14, ubuntu-24.04]
+      python-version: [3.13]
+      r-version: [4.5.1]
+
+  conservation:
+    uses: ./.github/workflows/run_circtools_conservation.yml
+    with:
+      os: [macos-15, macos-14, ubuntu-24.04]
+      python-version: [3.13]
+      r-version: [4.5.1]
+
+  detect:
+    uses: ./.github/workflows/run_circtools_detect.yml
+    with:
+      os: [macos-15, macos-14, ubuntu-24.04]
+      python-version: [3.13]
+      r-version: [4.5.1]
+
+  padlock:
+    uses: ./.github/workflows/run_circtools_padlock.yml
+    with:
+      os: [macos-15, macos-14, ubuntu-24.04]
+      python-version: [3.13]
+      r-version: [4.5.1]
+
+  primer:
+    uses: ./.github/workflows/run_circtools_primer.yml
+    with:
+      os: [macos-15, macos-14, ubuntu-24.04]
+      python-version: [3.13]
+      r-version: [4.5.1]
