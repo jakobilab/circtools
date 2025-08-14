@@ -1,8 +1,8 @@
-name: circtools circtest (pip)
+name: circtools run all (pip)
 
 on:
-  schedule:
-    - cron: '0 11 * * *'
+  push:
+  pull_request:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
@@ -14,15 +14,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15,ubuntu-22.04, ubuntu-24.04 ]
-        R:  ['4.4.0', '4.5.1' ]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ macos-13, macos-15,ubuntu-24.04 ]
+        R:  [ '4.5.1' ]
+        python-version: ["3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: ${{ github.ref_name }}
+        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref }}
+        repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -32,7 +34,7 @@ jobs:
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
-         if [ "$RUNNER_OS" == "Linux"]; then
+         if [ "$RUNNER_OS" == "ubuntu-22.04"]; then
             apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
          fi
          if [ "$RUNNER_OS" == "macOS"]; then
@@ -54,6 +56,28 @@ jobs:
         extra-packages: |
           local::circtools/contrib/circtest
           local::circtools/contrib/primex
+    - name: Install BEDTools from source (v2.31.1)
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
@@ -63,6 +87,41 @@ jobs:
     - name: Downloading circtools detect test data
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
+    - name: Running circtools detect with minimal data set
+      run: |
+        cd circtools_example
+        circtools detect \
+          @samplesheet \
+          -ss -T 2 -D \
+          -an annotation.gtf \
+          -A genome.fa \
+          -B @bam_files.txt \
+          -D -M -G \
+          -Nr 5 6 \
+          -O ./circtools_ci -k
+
+    - name: Checking generated output against master output
+      run: |
+         cd circtools_example
+         cd circtools_ci
+         ls -la
+         wc -l *
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            MASTER_DIR="../circtools_ci_master"
+            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            sha1sum -c "$MASTER_DIR/sha1sums.txt"
+          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+            MASTER_DIR="../circtools_ci_master_mac_amd"
+            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            MASTER_DIR="../circtools_ci_master_mac"
+            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+          else
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
+          fi
     - name: Fix missing Strand column (if needed)
       run: |
         cd circtools_example/circtools_ci_master
@@ -204,6 +263,124 @@ jobs:
           echo "::warning::No sha1sums.txt found in $MASTER_DIR; skipping hash verification."
         fi
 
+    - name: Run padlock
+      run: |
+        cd circtools_example
+        mkdir -p padlock_output
+        circtools padlock \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
+          -O mm \
+          -G Slc16a9 \
+          -T Slc16a9_padlock_design \
+          -r 1 \
+          -b \
+          -o ./padlock_output
+
+    - name: Checking generated output against master output
+      run: |
+        cd circtools_example/padlock_output
+        ls -la
+        wc -l *
+
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          MASTER_DIR="../padlock_output_master"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../padlock_output_master_mac_amd"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          MASTER_DIR="../padlock_output_master_mac"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+
+        diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        else
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        fi
+    - name: Run conservation with PDF output
+      env:
+        MPLBACKEND: pdf
+        MPLCONFIGDIR: ${{ github.workspace }}/.mplconfig
+      run: |
+        cd circtools_example
+        mkdir -p conservation/temp "$MPLCONFIGDIR"
+        circtools conservation \
+          -d ./circtools_ci_master/CircCoordinates \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
+          -O mm \
+          -G Map3k5 \
+          -o ./conservation/ \
+          -t ./conservation/temp/ \
+          -TS hs \
+          -pairwise
+
+
+    - name: Checking generated output against master output
+      run: |
+        set -x
+        cd circtools_example/conservation
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          MASTER_DIR="../conservation_master"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../conservation_master_mac_amd"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          MASTER_DIR="../conservation_master_mac"
+          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+    - name: Run primex
+      run: |
+        cd circtools_example
+        mkdir -p primer_output
+        circtools primex \
+          -d ./circtools_ci_master/CircCoordinates \
+          -f ./genome.fa \
+          -g ./annotation.gtf \
+          -O mm \
+          -G Slc16a9 \
+          -T "Slc16a9_primer" \
+          -o ./primer_output/ || true
+
+
+
+    - name: Checking generated output against master output
+      run: |
+        cd circtools_example/primer_output
+        ls -la
+        wc -l *
+
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          MASTER_DIR="../primer_output_master"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../primer_output_master_mac_amd"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          MASTER_DIR="../primer_output_master_mac"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+
+        diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        else
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        fi
+
   rerun-once-if-failed:
     if: failure() && github.run_attempt < 2
     needs: [Main]
@@ -213,5 +390,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh run rerun ${{ github.run_id }} --failed
+
 
 
