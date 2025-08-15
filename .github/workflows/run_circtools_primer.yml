@@ -58,7 +58,7 @@ jobs:
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           sudo apt-get update
-          sudo apt-get install -y make g++ zlib1g-dev wget
+          sudo apt-get install -y make g++ zlib1g-dev
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
           cd bedtools2
