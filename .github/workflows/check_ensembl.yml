@@ -1,0 +1,33 @@
+name: Ensembl API Health Check
+
+on:
+  schedule:
+    - cron: '0 11 * * *'
+jobs:
+  check-ensembl:
+    name: Ensembl REST health check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Ensembl /info/ping with retries
+        id: health
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://rest.ensembl.org/info/ping?content-type=application/json"
+
+          ok="false"
+          for i in $(seq 1 12); do
+            status=$(curl -sS -m 10 -w "%{http_code}" -o ping.json "$url" || echo "000")
+            if [ "$status" = "200" ] && grep -Eq '"ping"[[:space:]]*:[[:space:]]*1' ping.json; then
+              ok="true"
+              break
+            fi
+            sleep $((i * 5))
+          done
+
+          if [ "$ok" = "true" ]; then
+            echo "✅ Ensembl API is up"
+          else
+            echo "❌ Ensembl API is down"
+            exit 1
+          fi

@@ -1,8 +1,9 @@
 name: circtools conservation (pip)
 
 on:
-  schedule:
-    - cron: '0 11 * * *'
+  workflow_run:
+    workflows: ["Ensembl API Health Check"]
+    types: [completed]
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
