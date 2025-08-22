@@ -68,7 +68,7 @@ jobs:
           sudo cp bin/* /usr/local/bin/
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
-          brew install make gcc wget zlib
+          brew install make zlib
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
           cd bedtools2
