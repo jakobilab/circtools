@@ -47,16 +47,17 @@ jobs:
       - name: Download reference data
         run: |
           cd circtools_example
+          mkdir -p reference
           docker run --rm \
+            -e CURL_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0 Safari/537.36" \
+            -e WGET_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0 Safari/537.36" \
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
             nanopore \
               -d \
-              -R reference/ \
+              -R reference \
               -C hg38
-          cd reference/hg38
-          ls -lh
 
 
 
@@ -71,7 +72,8 @@ jobs:
             nanopore \
               -r \
               -s human_nanopore_1M.fastq.gz \
-              -G /host_rel/reference/hg38/genome.fa \
+              -R reference \
+              -C hg38 \
               -O results/ \
               --threads 16
 
