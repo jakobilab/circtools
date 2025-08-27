@@ -26,15 +26,32 @@ jobs:
           docker pull "${GHCR_IMAGE}"
           docker image inspect "${GHCR_IMAGE}" --format '{{json .RepoTags}}'
 
+      - name: Unpack test dataset
+        run: |
+          tar xvf ./tests/data/circtools_example.tar.bz2
+          cd circtools_example
+          # Ensure genome + annotation are uncompressed
+          if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+          if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+          ls -lh
+
+      - name: Subsample nanopore data
+        run: |
+          cd circtools_example
+          # Copy human nanopore dataset from repo
+          cp ../tests/data/human_nanopore/human_nanopore.fastq.gz .
+          # Extract first 1M reads (4M lines)
+          zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
+          ls -lh human_nanopore_1M.fastq.gz
+
       - name: Download reference data
         run: |
-          mkdir -p circtools_example
           cd circtools_example
           docker run --rm \
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            nanopore \
+            circtools nanopore \
               -d \
               -R reference/ \
               -C hg38
@@ -45,12 +62,11 @@ jobs:
           mkdir -p results
           docker run --rm \
             -v "$(pwd):/host_rel/" \
-            -v /:/host_os/ \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            nanopore \
+            circtools nanopore \
               -r \
-              -s human_nanopore.fastq.gz \
+              -s human_nanopore_1M.fastq.gz \
               -R reference/ \
               -C hg38 \
               -O results/ \
