@@ -386,10 +386,13 @@ jobs:
     needs: [Main]
     runs-on: ubuntu-latest
     steps:
+      - name: Sleep for 1 hour
+        run: sleep 3600
       - name: Re-run failed jobs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run rerun ${{ github.run_id }} --failed
+        run: gh run rerun ${{ github.run_id }} --failed --repo ${{ github.repository }}
+
 
 
 
