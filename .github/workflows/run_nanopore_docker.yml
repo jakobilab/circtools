@@ -47,14 +47,16 @@ jobs:
       - name: Download reference data
         run: |
           cd circtools_example
+          mkdir -p reference/hg38
           docker run --rm \
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
             nanopore \
               -d \
-              -R reference/ \
+              -R reference \
               -C hg38
+
 
       - name: Run circtools nanopore (Docker)
         run: |
@@ -67,7 +69,7 @@ jobs:
             nanopore \
               -r \
               -s human_nanopore_1M.fastq.gz \
-              -R reference/ \
+              -R reference/hg38 \
               -C hg38 \
               -O results/ \
               --threads 16
@@ -77,3 +79,4 @@ jobs:
         with:
           name: circRNA-candidates
           path: circtools_example/results/human_nanopore_1M.circRNA_candidates.annotated.txt
+
