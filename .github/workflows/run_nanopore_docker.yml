@@ -47,15 +47,15 @@ jobs:
       - name: Download reference data
         run: |
           cd circtools_example
-          mkdir -p reference/hg38
           docker run --rm \
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            nanopore \
+            circtools nanopore \
               -d \
               -R reference \
               -C hg38
+
 
 
       - name: Run circtools nanopore (Docker)
@@ -66,13 +66,14 @@ jobs:
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            nanopore \
+            circtools nanopore \
               -r \
               -s human_nanopore_1M.fastq.gz \
-              -R reference/hg38 \
+              -R reference \
               -C hg38 \
               -O results/ \
               --threads 16
+
 
       - name: Upload circRNA candidates artifact
         uses: actions/upload-artifact@v4
