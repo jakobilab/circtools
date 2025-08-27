@@ -76,4 +76,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: circRNA-candidates
-          path: circtools_example/results/human_nanopore.circRNA_candidates.annotated.txt
+          path: circtools_example/results/human_nanopore_1M.circRNA_candidates.annotated.txt
