@@ -51,7 +51,7 @@ jobs:
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            circtools nanopore \
+            nanopore \
               -d \
               -R reference \
               -C hg38
@@ -66,7 +66,7 @@ jobs:
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
             "${GHCR_IMAGE}" \
-            circtools nanopore \
+            nanopore \
               -r \
               -s human_nanopore_1M.fastq.gz \
               -R reference \
