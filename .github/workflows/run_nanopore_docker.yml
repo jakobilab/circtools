@@ -55,7 +55,7 @@ jobs:
               -d \
               -R reference \
               -C hg38
-          cd circtools_example/reference/hg38
+          cd reference/hg38
           ls -lh
 
 
