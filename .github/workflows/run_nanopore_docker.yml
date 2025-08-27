@@ -1,0 +1,63 @@
+name: circtools nanopore (docker)
+
+on:
+  push:
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GHCR_IMAGE: ghcr.io/jakobilab/circtools:master
+
+jobs:
+  run-nanopore-docker:
+    name: circtools nanopore (Docker)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Pull image
+        run: |
+          docker pull "${GHCR_IMAGE}"
+          docker image inspect "${GHCR_IMAGE}" --format '{{json .RepoTags}}'
+
+      - name: Download reference data
+        run: |
+          mkdir -p circtools_example
+          cd circtools_example
+          docker run --rm \
+            -v "$(pwd):/host_rel/" \
+            -w /host_rel \
+            "${GHCR_IMAGE}" \
+            circtools nanopore \
+              -d \
+              -R reference/ \
+              -C hg38
+
+      - name: Run circtools nanopore (Docker)
+        run: |
+          cd circtools_example
+          mkdir -p results
+          docker run --rm \
+            -v "$(pwd):/host_rel/" \
+            -v /:/host_os/ \
+            -w /host_rel \
+            "${GHCR_IMAGE}" \
+            circtools nanopore \
+              -r \
+              -s human_nanopore.fastq.gz \
+              -R reference/ \
+              -C hg38 \
+              -O results/ \
+              --threads 16
+
+      - name: Upload circRNA candidates artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: circRNA-candidates
+          path: circtools_example/results/human_nanopore.circRNA_candidates.annotated.txt
