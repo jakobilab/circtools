@@ -55,6 +55,7 @@ jobs:
               -d \
               -R reference \
               -C hg38
+          ls -lh
 
 
 
