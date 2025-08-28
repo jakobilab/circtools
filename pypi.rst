@@ -34,13 +34,13 @@ The latest circtools docker version will be downloaded directly from GitHub. The
 
 .. code-block:: console
 
-    docker pull ghcr.io/jakobilab/circtools/circtools:latest
+    docker pull ghcr.io/jakobilab/circtools:master
 
 An bash alias to call circtools "natively" and skip the unwieldy full docker command is recommended:
 
 .. code-block:: console
 
-    alias circtools='docker run --rm -v "`pwd`":/circtools/ ghcr.io/jakobilab/circtools/circtools'
+    alias circtools='docker run --rm -v "`pwd`":/host_rel/ -v /:/host_os/ ghcr.io/jakobilab/circtools:master'
 
 This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
 
