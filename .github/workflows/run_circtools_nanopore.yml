@@ -158,8 +158,8 @@ jobs:
           -s human_nanopore_1M.fastq.gz \
           -R reference \
           -C hg38 \
-          -O mkdir -p nanopore_output/ \
-          --threads 4
+          -O nanopore_output/ \
+          --threads 16
 
     - name: Upload circRNA candidates artifact
       uses: actions/upload-artifact@v4
