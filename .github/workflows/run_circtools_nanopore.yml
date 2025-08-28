@@ -152,17 +152,17 @@ jobs:
     - name: Run circtools nanopore (pip)
       run: |
         cd circtools_example
-        mkdir -p results
+        mkdir -p nanopore_output
         circtools nanopore \
           -r \
           -s human_nanopore_1M.fastq.gz \
           -R reference \
           -C hg38 \
-          -O results/ \
+          -O mkdir -p nanopore_output/ \
           --threads 4
 
     - name: Upload circRNA candidates artifact
       uses: actions/upload-artifact@v4
       with:
         name: circRNA-candidates-pip
-        path: circtools_example/results/human_nanopore_1M.circRNA_candidates.annotated.txt
+        path: circtools_example/nanopore_output/human_nanopore_1M.circRNA_candidates.annotated.txt

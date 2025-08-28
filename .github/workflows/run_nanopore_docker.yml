@@ -53,7 +53,7 @@ jobs:
       - name: Run circtools nanopore (Docker)
         run: |
           cd circtools_example
-          mkdir -p results
+          mkdir -p nanopore_output
           docker run --rm \
             -v "$(pwd):/host_rel/" \
             -w /host_rel \
@@ -63,7 +63,7 @@ jobs:
               -s human_nanopore_1M.fastq.gz \
               -R reference \
               -C hg38 \
-              -O results/ \
+              -O nanopore_output/ \
               --threads 16
 
 
@@ -71,5 +71,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: circRNA-candidates
-          path: circtools_example/results/human_nanopore_1M.circRNA_candidates.annotated.txt
+          path: circtools_example/nanopore_output/human_nanopore_1M.circRNA_candidates.annotated.txt
 
