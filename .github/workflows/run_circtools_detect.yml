@@ -29,6 +29,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Updating setuptools
       run: |
+         python3 -m pip install --upgrade pip
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
@@ -101,15 +102,17 @@ jobs:
 
 
 
+
   rerun-once-if-failed:
     if: failure() && github.run_attempt < 2
     needs: [Main]
     runs-on: ubuntu-latest
     steps:
+      - name: Sleep for 1 hour
+        run: sleep 3600
       - name: Re-run failed jobs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run rerun ${{ github.run_id }} --failed
-
+        run: gh run rerun ${{ github.run_id }} --failed --repo ${{ github.repository }}
 
 
