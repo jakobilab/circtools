@@ -33,21 +33,25 @@ import yaml
 import circ_module.circ_template
 import circtools
 
-
 def fix_path_for_docker(path: str):
+
     if is_running_in_docker() and os.path.isabs(path):
         path = str(os.path.join("/host_os/", path))
     return path
 
 
 def is_running_in_docker():
-    return os.path.exists('/.dockerenv')
+    # Check for the presence of .dockerenv
+    if os.path.exists('/.dockerenv'):
+        return True
 
+    return False
 
 def is_writeable(directory):
     try:
         with open(os.path.join(directory, 'testfile'), 'w'):
             os.remove(os.path.join(directory, 'testfile'))
+            pass
     except PermissionError:
         return False
     else:
@@ -56,32 +60,64 @@ def is_writeable(directory):
 
 def get_id_from_column_9(input_string: str, entity: str):
     splits = input_string.strip().split(';')
+
     feature_dict = {}
+
     for split in splits:
         item = split.strip().split(" ")
         if len(item) == 2:
             feature_dict[item[0]] = item[1].replace("\"", "")
-    return feature_dict.get(entity)
+
+    if entity in feature_dict:
+        return feature_dict[entity]
+    else:
+        return None
 
 
 def read_annotation_file(annotation_file, entity="exon"):
+    """Reads a GTF file
+    Will halt the program if file not accessible
+    Returns a BedTool object only containing gene sections
+    """
+    """
+    Reads a GTF file and outputs exons output used for the main script
+
+    Download (needs to be the version__lift__version file as GTF, e.g. v37):
+    https://www.gencodegenes.org/human/release_37lift37.html
+
+    Expected output (each line one exon):
+    chr1    11868   12227   DDX11L1 100     +       ENST00000456328.2_1     ENSG00000223972.5_4
+
+    Args:
+        annotation_file (str): Path to the GTF file.
+    """
     try:
         file_handle = open(annotation_file)
     except PermissionError:
-        sys.exit(f"Input file {annotation_file} cannot be read, exiting.")
+        message = ("Input file " + str(
+            annotation_file) + " cannot be read, exiting.")
+        sys.exit(message)
     else:
+
         with file_handle:
             line_iterator = iter(file_handle)
             bed_content = ""
             print("Start parsing GTF file")
             for line in line_iterator:
+                # we skip any comment lines
                 if line.startswith("#"):
                     continue
+
+                # split up the annotation line
                 columns = line.split('\t')
+
                 if not (columns[2] == entity):
                     continue
+
+                # we do not want any 0-length intervals -> bedtools segfault
                 if int(columns[4]) - int(columns[3]) == 0:
                     continue
+
                 entry = [
                     columns[0],
                     columns[3],
@@ -92,44 +128,98 @@ def read_annotation_file(annotation_file, entity="exon"):
                     get_id_from_column_9(columns[8], "transcript_id"),
                     get_id_from_column_9(columns[8], "gene_id")
                 ]
+
+                # concatenate lines to one string
                 bed_content += '\t'.join(entry) + "\n"
 
         if not bed_content:
             exit(-1)
-        return pybedtools.BedTool(bed_content, from_string=True).sort()
+
+        # create a "virtual" BED file
+        virtual_bed_file = pybedtools.BedTool(bed_content, from_string=True)
+
+        return virtual_bed_file.sort()
 
 
 def postprocess_ref_flat(refflat_csv: str):
+    """
+    Reads a refFlat file dumped by UCSC Genome Browser and outputs sorted
+    exon output used for the main script
+
+    refFlat schema:
+    https://genome.ucsc.edu/cgi-bin/hgTables?hgta_doSchemaDb=hg38&hgta_doSchemaTable=refFlat
+
+    Expected output:
+    chr1    11868   12227   LOC102725121_exon_0_0_chr1_11869_f      0       +
+
+    name = genename + exon # + 0 + chr + start+1 + strand (f or r)
+
+
+    Args:
+        file_path (str): Path to the input file.
+        :param refflat_csv:
+    """
     output_exons = ""
     output_genes = ""
+
     print("Creating refFlat-based exon files")
     try:
         with gzip.open(refflat_csv, mode='rt') as gz_file:
             csv_reader = csv.reader(gz_file, delimiter='\t')
             next(csv_reader, None)
+
             for row_number, row in enumerate(csv_reader, start=1):
                 geneName, name, chrom, strand, txStart, txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds = row
+
                 starts = exonStarts.split(',')
                 stops = exonEnds.split(',')
-                output_genes += "\t".join([chrom, txStart, txEnd, geneName, str(0), strand]) + "\n"
+
+                output_genes += "\t".join(
+                    [chrom, txStart, txEnd, geneName, str(0),
+                     strand]) + "\n"
+
                 for exon_num in range(int(exonCount) - 1):
                     strand_tag = "f" if strand == "+" else "r"
-                    name_tag = "_".join([geneName, "exon", str(exon_num), str(0), chrom,
-                                         str(int(starts[exon_num]) + 1), strand_tag])
-                    output_genes += "\t".join([chrom, starts[exon_num], stops[exon_num], geneName, str(0), strand]) + "\n"
-                    output_exons += "\t".join([chrom, starts[exon_num], stops[exon_num], name_tag, str(0), strand]) + "\n"
 
-        virtual_bed_file = pybedtools.BedTool(output_exons, from_string=True)
-        virtual_bed_file_genes = pybedtools.BedTool(output_genes, from_string=True).sort()
-        virtual_bed_file_genes = virtual_bed_file_genes.merge(s=True, o=["distinct", "count_distinct", "distinct"], c=[4, 4, 6])
+                    name_tag = "_".join(
+                        [geneName, "exon", str(exon_num), str(0), chrom,
+                         str(int(starts[exon_num]) + 1), strand_tag])
+
+                    output_genes += "\t".join(
+                        [chrom, starts[exon_num], stops[exon_num], geneName,
+                         str(0), strand]) + "\n"
+                    output_exons += "\t".join(
+                        [chrom, starts[exon_num], stops[exon_num], name_tag,
+                         str(0), strand]) + "\n"
+
+        virtual_bed_file = pybedtools.BedTool(output_exons,
+                                              from_string=True)
+
+        virtual_bed_file_genes = pybedtools.BedTool(output_genes,
+                                                    from_string=True).sort()
+
+        # the unique gene level file is different in regard to printing out all genes with comma instead of just choosing one
+        # and omit the other co-optimal hits
+
+        virtual_bed_file_genes = virtual_bed_file_genes.merge(s=True,
+                                                              o=["distinct",
+                                                                 "count_distinct",
+                                                                 "distinct"],
+                                                              c=[4, 4, 6])
+
         virtual_bed_file_sorted = virtual_bed_file.sort()
-        virtual_bed_file_merged = virtual_bed_file_sorted.merge(s=True, o=["collapse", "count", "distinct"], c=[4, 4, 6])
+
+        virtual_bed_file_merged = virtual_bed_file_sorted.merge(s=True, o=[
+            "collapse", "count", "distinct"], c=[4, 4, 6])
 
         file_base = refflat_csv.replace(".gz", "")
+
         with open(file_base + ".sort.bed", "w") as file:
             file.write(str(virtual_bed_file_sorted))
+
         with open(file_base + ".unique.bed", "w") as file:
             file.write(str(virtual_bed_file_genes))
+
         with open(file_base + ".merged.bed", "w") as file:
             file.write(str(virtual_bed_file_merged))
 
@@ -141,110 +231,133 @@ def postprocess_ref_flat(refflat_csv: str):
 
 def postprocess_gencode(gencode_file: str):
     print("Creating GENCODE-based exon files")
+
     bed_file = read_annotation_file(gencode_file)
+
     file_base = gencode_file.replace(".gtf", "")
+
     with open(file_base + ".exon.bed", "w") as file:
         file.write(str(bed_file))
-    virtual_bed_file_merged = bed_file.merge(s=True, o=["collapse", "count", "distinct"], c=[4, 4, 6])
+
+    virtual_bed_file_merged = bed_file.merge(s=True,
+                                             o=["collapse",
+                                                "count",
+                                                "distinct"],
+                                             c=[4, 4, 6])
+
     with open(file_base + ".exon.merge.bed", "w") as file:
         file.write(str(virtual_bed_file_merged))
 
 
-def safe_download(url: str, dest: str, file_type="gz"):
-    """
-    Download with requests first; if invalid, retry with curl.
-    Ensures the local file is named exactly as pipeline expects.
-    """
-    try:
-        r = requests.get(url, stream=True, allow_redirects=True, timeout=60)
-        r.raise_for_status()
-        total_size = int(r.headers.get('content-length', 0))
-        with open(dest, "wb") as f:
-            with tqdm(total=total_size, unit='B', unit_scale=True, desc=f"Downloading {os.path.basename(dest)}") as pbar:
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        pbar.update(len(chunk))
-        if file_type.startswith("gz"):
-            with open(dest, "rb") as fcheck:
-                if fcheck.read(2) != b"\x1f\x8b":
-                    raise ValueError("Not a valid gzip file")
-        return True
-    except Exception as e:
-        print(f"⚠️ requests failed for {url}: {e}, retrying with curl…")
-        try:
-            cmd = ["curl", "-L", "-C", "-", "-A", "Mozilla/5.0", "-o", dest, url]
-            subprocess.check_call(cmd)
-            return True
-        except Exception as e2:
-            print(f"❌ Both requests and curl failed for {url}: {e2}")
-            if os.path.exists(dest):
-                os.remove(dest)
-            return False
-
-
 def process_data(configuration: str, data_path: str):
+    # build internal path from config name:
+
     with open(configuration, 'r') as config_file:
         config = (yaml.safe_load(config_file))
 
         full_data_path = os.path.join(data_path, config['dataset'])
+
         if not os.path.exists(data_path):
             os.mkdir(data_path)
 
         if is_writeable(data_path):
             print("Storing reference data in {}".format(data_path))
+
+            # create folder, e.g. h19
             if not os.path.exists(full_data_path):
                 os.makedirs(full_data_path)
 
             for item in config:
+
                 if 'url' in config[item]:
+
                     url = config[item]['url']
-                    file_name = os.path.join(full_data_path, config[item]['name'])
+                    file_name = os.path.join(full_data_path,
+                                             config[item]['name'])
+
                     file_type = config[item]['type']
-                    file_name_unzipped = file_name.replace("." + file_type, "")
+
+                    file_name_unzipped = file_name.replace("." + file_type,
+                                                           "")
 
                     if not os.path.exists(file_name_unzipped):
-                        ok = safe_download(url, file_name, file_type=file_type)
-                        if not ok:
-                            print(f"❌ Could not download {config[item]['name']}")
-                            continue
 
+                        with requests.get(url, stream=True) as r:
+                            r.raise_for_status()
+                            total_size = int(
+                                r.headers.get('content-length', 0))
+
+                            with open(file_name, 'wb') as f:
+                                with tqdm(total=total_size, unit='B',
+                                          unit_scale=True,
+                                          desc="Downloading " +
+                                               config[item][
+                                                   'name']) as pbar:
+                                    for chunk in r.iter_content(
+                                            chunk_size=8192):
+                                        f.write(chunk)
+                                        pbar.update(len(chunk))
+
+                        # most files need to be unpacked
                         if file_type == 'gz':
                             print("Unpacking.")
-                            os.system("gzip -d -f " + file_name)
+                            os.system("gzip -d " + file_name)
                             print("Done.")
 
-                        if 'postprocess' in config[item] and config[item]['postprocess'] == 'gencode':
-                            postprocess_gencode(file_name_unzipped)
-                        if 'postprocess' in config[item] and config[item]['postprocess'] == 'refFlat':
-                            postprocess_ref_flat(file_name_unzipped)
-                    else:
-                        print("Skipping, " + config[item]['name'] + ", file already exists.")
+                        # work on the gencode file
+                        if 'postprocess' in config[item] and \
+                                config[item]['postprocess'] == 'gencode':
+                            postprocess_gencode(
+                                gencode_file=file_name_unzipped)
 
+                        # work with the refFlat file
+                        if 'postprocess' in config[item] and \
+                                config[item]['postprocess'] == 'refFlat':
+                            postprocess_ref_flat(
+                                refflat_csv=file_name_unzipped)
+
+                    # file already exists
+                    else:
+                        print("Skipping, " + config[item]['name'] +
+                              ", file already exists.")
 
 class Nanopore(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
+
+        # get the user supplied options
         self.cli_params = argparse_arguments
         self.program_name = program_name
         self.version = version
+
+        # mode
         self.run = self.cli_params.run
         self.download = self.cli_params.download
         self.check = self.cli_params.check
-        self.threads = self.cli_params.threads
+
+        # options
+        self.threads =  self.cli_params.threads
         self.config = self.cli_params.config
         self.sample_name = self.cli_params.sample
         self.sample_path = self.cli_params.sample
-        self.reference_path = fix_path_for_docker(self.cli_params.reference_path)
+        self.reference_path = self.cli_params.reference_path
+        # fix for docker if default argument is passed
+        self.reference_path = fix_path_for_docker(self.reference_path)
         self.keep_temp = self.cli_params.keep_temp
+        self.threads = self.cli_params.threads
         self.dry_run = self.cli_params.dry_run
         self.output_path = self.cli_params.output_path
+
+        # set path to library directory
         self.script_path = circtools.__path__[0] + "/nanopore/"
         self.config_location = circtools.__path__[0] + "/nanopore/config"
 
+
     def module_name(self):
+        """Return a string representing the name of the module."""
         return self.program_name
 
     def run_module(self):
+
         if self.cli_params.run:
             self.run_analysis()
         elif self.cli_params.download:
@@ -253,15 +366,19 @@ class Nanopore(circ_module.circ_template.CircTemplate):
             self.run_check(verbose=True)
 
     def run_download(self):
+
         if not self.config:
             print("No configuration file specified.")
             exit(-1)
-        final_path = os.path.join(self.config_location, self.config + ".yml")
+
+        final_path = os.path.join(self.config_location, self.config+".yml")
+
         if not os.path.isfile(final_path):
             print("Configuration file {} not accessible.".format(final_path))
             exit(-1)
         else:
-            process_data(configuration=str(final_path), data_path=self.reference_path)
+            process_data(configuration=str(final_path),
+                         data_path=self.reference_path)
 
 
     def run_check(self, verbose = False):
