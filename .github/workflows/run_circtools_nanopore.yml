@@ -1,0 +1,168 @@
+name: circtools nanopore (pip)
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  Main:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04 ]
+        R:  ['4.4.0' ]
+        python-version: [ "3.13"]
+    name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    steps:
+    - name: Create files
+      uses: actions/checkout@v4
+      with:
+       ref: ${{ github.ref_name }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Updating setuptools
+      run: |
+         python3 -m pip install -U pip setuptools
+    - name: Installing circtools & Python dependencies
+      run: |
+         if [ "$RUNNER_OS" == "Linux"]; then
+            apt-get update
+            apt-get install -y make g++ zlib1g-dev 
+            apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
+         fi
+         if [ "$RUNNER_OS" == "macOS"]; then
+            export SYSTEM_VERSION_COMPAT=1
+            sudo rm -rf /Library/Developer/CommandLineTools
+            sudo xcode-select --install
+            python3 -m pip install ./
+         else
+            python3 -m pip install ./
+         fi
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    - name: Set up R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        extra-packages: |
+          local::circtools/contrib/circtest
+          local::circtools/contrib/primex
+    - name: Install BEDTools from source (v2.31.1)
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+    - name: Install bioinformatics dependencies (bedtools, pblat, samtools)
+      run: |
+        set -euxo pipefail
+
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget samtools
+
+          # bedtools 2.31.1
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+          cd ..
+
+          # pblat (parallel BLAT)
+          git clone --depth=1 https://github.com/icebert/pblat.git
+          cd pblat
+          make
+          sudo cp pblat /usr/local/bin/
+          cd ..
+
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib samtools
+
+          # bedtools 2.31.1
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+          cd ..
+
+          # pblat (needs to be built manually, no brew formula anymore)
+          git clone --depth=1 https://github.com/icebert/pblat.git
+          cd pblat
+          make
+          sudo cp pblat /usr/local/bin/
+          cd ..
+
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+    - name: Checking library loading
+      run: Rscript -e 'library(primex)'
+    - name: Check if circtools starts
+      run: |
+         circtools --version
+         which circtools
+
+    - name: Unpack test dataset
+      run: |
+        tar xvf ./tests/data/circtools_example.tar.bz2
+        cd circtools_example
+        if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+        if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+        ls -lh
+
+
+    - name: Download reference data (nanopore)
+      run: |
+        cd circtools_example
+        mkdir -p reference
+        circtools nanopore \
+          -d \
+          -R reference \
+          -C hg38
+
+    - name: Run circtools nanopore (pip)
+      run: |
+        cd circtools_example
+        mkdir -p nanopore_output
+        circtools nanopore \
+          -r \
+          -s human_nanopore_1M.fastq.gz \
+          -R reference \
+          -C hg38 \
+          -O nanopore_output/ \
+          --threads 16
+
+    - name: Upload circRNA candidates artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: circRNA-candidates-pip
+        path: circtools_example/nanopore_output/human_nanopore_1M.circRNA_candidates.annotated.txt
