@@ -9,44 +9,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-    Main:
-      runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [ macos-13, macos-15,ubuntu-22.04, ubuntu-24.04 ]
-          R:  ['4.4.0', '4.5.1' ]
-          python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-      name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
-      steps:
-      - name: Create files
+  Main:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-15, ubuntu-22.04, ubuntu-24.04]
+        R: ['4.4.0', '4.5.1']
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+    name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    steps:
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
-        ref: ${{ github.ref_name }}
+          ref: ${{ github.ref_name }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Updating setuptools
         run: |
           python3 -m pip install -U pip setuptools
+
       - name: Installing circtools & Python dependencies
         run: |
-          if [ "$RUNNER_OS" == "Linux"]; then
-              apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y libblas-dev libatlas-base-dev liblapack-dev
           fi
-          if [ "$RUNNER_OS" == "macOS"]; then
-              export SYSTEM_VERSION_COMPAT=1
-              sudo rm -rf /Library/Developer/CommandLineTools
-              sudo xcode-select --install
-              python3 -m pip install ./
-          else
-              python3 -m pip install ./
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export SYSTEM_VERSION_COMPAT=1
+            sudo rm -rf /Library/Developer/CommandLineTools || true
+            sudo xcode-select --install || true
           fi
+          python3 -m pip install ./
+
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.R }}
+
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -54,8 +58,10 @@ jobs:
           extra-packages: |
             local::circtools/contrib/circtest
             local::circtools/contrib/primex
+
       - name: Checking library loading
         run: Rscript -e 'library(primex)'
+
       - name: Check if circtools starts
         run: |
           circtools --version
