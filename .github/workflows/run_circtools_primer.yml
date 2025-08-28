@@ -29,6 +29,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Updating setuptools
       run: |
+         python3 -m pip install --upgrade pip
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
@@ -57,8 +58,6 @@ jobs:
     - name: Install BEDTools from source (v2.31.1)
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt-get update
-          sudo apt-get install -y make g++ zlib1g-dev
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
           cd bedtools2
@@ -66,7 +65,7 @@ jobs:
           sudo cp bin/* /usr/local/bin/
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
-          brew install make gcc wget zlib
+          brew install make zlib
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
           cd bedtools2
@@ -125,15 +124,18 @@ jobs:
         fi
 
 
+
   rerun-once-if-failed:
     if: failure() && github.run_attempt < 2
     needs: [Main]
     runs-on: ubuntu-latest
     steps:
+      - name: Sleep for 1 hour
+        run: sleep 3600
       - name: Re-run failed jobs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run rerun ${{ github.run_id }} --failed
+        run: gh run rerun ${{ github.run_id }} --failed --repo ${{ github.repository }}
 
 
 
