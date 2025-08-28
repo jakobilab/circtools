@@ -23,9 +23,9 @@ gencode_exon:
   postprocess: gencode
 
 gencode_intron:
-  url: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/wgEncodeGencodeAutoV47.txt.gz
-  type: gz
-  name: gencode_intron.bed.gz
+    url: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/intronEst.txt.gz
+    type: gz
+    name: gencode_intron.bed.gz
 
 est:
   url: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/intronEst.txt.gz
