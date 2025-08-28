@@ -33,6 +33,8 @@ jobs:
     - name: Installing circtools & Python dependencies
       run: |
          if [ "$RUNNER_OS" == "Linux"]; then
+            apt-get update
+            apt-get install -y make g++ zlib1g-dev 
             apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
          fi
          if [ "$RUNNER_OS" == "macOS"]; then
@@ -54,6 +56,43 @@ jobs:
         extra-packages: |
           local::circtools/contrib/circtest
           local::circtools/contrib/primex
+    - name: Install BEDTools from source (v2.31.1)
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev wget
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install make gcc wget zlib
+          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+          tar -xzf bedtools-2.31.1.tar.gz
+          cd bedtools2
+          make -j4
+          sudo cp bin/* /usr/local/bin/
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
+    - name: Install pblat and samtools
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y samtools
+          # install pblat
+          wget http://www.kentinformatics.com/downloads/pblat/pblat-2.5-linux-amd64.tar.gz
+          tar -xzf pblat-2.5-linux-amd64.tar.gz
+          sudo cp pblat-2.5/pblat /usr/local/bin/
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew update
+          brew install samtools
+          brew install kent-tools   # includes pblat on macOS
+        fi
+
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
