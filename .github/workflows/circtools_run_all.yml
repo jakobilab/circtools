@@ -149,13 +149,7 @@ jobs:
       run: |
         cd circtools_example
         mkdir -p reference
-        docker run --rm \
-          -e CURL_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64)" \
-          -e WGET_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64)" \
-          -v "$(pwd):/host_rel/" \
-          -w /host_rel \
-          "${GHCR_IMAGE}" \
-          nanopore \
+        circtools nanopore \
             -d \
             -R reference \
             -C hg38
@@ -164,11 +158,7 @@ jobs:
       run: |
         cd circtools_example
         mkdir -p results
-        docker run --rm \
-          -v "$(pwd):/host_rel/" \
-          -w /host_rel \
-          "${GHCR_IMAGE}" \
-          nanopore \
+        circtools nanopore \
             -r \
             -s human_nanopore_1M.fastq.gz \
             -R reference \
