@@ -139,12 +139,6 @@ jobs:
         if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
         ls -lh
 
-    - name: Subsample nanopore data
-      run: |
-        cd circtools_example
-        cp ../tests/data/human_nanopore.fastq.gz .
-        zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
-        ls -lh human_nanopore_1M.fastq.gz
 
     - name: Download reference data (nanopore)
       run: |
