@@ -82,7 +82,9 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          gh workflow run r-lib/actions/setup-r-dependencies@v2 --inputs "cache-version=1,extra-packages=local::circtools/contrib/circtest local::circtools/contrib/primex"
+          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
+          Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
+          Rscript -e 'remotes::install_local("circtools/contrib/primex")'
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
       uses: nick-fields/retry@v3
