@@ -1,6 +1,7 @@
 name: circtools padlock (pip)
 
 on:
+  push:
   schedule:
     - cron: '0 11 * * *'
 
@@ -14,77 +15,74 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15,ubuntu-22.04, ubuntu-24.04 ]
+        os: [ macos-13, macos-15, ubuntu-22.04, ubuntu-24.04 ]
         R:  ['4.4.0', '4.5.1' ]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
-    - name: Create files
+    - name: Checkout
       uses: actions/checkout@v4
       with:
-       ref: ${{ github.ref_name }}
-    - name: Set up Python
-      uses: actions/setup-python@v5
+        ref: ${{ github.ref_name }}
+
+    - name: Setup environment (with retry)
+      uses: nick-fields/retry@v3
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Updating setuptools
-      run: |
-         python3 -m pip install --upgrade pip
-         python3 -m pip install -U pip setuptools
-    - name: Installing circtools & Python dependencies
-      run: |
-         if [ "$RUNNER_OS" == "ubuntu-22.04"]; then
-            apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
-         fi
-         if [ "$RUNNER_OS" == "macOS"]; then
+        max_attempts: 3
+        timeout_minutes: 30
+        command: |
+          echo "--- Python ---"
+          python3 -m pip install --upgrade pip setuptools
+
+          echo "--- Circtools ---"
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y libblas-dev libatlas-base-dev liblapack-dev
+          fi
+
+          if [ "$RUNNER_OS" = "macOS" ]; then
             export SYSTEM_VERSION_COMPAT=1
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
-    - name: Set up R
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-    - name: Set up R dependencies
-      uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        cache-version: 1
-        extra-packages: |
-          local::circtools/contrib/circtest
-          local::circtools/contrib/primex
-    - name: Install BEDTools from source (v2.31.1)
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          brew update
-          brew install make zlib
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
+            sudo rm -rf /Library/Developer/CommandLineTools || true
+            sudo xcode-select --install || true
+          fi
+
+          python3 -m pip install ./
+
+          echo "--- R ---"
+          Rscript -e "install.packages('remotes')"
+          Rscript -e "remotes::install_local('circtools/contrib/circtest')"
+          Rscript -e "remotes::install_local('circtools/contrib/primex')"
+
+          echo "--- BEDTools ---"
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+            cd ..
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            brew update
+            brew install make zlib
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+            cd ..
+          fi
 
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
+
     - name: Check if circtools starts
       run: |
-         circtools --version
-         which circtools
+        circtools --version
+        which circtools
+
     - name: Downloading circtools detect test data
-      run: |
-        tar xvf ./tests/data/circtools_example.tar.bz2
+      run: tar xvf ./tests/data/circtools_example.tar.bz2
+
     - name: Run padlock
       run: |
         cd circtools_example
@@ -122,22 +120,3 @@ jobs:
         else
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         fi
-
-
-
-  rerun-once-if-failed:
-    if: failure() && github.run_attempt < 2
-    needs: [Main]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sleep for 1 hour
-        run: sleep 3600
-      - name: Re-run failed jobs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh run rerun ${{ github.run_id }} --failed --repo ${{ github.repository }}
-
-
-
-
-

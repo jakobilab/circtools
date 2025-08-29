@@ -67,6 +67,29 @@ jobs:
               --threads 16
 
 
+      - name: Checking generated output against master output
+        run: |
+          cd circtools_example
+          cd circtools_ci
+          ls -la
+          wc -l *
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              MASTER_DIR="../nanopore_master"
+              diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+              sha1sum -c "$MASTER_DIR/sha1sums.txt"
+            elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+              MASTER_DIR="../nanopore_master"
+              diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+              shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+            elif [ "$RUNNER_OS" = "macOS" ]; then
+              MASTER_DIR="../nanopore_master"
+              diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+              shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+            else
+              echo "Unsupported OS: $RUNNER_OS" >&2
+              exit 1
+            fi
+
       - name: Upload circRNA candidates artifact
         uses: actions/upload-artifact@v4
         with:
