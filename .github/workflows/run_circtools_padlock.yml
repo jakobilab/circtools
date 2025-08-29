@@ -42,7 +42,13 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          python3 -m pip install --upgrade pip setuptools wheel build --break-system-packages
+          # Upgrade pip first (old pip doesn't know --break-system-packages)
+          python3 -m pip install --upgrade pip
+          
+          # Now upgrade setuptools/wheel/build with the new pip
+          python3 -m pip install --upgrade setuptools wheel build --break-system-packages || \
+          python3 -m pip install --upgrade setuptools wheel build
+
 
     - name: Installing circtools & Python dependencies (with retry)
       uses: nick-fields/retry@v3
@@ -61,11 +67,14 @@ jobs:
             sudo xcode-select --install
           fi
 
-          # upgrade build tools in case they’re stale
-          python3 -m pip install --upgrade pip setuptools wheel build --break-system-packages
+          # Upgrade build tools safely
+          python3 -m pip install --upgrade setuptools wheel build --break-system-packages || \
+          python3 -m pip install --upgrade setuptools wheel build
+          
+          # Install circtools
+          python3 -m pip install ./ --break-system-packages || \
+          python3 -m pip install ./
 
-          # now install circtools
-          python3 -m pip install ./ --break-system-packages
 
 
 
@@ -135,9 +144,18 @@ jobs:
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
         cd circtools_example
-        if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
-        if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
-        ls -lh
+
+        if [ -f genome.fa.gz ]; then 
+          echo "Decompressing genome.fa.gz..."
+          gunzip -f genome.fa.gz
+        fi
+        if [ -f annotation.gtf.gz ]; then 
+          echo "Decompressing annotation.gtf.gz..."
+          gunzip -f annotation.gtf.gz
+        fi
+
+        echo "Checking for expected files:"
+        ls -lh genome.fa annotation.gtf || true
     - name: Run padlock
       run: |
         cd circtools_example
