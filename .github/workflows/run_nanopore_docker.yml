@@ -70,7 +70,7 @@ jobs:
       - name: Checking generated output against master output
         run: |
           cd circtools_example
-          cd circtools_ci
+          cd nanopore_output
           ls -la
           wc -l *
             if [ "$RUNNER_OS" = "Linux" ]; then
