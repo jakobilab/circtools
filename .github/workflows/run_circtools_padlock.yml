@@ -52,26 +52,32 @@ jobs:
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: ${{ matrix.R }}
-        
-    - name: Set up R dependencies (with retry)
+
+    - name: Install R dependencies (with retry)
       uses: nick-fields/retry@v3
       with:
         timeout_minutes: 20
         max_attempts: 3
         retry_on: error
         command: |
-          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib=.libPaths()[1])'
-          Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", lib=.libPaths()[1])'
-          Rscript -e 'BiocManager::install(c("GenomicRanges","BSgenome","IRanges","S4Vectors","Biostrings"), ask=FALSE, lib=.libPaths()[1])'
-          Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib=.libPaths()[1])'
-          Rscript -e 'remotes::install_local("circtools/contrib/primex", lib=.libPaths()[1])'
+          Rscript circtools/scripts/install_R_dependencies.R
+
 
 
 
    
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
+    - name: Check if circtools starts
+      run: |
+         circtools --version
+         which circtools
 
+
+    - name: Fix zcat on macOS
+      if: runner.os == 'macOS'
+      run: |
+        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
       uses: nick-fields/retry@v3
@@ -98,10 +104,6 @@ jobs:
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
-    - name: Fix zcat on macOS
-      if: runner.os == 'macOS'
-      run: |
-        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
     - name: Unpack test dataset
       run: |

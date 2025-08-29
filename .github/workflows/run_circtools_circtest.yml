@@ -8,14 +8,15 @@ concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+
 jobs:
   Main:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15,ubuntu-22.04, ubuntu-24.04 ]
-        R:  ['4.4.0', '4.5.1' ]
+        os: [ macos-13, macos-15, ubuntu-22.04, ubuntu-24.04 ]
+        R: ['4.4.0', '4.5.1']
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
@@ -29,11 +30,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Updating setuptools
       run: |
-         python3 -m pip install --upgrade pip
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
          if [ "$RUNNER_OS" == "Linux"]; then
+            apt-get update
+            apt-get install -y make g++ zlib1g-dev 
             apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
          fi
          if [ "$RUNNER_OS" == "macOS"]; then
@@ -44,27 +46,36 @@ jobs:
          else
             python3 -m pip install ./
          fi
+
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: ${{ matrix.R }}
-    - name: Set up R dependencies
-      uses: r-lib/actions/setup-r-dependencies@v2
+
+    - name: Install R dependencies (with retry)
+      uses: nick-fields/retry@v3
       with:
-        cache-version: 1
-        extra-packages: |
-          local::circtools/contrib/circtest
-          local::circtools/contrib/primex
-    - name: Fix zcat on macOS
-      if: runner.os == 'macOS'
-      run: |
-        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+        timeout_minutes: 20
+        max_attempts: 3
+        retry_on: error
+        command: |
+          Rscript circtools/scripts/install_R_dependencies.R)'
+
+
+
+   
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
     - name: Check if circtools starts
       run: |
          circtools --version
          which circtools
+
+
+    - name: Fix zcat on macOS
+      if: runner.os == 'macOS'
+      run: |
+        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
     - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
