@@ -73,6 +73,8 @@ jobs:
         command: |
           sudo apt-get update
           sudo apt-get install -y r-base
+          mkdir -p ~/R/library
+          echo 'R_LIBS_USER="~/R/library"' > ~/.Renviron
           R --version
 
     - name: Set up R dependencies (with retry)
@@ -82,9 +84,10 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
-          Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
-          Rscript -e 'remotes::install_local("circtools/contrib/primex")'
+          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib="~/R/library")'
+          Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib="~/R/library")'
+          Rscript -e 'remotes::install_local("circtools/contrib/primex", lib="~/R/library")'
+
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
       uses: nick-fields/retry@v3
