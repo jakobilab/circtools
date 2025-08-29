@@ -72,17 +72,19 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
-          Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
-          Rscript -e 'remotes::install_local("circtools/contrib/primex")'
+          mkdir -p ~/R/library
+          echo 'R_LIBS_USER="~/R/library"' > ~/.Renviron
+          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib="~/R/library")'
+          Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib="~/R/library")'
+          Rscript -e 'remotes::install_local("circtools/contrib/primex", lib="~/R/library")'
+
 
 
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
-    - name: Check if circtools starts
-      run: |
-         circtools --version
-         which circtools
+      env:
+        R_LIBS_USER: ~/R/library
+
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
       uses: nick-fields/retry@v3
@@ -130,6 +132,7 @@ jobs:
 
         echo "Checking for expected files:"
         ls -lh genome.fa annotation.gtf || true
+        
     - name: Run padlock
       run: |
         cd circtools_example
@@ -143,6 +146,9 @@ jobs:
           -r 1 \
           -b \
           -o ./padlock_output
+      env:
+        R_LIBS_USER: ~/R/library
+
 
     - name: Checking generated output against master output
       run: |
