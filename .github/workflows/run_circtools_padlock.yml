@@ -24,9 +24,17 @@ jobs:
       uses: actions/checkout@v4
       with:
        ref: ${{ github.ref_name }}
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      
+    - name: Set up Python manually (with retry)
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        retry_on: error
+        command: |
+          sudo apt-get update
+          sudo apt-get install -y python${{ matrix.python-version }} python3-pip
+          python3 --version
+
     - name: Updating setuptools (with retry)
       uses: nick-fields/retry@v3
       with:
@@ -56,14 +64,16 @@ jobs:
             python3 -m pip install ./
           fi
 
-    - name: Set up R (with retry)
+    - name: Set up R manually (with retry)
       uses: nick-fields/retry@v3
       with:
-        timeout_minutes: 10
+        timeout_minutes: 15
         max_attempts: 3
         retry_on: error
         command: |
-          gh workflow run r-lib/actions/setup-r@v2 --inputs "r-version=${{ matrix.R }}"
+          sudo apt-get update
+          sudo apt-get install -y r-base
+          R --version
 
     - name: Set up R dependencies (with retry)
       uses: nick-fields/retry@v3
@@ -99,6 +109,10 @@ jobs:
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
+    - name: Fix zcat on macOS
+      if: runner.os == 'macOS'
+      run: |
+        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
 
     - name: Checking library loading
@@ -107,9 +121,13 @@ jobs:
       run: |
          circtools --version
          which circtools
-    - name: Downloading circtools detect test data
+    - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
+        cd circtools_example
+        if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+        if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+        ls -lh
     - name: Run padlock
       run: |
         cd circtools_example

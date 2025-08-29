@@ -26,6 +26,11 @@ jobs:
           docker pull "${GHCR_IMAGE}"
           docker image inspect "${GHCR_IMAGE}" --format '{{json .RepoTags}}'
 
+      - name: Fix zcat on macOS
+        if: runner.os == 'macOS'
+        run: |
+          sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+
       - name: Unpack test dataset
         run: |
           tar xvf ./tests/data/circtools_example.tar.bz2

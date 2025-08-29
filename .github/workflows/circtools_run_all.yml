@@ -84,9 +84,20 @@ jobs:
       run: |
          circtools --version
          which circtools
-    - name: Downloading circtools detect test data
+
+    - name: Fix zcat on macOS
+      if: runner.os == 'macOS'
+      run: |
+        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+        
+    - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
+        cd circtools_example
+        if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+        if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+        ls -lh
+
     - name: Running circtools detect with minimal data set
       run: |
         cd circtools_example
