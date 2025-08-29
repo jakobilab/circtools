@@ -20,24 +20,13 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
-    - name: Create files (with retry)
-      uses: nick-fields/retry@v3
+    - name: Create files
+      uses: actions/checkout@v4
       with:
-        timeout_minutes: 5
-        max_attempts: 3
-        retry_on: error
-        command: |
-          gh workflow run actions/checkout@v4 --ref ${{ github.ref_name }}
-
-    - name: Set up Python (with retry)
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 5
-        max_attempts: 3
-        retry_on: error
-        command: |
-          gh workflow run actions/setup-python@v5 --inputs "python-version=${{ matrix.python-version }}"
-
+       ref: ${{ github.ref_name }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      
     - name: Updating setuptools (with retry)
       uses: nick-fields/retry@v3
       with:
