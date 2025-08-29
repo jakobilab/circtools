@@ -53,16 +53,21 @@ jobs:
         retry_on: error
         command: |
           if [ "$RUNNER_OS" == "ubuntu-22.04" ]; then
-            apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
+            sudo apt-get update
+            sudo apt-get install -y libblas-dev libatlas-base-dev liblapack-dev
           fi
           if [ "$RUNNER_OS" == "macOS" ]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
-            python3 -m pip install ./
-          else
-            python3 -m pip install ./
           fi
+
+          # 🔑 ensure build tools are ready before local install
+          python3 -m pip install --upgrade pip setuptools wheel build
+
+          # now install circtools
+          python3 -m pip install ./
+
 
     - name: Set up R manually (with retry)
       uses: nick-fields/retry@v3
