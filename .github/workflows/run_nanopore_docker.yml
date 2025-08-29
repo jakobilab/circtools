@@ -39,12 +39,12 @@ jobs:
           if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
           if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
           ls -lh
-          
+
       - name: Subsample nanopore data
         run: |
           cd circtools_example
           # Copy human nanopore dataset from repo
-          cp ../tests/data/human_nanopore/human_nanopore.fastq.gz .
+          cp ../tests/data/human_nanopore.fastq.gz .
           # Extract first 1M reads (4M lines)
           zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
           ls -lh human_nanopore_1M.fastq.gz
