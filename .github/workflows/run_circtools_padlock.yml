@@ -35,15 +35,14 @@ jobs:
           sudo apt-get install -y python${{ matrix.python-version }} python3-pip
           python3 --version
 
-    - name: Updating setuptools (with retry)
+        - name: Updating setuptools (with retry)
       uses: nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
         retry_on: error
         command: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -U pip setuptools
+          python3 -m pip install --upgrade pip setuptools wheel build --break-system-packages
 
     - name: Installing circtools & Python dependencies (with retry)
       uses: nick-fields/retry@v3
@@ -52,21 +51,22 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          if [ "$RUNNER_OS" == "ubuntu-22.04" ]; then
+          if [ "$RUNNER_OS" = "Linux" ]; then
             sudo apt-get update
             sudo apt-get install -y libblas-dev libatlas-base-dev liblapack-dev
           fi
-          if [ "$RUNNER_OS" == "macOS" ]; then
+          if [ "$RUNNER_OS" = "macOS" ]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
           fi
 
-          # 🔑 ensure build tools are ready before local install
-          python3 -m pip install --upgrade pip setuptools wheel build
+          # upgrade build tools in case they’re stale
+          python3 -m pip install --upgrade pip setuptools wheel build --break-system-packages
 
           # now install circtools
-          python3 -m pip install ./
+          python3 -m pip install ./ --break-system-packages
+
 
 
     - name: Set up R manually (with retry)
