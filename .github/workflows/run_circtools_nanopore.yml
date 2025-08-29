@@ -52,11 +52,15 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          sudo apt-get update
-          sudo apt-get install -y r-base
-          mkdir -p ~/R/library
-          echo 'R_LIBS_USER="~/R/library"' > ~/.Renviron
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y r-base
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            brew update
+            brew install r
+          fi
           R --version
+
 
     - name: Set up R dependencies (with retry)
       uses: nick-fields/retry@v3
@@ -65,9 +69,10 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib="~/R/library")'
-          Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib="~/R/library")'
-          Rscript -e 'remotes::install_local("circtools/contrib/primex", lib="~/R/library")'
+          sudo Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
+          sudo Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
+          sudo Rscript -e 'remotes::install_local("circtools/contrib/primex")'
+
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
