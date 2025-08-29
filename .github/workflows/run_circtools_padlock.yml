@@ -48,42 +48,24 @@ jobs:
             python3 -m pip install ./
          fi
 
-    - name: Set up R manually (with retry)
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    - name: Set up R dependencies (system-wide, with retry)
       uses: nick-fields/retry@v3
       with:
         timeout_minutes: 15
         max_attempts: 3
         retry_on: error
         command: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y r-base
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            brew update
-            brew install r
-          fi
-          R --version
+          sudo Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib="/usr/local/lib/R/site-library")'
+          sudo Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib="/usr/local/lib/R/site-library")'
+          sudo Rscript -e 'remotes::install_local("circtools/contrib/primex", lib="/usr/local/lib/R/site-library")'
 
-
-    - name: Set up R dependencies (with retry)
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 10
-        max_attempts: 3
-        retry_on: error
-        command: |
-          mkdir -p ~/R/library
-          echo 'R_LIBS_USER="~/R/library"' > ~/.Renviron
-          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org", lib="~/R/library")'
-          Rscript -e 'remotes::install_local("circtools/contrib/circtest", lib="~/R/library")'
-          Rscript -e 'remotes::install_local("circtools/contrib/primex", lib="~/R/library")'
-
-
-
+   
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
-      env:
-        R_LIBS_USER: ~/R/library
 
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
@@ -132,7 +114,7 @@ jobs:
 
         echo "Checking for expected files:"
         ls -lh genome.fa annotation.gtf || true
-        
+
     - name: Run padlock
       run: |
         cd circtools_example
