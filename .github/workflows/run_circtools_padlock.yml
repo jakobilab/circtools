@@ -72,10 +72,17 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          sudo Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
-          sudo Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
-          sudo Rscript -e 'remotes::install_local("circtools/contrib/primex")'
+          Rscript -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
+          Rscript -e 'remotes::install_local("circtools/contrib/circtest")'
+          Rscript -e 'remotes::install_local("circtools/contrib/primex")'
 
+
+    - name: Checking library loading
+      run: Rscript -e 'library(primex)'
+    - name: Check if circtools starts
+      run: |
+         circtools --version
+         which circtools
 
     - name: Install BEDTools from source (v2.31.1) (with retry)
       uses: nick-fields/retry@v3
@@ -107,13 +114,6 @@ jobs:
       run: |
         sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
-
-    - name: Checking library loading
-      run: Rscript -e 'library(primex)'
-    - name: Check if circtools starts
-      run: |
-         circtools --version
-         which circtools
     - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
