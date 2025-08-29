@@ -1,6 +1,7 @@
 name: circtools padlock (pip)
 
 on:
+  push:
   schedule:
     - cron: '0 11 * * *'
 
