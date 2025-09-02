@@ -33,7 +33,7 @@ jobs:
       run: |
         python3 -m pip install -U pip setuptools
 
-    - name: Installing circtools & Python dependencies
+        - name: Installing circtools & Python dependencies
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           sudo apt-get update
@@ -46,7 +46,12 @@ jobs:
           python3 -m pip install ./
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
-          brew install make gcc zlib openssl@3
+          
+          # Ensure Xcode Command Line Tools are available (fix for missing 'as')
+          sudo xcode-select --install || true
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
+          
+          brew install make gcc zlib openssl@3 bedtools
           
           # Symlink brew gcc/g++ to standard names
           GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
@@ -59,13 +64,14 @@ jobs:
           export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
           export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
           
-          # Help pybedtools find the bedtools binary (after build)
+          # Help pybedtools find the bedtools binary
           export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
           
           python3 -m pip install ./
         else
           python3 -m pip install ./
         fi
+
 
 
 
