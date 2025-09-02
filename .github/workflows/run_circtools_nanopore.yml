@@ -47,10 +47,6 @@ jobs:
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
           
-          # Ensure Xcode Command Line Tools are available (fix for missing 'as')
-          sudo xcode-select --install || true
-          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
-          
           brew install make gcc zlib openssl@3 bedtools
           
           # Symlink brew gcc/g++ to standard names
@@ -67,14 +63,12 @@ jobs:
           # Help pybedtools find the bedtools binary
           export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
           
+          # Force pybedtools to install from wheels (avoid assembler issue)
+          python3 -m pip install --only-binary=:all: pybedtools
           python3 -m pip install ./
         else
           python3 -m pip install ./
         fi
-
-
-
-
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
@@ -158,8 +152,6 @@ jobs:
             LIBS="-lssl -lcrypto -lz -lpthread -lm"
           sudo cp pblat /usr/local/bin/
           cd ..
-
-
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
