@@ -33,10 +33,15 @@ jobs:
          python3 -m pip install -U pip setuptools
     - name: Installing circtools & Python dependencies
       run: |
-         if [ "$RUNNER_OS" == "Linux"]; then
-            apt-get update
-            apt-get install -y make g++ zlib1g-dev 
-            apt-get install libblas-dev libatlas-base-dev liblapack-dev -y
+         if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y \
+                make g++ zlib1g-dev \
+                libblas-dev libatlas-base-dev liblapack-dev \
+                libcurl4-openssl-dev libssl-dev libxml2-dev \
+                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+            python3 -m pip install ./
          fi
          if [ "$RUNNER_OS" == "macOS"]; then
             export SYSTEM_VERSION_COMPAT=1
