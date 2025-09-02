@@ -46,14 +46,17 @@ jobs:
           python3 -m pip install ./
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
-          # make sure zlib + openssl are installed
-          brew install zlib openssl@3
-          # help pybedtools find the bedtools binary after we build it
+          # Ensure build tools before pip tries to build pysam
+          brew install make gcc zlib openssl@3
+          export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
+          export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
+          # Help pybedtools find bedtools later
           export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
           python3 -m pip install ./
         else
           python3 -m pip install ./
         fi
+
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
