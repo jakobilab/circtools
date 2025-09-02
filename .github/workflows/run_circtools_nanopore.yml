@@ -67,7 +67,7 @@ jobs:
           export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
 
           # Install circtools
-          python3 -m pip install ./
+          python3 -m pip install --no-deps ./
         else
           python3 -m pip install ./
         fi
