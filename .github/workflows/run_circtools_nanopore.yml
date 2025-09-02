@@ -219,3 +219,12 @@ jobs:
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+
+    - name: Upload output artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: circtools-nanopore-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
+        path: |
+          circtools_example/nanopore_output/human_nanopore_1M.circRNA_candidates.annotated.txt
+          circtools_example/nanopore_output/*.sha1sums.txt
+
