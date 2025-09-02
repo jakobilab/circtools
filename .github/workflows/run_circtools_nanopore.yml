@@ -8,7 +8,6 @@ concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
   Main:
     runs-on: ${{ matrix.os }}
@@ -23,41 +22,41 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: ${{ github.ref_name }}
+        ref: ${{ github.ref_name }}
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Updating setuptools
       run: |
-         python3 -m pip install -U pip setuptools
+        python3 -m pip install -U pip setuptools
+
     - name: Installing circtools & Python dependencies
       run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y \
-                make g++ zlib1g-dev \
-                libblas-dev libatlas-base-dev liblapack-dev \
-                libcurl4-openssl-dev libssl-dev libxml2-dev \
-                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-            python3 -m pip install ./
-         fi
-         if [ "$RUNNER_OS" == "macOS"]; then
-            export SYSTEM_VERSION_COMPAT=1
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y \
+            make g++ zlib1g-dev \
+            libblas-dev libatlas-base-dev liblapack-dev \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+          python3 -m pip install ./
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          export SYSTEM_VERSION_COMPAT=1
+          # Xcode CommandLineTools already present on runners
+          python3 -m pip install ./
+        else
+          python3 -m pip install ./
+        fi
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: ${{ matrix.R }}
 
-    
     - name: Install R dependencies (with retry, prefer binaries)
       uses: nick-fields/retry@v3
       with:
@@ -65,32 +64,28 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          # Configure CRAN binaries on Linux runners
           if [ "$RUNNER_OS" = "Linux" ]; then
             UBUNTU_VERSION=$(lsb_release -cs)  # e.g. jammy, noble
             echo "options(repos = c(RSPM = sprintf('https://packagemanager.posit.co/cran/__linux__/%s/latest', '$UBUNTU_VERSION')))" >> ~/.Rprofile
           fi
 
-          # Run your dependency installer
           Rscript circtools/scripts/install_R_dependencies.R
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
-
-
-   
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
+
     - name: Check if circtools starts
       run: |
-         circtools --version
-         which circtools
-
+        circtools --version
+        which circtools
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
       run: |
         sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools)
       run: |
         set -euxo pipefail
@@ -116,7 +111,7 @@ jobs:
 
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
-          brew install make gcc wget zlib samtools openssl
+          brew install make gcc wget zlib samtools openssl@3
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -126,12 +121,13 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (needs OpenSSL headers)
+          # pblat (needs OpenSSL headers/libs)
           git clone --depth=1 https://github.com/icebert/pblat.git
           cd pblat
           make \
-            CFLAGS="-I$(brew --prefix openssl)/include" \
-            LDFLAGS="-L$(brew --prefix openssl)/lib"
+            CFLAGS="-I$(brew --prefix openssl@3)/include" \
+            LDFLAGS="-L$(brew --prefix openssl@3)/lib" \
+            LIBS="-lssl -lcrypto -lz -lpthread -lm"
           sudo cp pblat /usr/local/bin/
           cd ..
 
@@ -151,12 +147,9 @@ jobs:
     - name: Subsample nanopore data
       run: |
         cd circtools_example
-        # Copy human nanopore dataset from repo
         cp ../tests/data/human_nanopore.fastq.gz .
-        # Extract first 1M reads (4M lines)
         zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
         ls -lh human_nanopore_1M.fastq.gz
-
 
     - name: Download reference data (nanopore)
       run: |
@@ -181,24 +174,23 @@ jobs:
 
     - name: Checking generated output against master output
       run: |
-         cd circtools_example
-         cd nanopore_output
-         ls -la
-         wc -l *
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            MASTER_DIR="../nanopore_master"
-            diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-            sha1sum -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-            MASTER_DIR="../nanopore_master"
-            diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            MASTER_DIR="../nanopore_master"
-            diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-          else
-            echo "Unsupported OS: $RUNNER_OS" >&2
-            exit 1
-          fi
-
+        cd circtools_example
+        cd nanopore_output
+        ls -la
+        wc -l *
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          MASTER_DIR="../nanopore_master"
+          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          MASTER_DIR="../nanopore_master"
+          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          MASTER_DIR="../nanopore_master"
+          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        else
+          echo "Unsupported OS: $RUNNER_OS" >&2
+          exit 1
+        fi
