@@ -52,7 +52,7 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
 
           # Install build deps
-          brew install make gcc zlib openssl@3 bedtools
+          brew install make gcc zlib openssl@3
 
           # Symlink brew gcc/g++ to standard names
           GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
@@ -66,17 +66,7 @@ jobs:
           export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
           export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
 
-          # Help pybedtools find bedtools
-          export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
-
-          # Build pybedtools from source
-          git clone https://github.com/daler/pybedtools.git
-          cd pybedtools
-          python3 -m pip install cython
-          python3 -m pip install --no-build-isolation .
-          cd ..
-
-          # Now install circtools
+          # Install circtools
           python3 -m pip install ./
         else
           python3 -m pip install ./
@@ -117,7 +107,7 @@ jobs:
       run: |
         sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
-    - name: Install bioinformatics dependencies (bedtools, pblat, samtools)
+    - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools)
       run: |
         set -euxo pipefail
 
@@ -140,6 +130,14 @@ jobs:
           sudo cp pblat /usr/local/bin/
           cd ..
 
+          # pybedtools (manual build)
+          git clone https://github.com/daler/pybedtools.git
+          cd pybedtools
+          python3 -m pip install cython
+          python3 setup.py cythonize
+          python3 setup.py install
+          cd ..
+
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
@@ -147,6 +145,7 @@ jobs:
           # Ensure consistent flags
           export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
           export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
+          export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -165,10 +164,20 @@ jobs:
             LIBS="-lssl -lcrypto -lz -lpthread -lm"
           sudo cp pblat /usr/local/bin/
           cd ..
+
+          # pybedtools (manual build)
+          git clone https://github.com/daler/pybedtools.git
+          cd pybedtools
+          python3 -m pip install cython
+          python3 setup.py cythonize
+          python3 setup.py install
+          cd ..
+
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+
 
     - name: Unpack test dataset
       run: |
