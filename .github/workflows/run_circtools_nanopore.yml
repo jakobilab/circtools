@@ -116,7 +116,7 @@ jobs:
 
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
-          brew install make gcc wget zlib samtools
+          brew install make gcc wget zlib samtools openssl
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -126,10 +126,12 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (needs to be built manually, no brew formula anymore)
+          # pblat (needs OpenSSL headers)
           git clone --depth=1 https://github.com/icebert/pblat.git
           cd pblat
-          make
+          make \
+            CFLAGS="-I$(brew --prefix openssl)/include" \
+            LDFLAGS="-L$(brew --prefix openssl)/lib"
           sudo cp pblat /usr/local/bin/
           cd ..
 
