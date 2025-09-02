@@ -46,6 +46,12 @@ jobs:
           python3 -m pip install ./
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
+
+          # Ensure Xcode tools are available
+          sudo xcode-select --install || true
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
+
+          # Install build deps
           brew install make gcc zlib openssl@3 bedtools
 
           # Symlink brew gcc/g++ to standard names
@@ -55,21 +61,27 @@ jobs:
           export CC=/usr/local/bin/gcc
           export CXX=/usr/local/bin/g++
 
-          # Ensure headers/libs are visible
+          # Compiler flags
           export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
           export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
           export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
 
-          # Help pybedtools find the bedtools binary
+          # Help pybedtools find bedtools
           export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
 
-          # Pre-install pybedtools binary wheel to avoid source build
-          python3 -m pip install "pybedtools==0.12.0"
-          python3 -m pip install ./
+          # Build pybedtools from source
+          git clone https://github.com/daler/pybedtools.git
+          cd pybedtools
+          python3 -m pip install cython
+          python3 -m pip install --no-build-isolation .
+          cd ..
 
+          # Now install circtools
+          python3 -m pip install ./
         else
           python3 -m pip install ./
         fi
+
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
