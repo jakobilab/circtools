@@ -46,16 +46,28 @@ jobs:
           python3 -m pip install ./
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
-          # Ensure build tools before pip tries to build pysam
           brew install make gcc zlib openssl@3
+          
+          # Symlink brew gcc/g++ to standard names
+          GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
+          sudo ln -sf "$(brew --prefix)/bin/gcc-${GCC_VERSION}" /usr/local/bin/gcc
+          sudo ln -sf "$(brew --prefix)/bin/g++-${GCC_VERSION}" /usr/local/bin/g++
+          export CC=/usr/local/bin/gcc
+          export CXX=/usr/local/bin/g++
+          
+          # Ensure headers/libs are visible
           export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
           export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
-          # Help pybedtools find bedtools later
+          
+          # Help pybedtools find the bedtools binary (after build)
           export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
+          
           python3 -m pip install ./
         else
           python3 -m pip install ./
         fi
+
+
 
 
     - name: Set up R
@@ -119,6 +131,10 @@ jobs:
           brew update
           brew install make gcc wget zlib samtools openssl@3
 
+          # Ensure consistent flags
+          export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
+          export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
+
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
@@ -136,6 +152,7 @@ jobs:
             LIBS="-lssl -lcrypto -lz -lpthread -lm"
           sudo cp pblat /usr/local/bin/
           cd ..
+
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
