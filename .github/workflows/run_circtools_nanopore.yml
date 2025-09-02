@@ -35,42 +35,24 @@ jobs:
 
     - name: Installing circtools & Python dependencies
       run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt-get update
-          sudo apt-get install -y \
-            make g++ zlib1g-dev \
-            libblas-dev libatlas-base-dev liblapack-dev \
-            libcurl4-openssl-dev libssl-dev libxml2-dev \
-            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-          python3 -m pip install ./
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          export SYSTEM_VERSION_COMPAT=1
-
-          # Ensure Xcode tools are available
-          sudo xcode-select --install || true
-          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
-
-          # Install build deps
-          brew install make gcc zlib openssl@3
-
-          # Symlink brew gcc/g++ to standard names
-          GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
-          sudo ln -sf "$(brew --prefix)/bin/gcc-${GCC_VERSION}" /usr/local/bin/gcc
-          sudo ln -sf "$(brew --prefix)/bin/g++-${GCC_VERSION}" /usr/local/bin/g++
-          export CC=/usr/local/bin/gcc
-          export CXX=/usr/local/bin/g++
-
-          # Compiler flags
-          export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
-          export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
-          export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
-
-          # Install circtools
-          python3 -m pip install --no-deps ./
-        else
-          python3 -m pip install ./
-        fi
+         if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y \
+                make g++ zlib1g-dev \
+                libblas-dev libatlas-base-dev liblapack-dev \
+                libcurl4-openssl-dev libssl-dev libxml2-dev \
+                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+            python3 -m pip install ./
+         fi
+         if [ "$RUNNER_OS" == "macOS"]; then
+            export SYSTEM_VERSION_COMPAT=1
+            sudo rm -rf /Library/Developer/CommandLineTools
+            sudo xcode-select --install
+            python3 -m pip install ./
+         else
+            python3 -m pip install ./
+         fi
 
 
     - name: Set up R
