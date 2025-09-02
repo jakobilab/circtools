@@ -1,8 +1,10 @@
 name: circtools nanopore (docker)
 
 on:
-  push:
-
+  workflow_run:
+    workflows: ["Multi-arch docker container"]
+    types: [completed]
+    
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

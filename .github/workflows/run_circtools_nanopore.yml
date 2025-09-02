@@ -46,7 +46,10 @@ jobs:
           python3 -m pip install ./
         elif [ "$RUNNER_OS" = "macOS" ]; then
           export SYSTEM_VERSION_COMPAT=1
-          # Xcode CommandLineTools already present on runners
+          # make sure zlib + openssl are installed
+          brew install zlib openssl@3
+          # help pybedtools find the bedtools binary after we build it
+          export PYBEDTOOLS_BEDTOOLS=/usr/local/bin/bedtools
           python3 -m pip install ./
         else
           python3 -m pip install ./
@@ -121,7 +124,7 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (needs OpenSSL headers/libs)
+          # pblat (with OpenSSL headers/libs)
           git clone --depth=1 https://github.com/icebert/pblat.git
           cd pblat
           make \
