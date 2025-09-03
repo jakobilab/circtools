@@ -107,14 +107,26 @@ jobs:
           sudo cp pblat /usr/local/bin/
           cd ..
 
+          # pybedtools (manual build)
+          git clone https://github.com/daler/pybedtools.git
+          cd pybedtools
+          python3 -m pip install cython
+          python3 setup.py cythonize
+          python3 setup.py install
+          cd ..
+
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
 
           # Ensure consistent flags
-          export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix openssl@3)/lib"
-          export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix openssl@3)/include"
-          export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig"
+          export OPENSSL_PREFIX="$(brew --prefix openssl@3)"
+          export ZLIB_PREFIX="$(brew --prefix zlib)"
+
+          export CFLAGS="-I$OPENSSL_PREFIX/include -I$ZLIB_PREFIX/include"
+          export CPPFLAGS="$CFLAGS"
+          export LDFLAGS="-L$OPENSSL_PREFIX/lib -L$ZLIB_PREFIX/lib"
+          export PKG_CONFIG_PATH="$OPENSSL_PREFIX/lib/pkgconfig:$ZLIB_PREFIX/lib/pkgconfig"
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -124,31 +136,21 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-        # pblat (with OpenSSL headers/libs)
-        git clone --depth=1 https://github.com/icebert/pblat.git
-        cd pblat
-
-        OPENSSL_PREFIX="$(brew --prefix openssl@3)"
-        ZLIB_PREFIX="$(brew --prefix zlib)"
-
-        export CFLAGS="-I$OPENSSL_PREFIX/include -I$ZLIB_PREFIX/include"
-        export CPPFLAGS="$CFLAGS"
-        export LDFLAGS="-L$OPENSSL_PREFIX/lib -L$ZLIB_PREFIX/lib"
-        export PKG_CONFIG_PATH="$OPENSSL_PREFIX/lib/pkgconfig:$ZLIB_PREFIX/lib/pkgconfig"
-
-        make \
-          CFLAGS="$CFLAGS" \
-          LDFLAGS="$LDFLAGS" \
-          LIBS="-lssl -lcrypto -lz -lpthread -lm"
-
-        sudo cp pblat /usr/local/bin/
-        cd ..
-
+          # pblat (with OpenSSL headers/libs)
+          git clone --depth=1 https://github.com/icebert/pblat.git
+          cd pblat
+          make \
+            CFLAGS="$CFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            LIBS="-L$OPENSSL_PREFIX/lib -lssl -lcrypto -lz -lpthread -lm"
+          sudo cp pblat /usr/local/bin/
+          cd ..
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+
 
 
     - name: Unpack test dataset
