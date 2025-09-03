@@ -110,6 +110,9 @@ jobs:
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
+          brew install gnu-sed
+          sudo ln -sf $(which gsed) /usr/local/bin/sed
+
 
           # Resolve prefixes
           OPENSSL_PREFIX="$(brew --prefix openssl@3)"
