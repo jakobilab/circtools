@@ -147,14 +147,6 @@ jobs:
           sudo cp pblat /usr/local/bin/
           cd ..
 
-          # pybedtools (manual build)
-          git clone https://github.com/daler/pybedtools.git
-          cd pybedtools
-          python3 -m pip install cython
-          python3 setup.py cythonize
-          python3 setup.py install
-          cd ..
-
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
