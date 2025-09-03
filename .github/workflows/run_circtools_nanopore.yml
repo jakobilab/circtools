@@ -138,14 +138,11 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (with OpenSSL headers/libs)
-          git clone --depth=1 https://github.com/icebert/pblat.git
-          cd pblat
-          make \
-            CFLAGS="$CFLAGS" \
-            LDFLAGS="$LDFLAGS" \
-            LIBS="-L${OPENSSL_PREFIX}/lib -lssl -lcrypto -lz -lpthread -lm"
-          sudo cp pblat /usr/local/bin/
+          # pblat (parallel BLAT, patched repo)
+          git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
+          cd pblat-src
+          make
+          sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
           cd ..
 
 
