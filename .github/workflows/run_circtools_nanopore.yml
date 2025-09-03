@@ -91,9 +91,6 @@ jobs:
         if [ "$RUNNER_OS" = "Linux" ]; then
           sudo apt-get update
           sudo apt-get install -y make g++ zlib1g-dev wget samtools libssl-dev
-          brew install gnu-sed grep
-          sudo ln -sf $(which gsed) /usr/local/bin/sed
-          sudo ln -sf $(which ggrep) /usr/local/bin/grep
 
 
           # bedtools 2.31.1
@@ -114,8 +111,10 @@ jobs:
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
-          brew install gnu-sed
+          brew install gnu-sed grep
           sudo ln -sf $(which gsed) /usr/local/bin/sed
+          sudo ln -sf $(which ggrep) /usr/local/bin/grep
+          
 
 
           # Resolve prefixes
