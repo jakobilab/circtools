@@ -84,11 +84,6 @@ jobs:
         circtools --version
         which circtools
 
-    - name: Fix zcat on macOS
-      if: runner.os == 'macOS'
-      run: |
-        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
-
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools)
       run: |
         set -euxo pipefail
@@ -112,14 +107,6 @@ jobs:
           sudo cp pblat /usr/local/bin/
           cd ..
 
-          # pybedtools (manual build)
-          git clone https://github.com/daler/pybedtools.git
-          cd pybedtools
-          python3 -m pip install cython
-          python3 setup.py cythonize
-          python3 setup.py install
-          cd ..
-
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
@@ -137,15 +124,26 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (with OpenSSL headers/libs)
-          git clone --depth=1 https://github.com/icebert/pblat.git
-          cd pblat
-          make \
-            CFLAGS="-I$(brew --prefix openssl@3)/include" \
-            LDFLAGS="-L$(brew --prefix openssl@3)/lib" \
-            LIBS="-lssl -lcrypto -lz -lpthread -lm"
-          sudo cp pblat /usr/local/bin/
-          cd ..
+        # pblat (with OpenSSL headers/libs)
+        git clone --depth=1 https://github.com/icebert/pblat.git
+        cd pblat
+
+        OPENSSL_PREFIX="$(brew --prefix openssl@3)"
+        ZLIB_PREFIX="$(brew --prefix zlib)"
+
+        export CFLAGS="-I$OPENSSL_PREFIX/include -I$ZLIB_PREFIX/include"
+        export CPPFLAGS="$CFLAGS"
+        export LDFLAGS="-L$OPENSSL_PREFIX/lib -L$ZLIB_PREFIX/lib"
+        export PKG_CONFIG_PATH="$OPENSSL_PREFIX/lib/pkgconfig:$ZLIB_PREFIX/lib/pkgconfig"
+
+        make \
+          CFLAGS="$CFLAGS" \
+          LDFLAGS="$LDFLAGS" \
+          LIBS="-lssl -lcrypto -lz -lpthread -lm"
+
+        sudo cp pblat /usr/local/bin/
+        cd ..
+
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
@@ -165,8 +163,13 @@ jobs:
       run: |
         cd circtools_example
         cp ../tests/data/human_nanopore.fastq.gz .
-        zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          gzcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
+        else
+          zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
+        fi
         ls -lh human_nanopore_1M.fastq.gz
+
 
     - name: Download reference data (nanopore)
       run: |
