@@ -145,9 +145,14 @@ jobs:
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
       run: |
-        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+        # Make zcat an alias to gunzip -c
+        echo '#!/bin/bash' | sudo tee /usr/local/bin/zcat
+        echo 'exec gunzip -c "$@"' | sudo tee -a /usr/local/bin/zcat
+        sudo chmod +x /usr/local/bin/zcat
+        export PATH="/usr/local/bin:$PATH"
         which zcat
         zcat --version || true
+
 
 
 
