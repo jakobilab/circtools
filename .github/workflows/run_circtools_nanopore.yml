@@ -90,7 +90,7 @@ jobs:
 
         if [ "$RUNNER_OS" = "Linux" ]; then
           sudo apt-get update
-          sudo apt-get install -y make g++ zlib1g-dev wget samtools
+          sudo apt-get install -y make g++ zlib1g-dev wget samtools libssl-dev
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -100,19 +100,11 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (parallel BLAT)
-          git clone --depth=1 https://github.com/icebert/pblat.git
-          cd pblat
+          # pblat (parallel BLAT from fork)
+          git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
+          cd pblat-src
           make
-          sudo cp pblat /usr/local/bin/
-          cd ..
-
-          # pybedtools (manual build)
-          git clone https://github.com/daler/pybedtools.git
-          cd pybedtools
-          python3 -m pip install cython
-          python3 setup.py cythonize
-          python3 setup.py install
+          sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
           cd ..
 
         elif [ "$RUNNER_OS" = "macOS" ]; then
@@ -128,7 +120,7 @@ jobs:
           export CFLAGS="$CPPFLAGS"
           export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
           export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
-          export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:$LIBRARY_PATH"
+          export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:${LIBRARY_PATH:-}"
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -138,13 +130,12 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (parallel BLAT, patched repo)
+          # pblat (parallel BLAT)
           git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
           cd pblat-src
           make
           sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
           cd ..
-
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
