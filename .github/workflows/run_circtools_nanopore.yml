@@ -119,14 +119,16 @@ jobs:
           brew update
           brew install make gcc wget zlib samtools openssl@3
 
-          # Ensure consistent flags
-          export OPENSSL_PREFIX="$(brew --prefix openssl@3)"
-          export ZLIB_PREFIX="$(brew --prefix zlib)"
+          # Resolve prefixes
+          OPENSSL_PREFIX="$(brew --prefix openssl@3)"
+          ZLIB_PREFIX="$(brew --prefix zlib)"
 
-          export CFLAGS="-I$OPENSSL_PREFIX/include -I$ZLIB_PREFIX/include"
-          export CPPFLAGS="$CFLAGS"
-          export LDFLAGS="-L$OPENSSL_PREFIX/lib -L$ZLIB_PREFIX/lib"
-          export PKG_CONFIG_PATH="$OPENSSL_PREFIX/lib/pkgconfig:$ZLIB_PREFIX/lib/pkgconfig"
+          # Export proper flags
+          export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include"
+          export CFLAGS="$CPPFLAGS"
+          export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
+          export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
+          export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:$LIBRARY_PATH"
 
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -142,9 +144,10 @@ jobs:
           make \
             CFLAGS="$CFLAGS" \
             LDFLAGS="$LDFLAGS" \
-            LIBS="-L$OPENSSL_PREFIX/lib -lssl -lcrypto -lz -lpthread -lm"
+            LIBS="-L${OPENSSL_PREFIX}/lib -lssl -lcrypto -lz -lpthread -lm"
           sudo cp pblat /usr/local/bin/
           cd ..
+
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
