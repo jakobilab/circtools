@@ -134,17 +134,23 @@ jobs:
           cd ..
 
           if [ "${{ matrix.os }}" = "macos-15" ]; then
-            echo "Using conda for pblat on macOS ARM"
-            brew install miniforge
-            eval "$(/opt/homebrew/Caskroom/miniforge/base/bin/conda shell.bash hook)"
-            conda create -n circtools -y -c bioconda -c conda-forge pblat
-            PBLAT_BIN="$(conda run -n circtools which pblat)"
-            echo "Conda-installed pblat is at: $PBLAT_BIN"
+            echo "Using micromamba for pblat on macOS ARM"
+            brew install micromamba
+            micromamba create -y -n circtools -c conda-forge -c bioconda pblat
+            eval "$(micromamba shell hook -s bash)"
+            micromamba activate circtools
+
+            PBLAT_BIN="$(micromamba run -n circtools which pblat)"
+            echo "micromamba-installed pblat is at: $PBLAT_BIN"
+            file "$PBLAT_BIN" || true
             ls -lh "$PBLAT_BIN" || true
+
+            # Symlink so circtools can always find it
             sudo ln -sf "$PBLAT_BIN" /usr/local/bin/pblat
             ls -lh /usr/local/bin/pblat
             which pblat
             pblat -help || true
+
           else
             echo "Building pblat from source on macOS Intel"
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
@@ -153,6 +159,7 @@ jobs:
             sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
             cd ..
           fi
+
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
