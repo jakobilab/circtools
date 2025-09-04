@@ -139,6 +139,8 @@ jobs:
             eval "$(/opt/homebrew/Caskroom/miniforge/base/bin/conda shell.bash hook)"
             conda create -n circtools -y -c bioconda -c conda-forge pblat
             conda activate circtools
+            PBLAT_BIN="$(conda run -n circtools which pblat)"
+            sudo ln -sf "$PBLAT_BIN" /usr/local/bin/pblat
             which pblat
           else
             echo "Building pblat from source on macOS Intel"
