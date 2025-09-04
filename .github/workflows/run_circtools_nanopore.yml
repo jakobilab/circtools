@@ -45,7 +45,7 @@ jobs:
                 libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
             python3 -m pip install ./
          fi
-         if [ "$RUNNER_OS" == "macOS"]; then
+         if [ "$RUNNER_OS" = "macOS" ]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
@@ -114,8 +114,6 @@ jobs:
           brew install gnu-sed grep
           sudo ln -sf $(which gsed) /usr/local/bin/sed
           sudo ln -sf $(which ggrep) /usr/local/bin/grep
-          
-
 
           # Resolve prefixes
           OPENSSL_PREFIX="$(brew --prefix openssl@3)"
@@ -123,7 +121,6 @@ jobs:
 
           # Export proper flags
           export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include"
-          export CFLAGS="$CPPFLAGS"
           export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
           export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
           export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:${LIBRARY_PATH:-}"
@@ -139,9 +136,16 @@ jobs:
           # pblat (parallel BLAT)
           git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
           cd pblat-src
-          make
+          if [ "$(uname -m)" = "arm64" ]; then
+            echo "Building for Apple Silicon (arm64)"
+            make CFLAGS="-O -Wall -arch arm64 $CPPFLAGS"
+          else
+            echo "Building for Intel macOS (x86_64)"
+            make
+          fi
           sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
           cd ..
+
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
