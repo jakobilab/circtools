@@ -147,6 +147,7 @@ jobs:
             make
             sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
             cd ..
+          fi
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
