@@ -133,32 +133,20 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (parallel BLAT)
-          # pblat (parallel BLAT)
-          git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
-          cd pblat-src
-
-          # always force a clean rebuild (avoid cached htslib/libhts.a from wrong arch)
-          make clean || true
-          [ -d htslib ] && (cd htslib && make distclean || true && make clean || true)
-
-          if [ "$(uname -m)" = "arm64" ]; then
-            echo "Building for Apple Silicon (arm64)"
-            make CFLAGS="-O -Wall -arch arm64 -mmacosx-version-min=12.0 $CPPFLAGS"
+          if [ "${{ matrix.os }}" = "macos-15" ]; then
+            echo "Using conda for pblat on macOS ARM"
+            brew install miniforge
+            eval "$(/opt/homebrew/Caskroom/miniforge/base/bin/conda shell.bash hook)"
+            conda create -n circtools -y -c bioconda -c conda-forge pblat
+            conda activate circtools
+            which pblat
           else
-            echo "Building for Intel macOS (x86_64)"
-            make CFLAGS="-O -Wall -arch x86_64 -mmacosx-version-min=10.13 $CPPFLAGS"
-          fi
-
-          # verify arch of built binary
-          file pblat || true
-          otool -L pblat || true
-
-          sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-          cd ..
-
-
-
+            echo "Building pblat from source on macOS Intel"
+            git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
+            cd pblat-src
+            make
+            sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
+            cd ..
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
