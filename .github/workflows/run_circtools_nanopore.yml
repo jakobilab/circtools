@@ -134,17 +134,29 @@ jobs:
           cd ..
 
           # pblat (parallel BLAT)
+          # pblat (parallel BLAT)
           git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
           cd pblat-src
+
+          # always force a clean rebuild (avoid cached htslib/libhts.a from wrong arch)
+          make clean || true
+          [ -d htslib ] && (cd htslib && make distclean || true && make clean || true)
+
           if [ "$(uname -m)" = "arm64" ]; then
             echo "Building for Apple Silicon (arm64)"
-            make CFLAGS="-O -Wall -arch arm64 $CPPFLAGS"
+            make CFLAGS="-O -Wall -arch arm64 -mmacosx-version-min=12.0 $CPPFLAGS"
           else
             echo "Building for Intel macOS (x86_64)"
-            make
+            make CFLAGS="-O -Wall -arch x86_64 -mmacosx-version-min=10.13 $CPPFLAGS"
           fi
+
+          # verify arch of built binary
+          file pblat || true
+          otool -L pblat || true
+
           sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
           cd ..
+
 
 
         else
