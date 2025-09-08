@@ -165,17 +165,10 @@ jobs:
             echo "Building pblat from source on macOS Intel"
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
             cd pblat-src
-            make clean
             make
             sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
             cd ..
-
-            # Verify installation
-            which pblat
-            file $(which pblat)
-            pblat -help || true
           fi
-
 
 
         else
