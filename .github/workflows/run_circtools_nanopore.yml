@@ -92,7 +92,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y make g++ zlib1g-dev wget samtools libssl-dev
 
-
           # bedtools 2.31.1
           wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
           tar -xzf bedtools-2.31.1.tar.gz
@@ -112,14 +111,13 @@ jobs:
           brew update
           brew install make gcc wget zlib samtools openssl@3
           brew install gnu-sed grep
-          sudo ln -sf $(which gsed) /usr/local/bin/sed
-          sudo ln -sf $(which ggrep) /usr/local/bin/grep
+          sudo ln -sf "$(which gsed)" /usr/local/bin/sed
+          sudo ln -sf "$(which ggrep)" /usr/local/bin/grep
 
           # Resolve prefixes
           OPENSSL_PREFIX="$(brew --prefix openssl@3)"
           ZLIB_PREFIX="$(brew --prefix zlib)"
 
-          # Export proper flags
           export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include"
           export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
           export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
@@ -145,20 +143,19 @@ jobs:
               arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
             fi
 
-            # Install Intel OpenSSL + zlib (needed for x86_64 build)
+            # Install Intel OpenSSL + zlib
             arch -x86_64 /usr/local/bin/brew install openssl@3 zlib
 
             # Resolve Intel prefixes
             OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
             ZLIB_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix zlib)"
 
-            # Export proper flags for Intel libraries
             export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include"
             export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
             export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
             export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:${LIBRARY_PATH:-}"
 
-            # Clone and build pblat as x86_64 with Intel OpenSSL + zlib
+            # Clone and build pblat as x86_64
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
             cd pblat-src
             make clean
@@ -169,10 +166,6 @@ jobs:
             # Verify installation
             which pblat
             file "$(which pblat)"
-          fi
-
-
-
           else
             echo "Building pblat from source on macOS Intel"
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
@@ -182,11 +175,11 @@ jobs:
             cd ..
           fi
 
-
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
