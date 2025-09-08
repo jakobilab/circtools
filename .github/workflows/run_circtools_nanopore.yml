@@ -148,6 +148,13 @@ jobs:
             # Install Intel OpenSSL (for x86_64 build)
             arch -x86_64 /usr/local/bin/brew install openssl@3
 
+            # Set Intel OpenSSL environment
+            OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
+            export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
+            export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
+            export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
+            export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${LIBRARY_PATH:-}"
+
             # Clone and build pblat as x86_64 with Intel OpenSSL
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
             cd pblat-src
@@ -160,6 +167,7 @@ jobs:
             which pblat
             file $(which pblat)
             pblat -help || true
+
 
           else
             echo "Building pblat from source on macOS Intel"
