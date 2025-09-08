@@ -134,40 +134,48 @@ jobs:
           cd ..
 
           if [ "${{ matrix.os }}" = "macos-15" ]; then
-            echo "Using micromamba for pblat on macOS ARM"
-            brew install micromamba
+            echo "Building pblat for Apple Silicon via Rosetta (Intel Homebrew)"
 
-            # Define root prefix (micromamba needs this)
-            export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+            # Install Rosetta (needed for x86_64 builds)
+            softwareupdate --install-rosetta --agree-to-license
 
-            # Create environment with pblat
-            micromamba create -y -n circtools -c conda-forge -c bioconda pblat
+            # Ensure Intel Homebrew exists
+            if [ ! -x /usr/local/bin/brew ]; then
+              echo "Installing Intel Homebrew under /usr/local"
+              arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            fi
 
-            # Load shell functions
-            eval "$(micromamba shell hook -s bash)"
+            # Install Intel OpenSSL (for x86_64 build)
+            arch -x86_64 /usr/local/bin/brew install openssl@3
 
-            # Activate env
-            micromamba activate circtools
+            # Clone and build pblat as x86_64 with Intel OpenSSL
+            git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
+            cd pblat-src
+            make clean
+            make ARCH=x86_64 CC="clang -arch x86_64"
+            sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
+            cd ..
 
-            PBLAT_BIN="$(micromamba run -n circtools which pblat)"
-            echo "micromamba-installed pblat is at: $PBLAT_BIN"
-            file "$PBLAT_BIN" || true
-            ls -lh "$PBLAT_BIN" || true
-
-            # Symlink into PATH for circtools
-            sudo ln -sf "$PBLAT_BIN" /usr/local/bin/pblat
-            ls -lh /usr/local/bin/pblat
+            # Verify installation
             which pblat
+            file $(which pblat)
             pblat -help || true
 
           else
             echo "Building pblat from source on macOS Intel"
             git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
             cd pblat-src
+            make clean
             make
             sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
             cd ..
+
+            # Verify installation
+            which pblat
+            file $(which pblat)
+            pblat -help || true
           fi
+
 
 
         else
