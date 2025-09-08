@@ -169,7 +169,6 @@ jobs:
             # Verify installation
             which pblat
             file "$(which pblat)"
-            pblat -help || true
           fi
 
 
