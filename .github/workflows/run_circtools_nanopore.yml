@@ -113,8 +113,6 @@ jobs:
           brew update
           brew install make gcc wget zlib samtools openssl@3
           brew install gnu-sed grep
-          sudo ln -sf "$(which gsed)" /usr/local/bin/sed
-          sudo ln -sf "$(which ggrep)" /usr/local/bin/grep
 
           # Resolve prefixes
           OPENSSL_PREFIX="$(brew --prefix openssl@3)"

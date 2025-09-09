@@ -385,7 +385,7 @@ class Nanopore(circ_module.circ_template.CircTemplate):
 
         tools = {"bedtools": "bedtools",
                  "NanoFilt": "NanoFilt -h",
-                 "pblat": "pblat",
+                # "pblat": "pblat",
                  "samtools": "samtools --help"}
 
         failed = False
