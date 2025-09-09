@@ -1,0 +1,31 @@
+name: Build pblat (Ubuntu 22.04)
+
+on:
+  workflow_dispatch:  # manual trigger
+  push:               # also build on push
+    branches: [ main ]
+
+jobs:
+  build-pblat:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make g++ zlib1g-dev
+
+      - name: Build pblat
+        run: |
+          git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
+          cd pblat-src
+          make -j$(nproc)
+          ls -lh pblat*
+
+      - name: Upload pblat binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: pblat-ubuntu-22.04
+          path: pblat-src/pblat
