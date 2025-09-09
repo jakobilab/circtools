@@ -1,7 +1,6 @@
 name: Build pblat (Ubuntu 22.04)
 
 on:
-  workflow_dispatch:  # manual trigger
   push:               # also build on push
     branches: [ main ]
 
