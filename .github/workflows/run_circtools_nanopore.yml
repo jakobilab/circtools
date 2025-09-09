@@ -91,7 +91,7 @@ jobs:
     - name: Check if circtools starts
       run: |
         circtools --version
-        which 
+        which circtools
 
 
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools)
