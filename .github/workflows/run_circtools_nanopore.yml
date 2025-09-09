@@ -174,24 +174,6 @@ jobs:
           exit 1
         fi
 
-    - name: Build pblat from source (Ubuntu 22.04 only)
-      if: matrix.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y make g++ zlib1g-dev
-        git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
-        cd pblat-src
-        make -j4
-        sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-        cd ..
-
-    - name: Upload pblat binary (Ubuntu 22.04 only)
-      if: matrix.os == 'ubuntu-22.04'
-      uses: actions/upload-artifact@v4
-      with:
-        name: pblat-ubuntu-22.04
-        path: /usr/local/bin/pblat
-
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
