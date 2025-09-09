@@ -55,9 +55,6 @@ if [ ! -x "$pblat_bin" ]; then
     exit 1
 fi
 
-# -----------------------------
-# Original circRNA pipeline code
-# -----------------------------
 
 if [ $# -ne 8 ]; then
     echo "This script is called directly by the circtools nanopore pipeline and not meant for direct user interaction."

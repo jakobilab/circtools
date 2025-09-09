@@ -109,13 +109,6 @@ jobs:
           sudo cp bin/* /usr/local/bin/
           cd ..
 
-          # pblat (parallel BLAT from fork)
-          git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
-          cd pblat-src
-          make
-          sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-          cd ..
-
         elif [ "$RUNNER_OS" = "macOS" ]; then
           brew update
           brew install make gcc wget zlib samtools openssl@3
@@ -139,50 +132,6 @@ jobs:
           make -j4
           sudo cp bin/* /usr/local/bin/
           cd ..
-
-          if [ "${{ matrix.os }}" = "macos-15" ]; then
-            echo "Building pblat for Apple Silicon via Rosetta (Intel Homebrew)"
-
-            # Install Rosetta (needed for x86_64 builds)
-            softwareupdate --install-rosetta --agree-to-license
-
-            # Ensure Intel Homebrew exists
-            if [ ! -x /usr/local/bin/brew ]; then
-              echo "Installing Intel Homebrew under /usr/local"
-              arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            fi
-
-            # Install Intel OpenSSL + zlib
-            arch -x86_64 /usr/local/bin/brew install openssl@3 zlib
-
-            # Resolve Intel prefixes
-            OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
-            ZLIB_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix zlib)"
-
-            export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include"
-            export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib"
-            export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig"
-            export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:${LIBRARY_PATH:-}"
-
-            # Clone and build pblat as x86_64
-            git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
-            cd pblat-src
-            make clean
-            make ARCH=x86_64 CC="clang -arch x86_64"
-            sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-            cd ..
-
-            # Verify installation
-            which pblat
-            file "$(which pblat)"
-          else
-            echo "Building pblat from source on macOS Intel"
-            git clone --depth=1 https://github.com/wjmellon/pblat pblat-src
-            cd pblat-src
-            make
-            sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-            cd ..
-          fi
 
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
@@ -266,11 +215,11 @@ jobs:
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../nanopore_master"
+          MASTER_DIR="../nanopore_master_mac_amd"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../nanopore_master"
+          MASTER_DIR="../nanopore_master_mac"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
