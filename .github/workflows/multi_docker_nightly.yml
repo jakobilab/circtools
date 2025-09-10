@@ -117,7 +117,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-    merge:
+  merge:
     runs-on: ubuntu-24.04
     needs:
       - build_arm
