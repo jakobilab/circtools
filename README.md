@@ -18,7 +18,7 @@ Circular RNAs (circRNAs) originate through back-splicing events from linear prim
 
 The prediction of circular RNAs is a multi-stage bioinformatics process starting with raw sequencing data and usually ending with a list of potential circRNA candidates which, depending on tissue and condition may contain hundreds to thousands of potential circRNAs. While there already exist a number of tools for the prediction process (e.g. [DCC](https://github.com/dieterich-lab/DCC) and [CircTest](https://github.com/dieterich-lab/CircTest)), publicly available downstream analysis tools are rare.
 
-We developed **circtools**, a modular, Python3-based framework for circRNA-related tools that unifies several functionalities in single command line driven software. The command line follows the `circtools subcommand` standard that is employed in samtools or bedtools. Currently, circtools includes modules for detecting and reconstructing circRNAs, a quick check of circRNA mapping results, RBP enrichment screenings, circRNA primer design, statistical testing, and an exon usage module.
+We developed **circtools**, a modular, Python3-based framework for circRNA-related tools that unifies several functionalities in single command line driven software. The command line follows the circtools subcommand standard that is employed in samtools or bedtools. Currently, circtools includes modules for detecting and reconstructing circRNAs, a quick check of circRNA mapping results, RBP enrichment screenings, circRNA primer design, statistical testing, and an exon usage module.
 
 ---
 
@@ -50,24 +50,28 @@ This line can be added to the `.bashrc` or `.profile` file to be automatically l
 
 ### Via pip
 
-The `circtools` package is written in Python 3 (supporting Python 3.8 - 3.13). It requires only a small number of external dependencies, namely standard bioinformatics tools:
+Installation is managed through pip3 install circtools or python3 setup.py
+install when installed from the cloned GitHub repository. No sudo access is required if the installation is executed in an virtual environment which will install the package in a user-writeable folder. The binaries should be installed to /home/$user/.local/bin/ in case of Debian-based systems.
 
-- [bedtools (>= 2.27.1)](https://bedtools.readthedocs.io/en/latest/content/installation.html) – RBP enrichment module, installed automatically  
-- [R (>= 4.0)](https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-22-04) – Data visualization and data processing  
+circtools was developed and tested on Debian Bookworm, but should also run with any other distribution.
 
-Installation is managed through:
-
-```console
-pip3 install circtools
-```
-
-or
+The installation can be performed directly from PyPi:
 
 ```console
-python3 setup.py install
+# create virtual environment
+python3 -m venv circtools
+
+# activate virtual environment
+source circtools/bin/activate
+
+# install circtools
+pip install numpy # required for HTSeq, dependency of circtools
+pip install circtools
+
+# install R packages for circtools
+circtools_install_R_dependencies
 ```
 
-when installed from the cloned GitHub repository. No sudo access is required if the installation is executed in a virtual environment which will install the package in a user-writeable folder. The binaries should be installed to `/home/$user/.local/bin/` in case of Debian-based systems.
 
 `circtools` was developed and tested on Debian Bookworm, but should also run with any other distribution.
 
@@ -113,10 +117,7 @@ Recent advances in long-read sequencing technologies have enabled the generation
 
 ### padlock ([detailed documentation](https://docs.circ.tools/en/latest/Conservation.html)) [NEW in 2.0]
 
-Spatial transcriptomics emerged as a powerful technique to map the localization of single molecules to the level of individual cells and even offer subcellular resolution. Although most of the high-throughput methods were designed with linear polyadenylated RNAs in mind, some methods could target circRNAs as well. This module is specifically tailored to the Xenium platform as it offers subcellular resolution and an option for custom panel design. The module requires three inputs:  
-1. circRNA coordinates detected using *circtools* detect step  
-2. a genome FASTA file  
-3. a transcriptome GTF file  
+Spatial transcriptomics emerged as a powerful technique to map the localization of single molecules to the level of individual cells and even offer subcellular resolution. Although most of the high-throughput methods were designed with linear polyadenylated RNAs in mind, some methods could target circRNAs as well. This module is specifically tailored to the Xenium platform as it offers subcellular resolution and an option for custom panel design. The module requires three inputs: 1) circRNA coordinates detected using textit{circtools}' detect step, 2) a genome FASTA file, and 3) a transcriptome GTF file.
 
 ### conservation ([detailed documentation](https://docs.circ.tools/en/latest/Conservation.html)) [NEW in 2.0]
 
@@ -124,11 +125,11 @@ Evolutionary conservation analysis oftentimes uncovers the potential functional 
 
 ### detect/metatool ([detailed documentation](https://docs.circ.tools/en/latest/Detect.html)) [Updated in 2.0]
 
-The `detect` command is an interface to [DCC](https://github.com/dieterich-lab/DCC), developed at the Dieterich Lab. The module allows detection of circRNAs from RNA sequencing data. The module is the foundation of all other steps for the circtools workflow. All parameters supplied to circtools will be directly passed to DCC. The detect module also performs the new metatool functionality added with circtools 2.0 which enables the addition of circRNA counts generated with `ciriquant` to further improve recall rates.
+The `detect` command is an interface to [DCC](https://github.com/dieterich-lab/DCC), developed at the Dieterich Lab. The module allows to detect circRNAs from RNA sequencing data. The module is the foundation of all other steps for the circtools work flow. All parameters supplied to circtools will be directly passed to DCC. The detect module also performs the new metatool functionality added with circtools 2.0 which enables the addition of circRNA counts generated with ciriquant to further improve recall rates.
 
 ### quickcheck ([detailed documentation](https://docs.circ.tools/en/latest/Quickcheck.html))
 
-The quickcheck module of circtools is an easy way to check the results of a DCC run for problems and to quickly assess the number of circRNAs in a given experiment. The module needs the mapping log files produced by STAR as well as the directory with the DCC results. The module then generates a series of figures in PDF format to assess the results.
+The quickcheck module of circtools is an easy way to check the results of a DCC run for problems and to quickly assess the number of circRNAs in a given experiment. The module needs the mapping log files produced by STAR as well as the directory with the DCC results. The module than generates a series of figures in PDF format to assess the results.
 
 ### reconstruct ([detailed documentation](https://docs.circ.tools/en/latest/Reconstruct.html))
 
@@ -136,7 +137,7 @@ The `reconstruct` command is an interface to [FUCHS](https://github.com/dieteric
 
 ### circtest ([detailed documentation](https://docs.circ.tools/en/latest/Circtest.html))
 
-The `circtest` command is an interface to [CircTest](https://github.com/dieterich-lab/CircTest). The module is a convenient way to employ statistical testing to circRNA candidates generated with DCC without having to write an R script for each new experiment. For detailed information on the implementation itself take a look at the CircTest documentation. In essence, the module allows dynamic grouping of the columns (samples) in the DCC data.
+The `circtest` command is an interface to [CircTest](https://github.com/dieterich-lab/CircTest). The module is a convenient way to employ statistical testing to circRNA candidates generated with DCC without having to write an R script for each new experiment. For detailed information on the implementation itself take a look at the [CircTest documentation] (https://github.com/dieterich-lab/CircTest). In essence, the module allows dynamic grouping of the columns (samples) in the DCC data.
 
 ### exon ([detailed documentation](https://docs.circ.tools/en/latest/Exon.html))
 
