@@ -411,6 +411,15 @@ jobs:
           -T "Slc16a9_primer" \
           -o ./primer_output/ || true
 
+    - name: Upload macOS-15 primer output as artifact
+      if: matrix.os == 'macos-15'
+      uses: actions/upload-artifact@v4
+      with:
+        name: primer_output_macos15
+        path: circtools_example/primer_output/**
+        retention-days: 7
+
+
 
 
     - name: Checking generated output against master output
