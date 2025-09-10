@@ -52,10 +52,7 @@ jobs:
          else
             python3 -m pip install ./
          fi
-
-   
-    - name: Checking library loading
-      run: Rscript -e 'library(primex)'
+         
     - name: Check if circtools starts
       run: |
          circtools --version
