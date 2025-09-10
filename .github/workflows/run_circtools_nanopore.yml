@@ -1,8 +1,8 @@
 name: circtools nanopore (pip)
 
 on:
-  push:
-  pull_request:
+  schedule:
+    - cron: '0 11 * * *'
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}

@@ -2,7 +2,6 @@ name: circtools run all (pip)
 
 on:
   push:
-  pull_request:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
@@ -22,7 +21,9 @@ jobs:
     - name: Create files
       uses: actions/checkout@v4
       with:
-       ref: ${{ github.ref_name }}
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+        fetch-depth: 0   # full history to allow diff/merge
+        persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -434,19 +435,4 @@ jobs:
         else
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         fi
-
-  rerun-once-if-failed:
-    if: failure() && github.run_attempt < 2
-    needs: [Main]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sleep for 1 hour
-        run: sleep 3600
-      - name: Re-run failed jobs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh run rerun ${{ github.run_id }} --failed --repo ${{ github.repository }}
-
-
-
 
