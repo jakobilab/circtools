@@ -247,94 +247,20 @@ for follow up wet lab experiments to verify circRNA candidates.
 Status
 ------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 25 25
-
-   * - Workflow
-     - Pip
-     - Docker
-   * - **Detect**
-     - |pip-detect|
-     - |docker-detect|
-   * - **Primer**
-     - |pip-primer|
-     - |docker-primer|
-   * - **Padlock**
-     - |pip-padlock|
-     - |docker-padlock|
-   * - **Nanopore**
-     - |pip-nanopore|
-     - |docker-nanopore|
-   * - **Circtest**
-     - |pip-circtest|
-     - |docker-circtest|
-   * - **Conservation**
-     - |pip-conservation|
-     - |docker-conservation|
-   * - **All (matrix)**
-     - |pip-all|
-     - |docker-stable|
-     - |docker-nightly|
-
-
-.. |pip-detect| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master
-   :alt: Pip Detect
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml
-
-.. |docker-detect| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master
-   :alt: Docker Detect
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml
-
-.. |pip-primer| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master
-   :alt: Pip Primer
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml
-
-.. |docker-primer| image:: https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master
-   :alt: Docker Primer
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml
-
-.. |pip-padlock| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master
-   :alt: Pip Padlock
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml
-
-.. |docker-padlock| image:: https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master
-   :alt: Docker Padlock
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml
-
-.. |pip-nanopore| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master
-   :alt: Pip Nanopore
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml
-
-.. |docker-nanopore| image:: https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master
-   :alt: Docker Nanopore
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml
-
-.. |pip-circtest| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master
-   :alt: Pip Circtest
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml
-
-.. |docker-circtest| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml/badge.svg?branch=master
-   :alt: Docker Circtest
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml
-
-.. |pip-conservation| image:: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master
-   :alt: Pip Conservation
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml
-
-.. |docker-conservation| image:: https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master
-   :alt: Docker Conservation
-   :target: https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml
-
-.. |pip-all| image:: https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master
-   :alt: Pip All
-   :target: https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml
-
-.. |docker-stable| image:: https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master
-   :alt: Docker Multi-arch Stable
-   :target: https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml
-
-.. |docker-nightly| image:: https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master
-   :alt: Docker Multi-arch Nightly
-   :target: https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml
-
++------------+------------+------------+
+| Workflow   | Pip        | Docker     |
++============+============+============+
+| Detect     | |pip-detect| |docker-detect| |
++------------+------------+------------+
+| Primer     | |pip-primer| |docker-primer| |
++------------+------------+------------+
+| Padlock    | |pip-padlock| |docker-padlock| |
++------------+------------+------------+
+| Nanopore   | |pip-nanopore| |docker-nanopore| |
++------------+------------+------------+
+| Circtest   | |pip-circtest| |docker-circtest| |
++------------+------------+------------+
+| Conservation | |pip-conservation| |docker-conservation| |
++------------+------------+------------+
+| All        | |pip-all|  |docker-stable| / |docker-nightly| |
++------------+------------+------------+
