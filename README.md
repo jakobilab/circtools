@@ -50,10 +50,29 @@ This line can be added to the `.bashrc` or `.profile` file to be automatically l
 
 ### Via pip
 
-Installation is managed through pip3 install circtools or python3 setup.py
-install when installed from the cloned GitHub repository. No sudo access is required if the installation is executed in an virtual environment which will install the package in a user-writeable folder. The binaries should be installed to /home/$user/.local/bin/ in case of Debian-based systems.
+The `circtools` package is written in Python 3 (supporting Python 3.8 – 3.13).  
+It requires only a small number of external dependencies, namely standard bioinformatics tools:
 
-circtools was developed and tested on Debian Bookworm, but should also run with any other distribution.
+- [bedtools (>= 2.27.1)](https://bedtools.readthedocs.io/en/latest/content/installation.html)  
+  *RBP enrichment module, installed automatically*
+- [R (>= 4.0)](https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-22-04)  
+  *Data visualization and data processing*
+
+Installation is managed through:
+
+```console
+pip3 install circtools
+```
+
+or
+
+```console
+python3 setup.py install
+```
+
+when installed from the cloned GitHub repository. No sudo access is required if the installation is executed in a virtual environment, which will install the package in a user-writeable folder. The binaries should be installed to `/home/$user/.local/bin/` on Debian-based systems.
+
+`circtools` was developed and tested on Debian Bookworm, but should also run with other distributions.
 
 The installation can be performed directly from PyPi:
 
@@ -72,25 +91,6 @@ pip install circtools
 circtools_install_R_dependencies
 ```
 
-
-`circtools` was developed and tested on Debian Bookworm, but should also run with any other distribution.
-
-The installation can be performed directly from PyPi:
-
-```console
-# create virtual environment
-python3 -m venv circtools
-
-# activate virtual environment
-source circtools/bin/activate
-
-# install circtools
-pip install numpy # required for HTSeq, dependency of circtools
-pip install circtools
-
-# install R packages for circtools
-circtools_install_R_dependencies
-```
 
 ---
 
