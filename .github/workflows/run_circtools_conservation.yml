@@ -53,33 +53,6 @@ jobs:
             python3 -m pip install ./
          fi
 
-    
-    - name: Set up R
-      id: setup-r
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-      continue-on-error: true
-
-    - name: Retry Set up R if failed
-      if: steps.setup-r.outcome == 'failure'
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-
-    - name: Install R dependencies (with retry)
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 20
-        max_attempts: 3
-        retry_on: error
-        command: |
-          Rscript circtools/scripts/install_R_dependencies.R)
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-
-
-
    
     - name: Checking library loading
       run: Rscript -e 'library(primex)'
