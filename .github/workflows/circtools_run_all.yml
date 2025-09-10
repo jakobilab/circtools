@@ -2,6 +2,7 @@ name: circtools run all (pip)
 
 on:
   push:
+  pull_request:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
