@@ -137,7 +137,7 @@ The `reconstruct` command is an interface to [FUCHS](https://github.com/dieteric
 
 ### circtest ([detailed documentation](https://docs.circ.tools/en/latest/Circtest.html))
 
-The `circtest` command is an interface to [CircTest](https://github.com/dieterich-lab/CircTest). The module is a convenient way to employ statistical testing to circRNA candidates generated with DCC without having to write an R script for each new experiment. For detailed information on the implementation itself take a look at the [CircTest documentation] (https://github.com/dieterich-lab/CircTest). In essence, the module allows dynamic grouping of the columns (samples) in the DCC data.
+The `circtest` command is an interface to [CircTest](https://github.com/dieterich-lab/CircTest). The module is a convenient way to employ statistical testing to circRNA candidates generated with DCC without having to write an R script for each new experiment. For detailed information on the implementation itself take a look at the [CircTest documentation](https://github.com/dieterich-lab/CircTest). In essence, the module allows dynamic grouping of the columns (samples) in the DCC data.
 
 ### exon ([detailed documentation](https://docs.circ.tools/en/latest/Exon.html))
 
