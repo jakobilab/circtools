@@ -247,20 +247,12 @@ for follow up wet lab experiments to verify circRNA candidates.
 Status
 ------
 
-+------------+------------+------------+
-| Workflow   | Pip        | Docker     |
-+============+============+============+
-| Detect     | |pip-detect| |docker-detect| |
-+------------+------------+------------+
-| Primer     | |pip-primer| |docker-primer| |
-+------------+------------+------------+
-| Padlock    | |pip-padlock| |docker-padlock| |
-+------------+------------+------------+
-| Nanopore   | |pip-nanopore| |docker-nanopore| |
-+------------+------------+------------+
-| Circtest   | |pip-circtest| |docker-circtest| |
-+------------+------------+------------+
-| Conservation | |pip-conservation| |docker-conservation| |
-+------------+------------+------------+
-| All        | |pip-all|  |docker-stable| / |docker-nightly| |
-+------------+------------+------------+
+Workflow | Pip | Docker
+---------|-----|--------
+**Detect** | ![pip-detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master) | ![docker-detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master)
+**Primer** | ![pip-primer](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master) | ![docker-primer](https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master)
+**Padlock** | ![pip-padlock](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master) | ![docker-padlock](https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master)
+**Nanopore** | ![pip-nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master) | ![docker-nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master)
+**Circtest** | ![pip-circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master) | ![docker-circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml/badge.svg?branch=master)
+**Conservation** | ![pip-conservation](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master) | ![docker-conservation](https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master)
+**All** | ![pip-all](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master) | ![docker-stable](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master) / ![docker-nightly](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master)
