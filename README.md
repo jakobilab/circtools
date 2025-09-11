@@ -155,23 +155,24 @@ The `primer` command is used to design and visualize primers required for follow
 
 ## Status
 
-| **Workflow**   | **Status** |
-|-----------------|------------|
-| Detect          | Pip: [![Pip Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml) <br> Docker: [![Docker Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml) |
-| Primer          | Pip: [![Pip Primer](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml) <br> Docker: [![Docker Primer](https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml) |
-| Padlock         | Pip: [![Pip Padlock](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml) <br> Docker: [![Docker Padlock](https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml) |
-| Nanopore        | Pip: [![Pip Nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml) <br> Docker: [![Docker Nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml) |
-| Circtest        | Pip: [![Pip Circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml) <br> Docker: [![Docker Circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml) |
-| Conservation    | Pip: [![Pip Conservation](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml) <br> Docker: [![Docker Conservation](https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml) |
+## Status
+
+| **Workflow**   | **Pip** | **Docker** |
+|----------------|---------|------------|
+| Detect         | [![Pip Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml) | [![Docker Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml) |
+| Primer         | [![Pip Primer](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml) | [![Docker Primer](https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml) |
+| Padlock        | [![Pip Padlock](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml) | [![Docker Padlock](https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml) |
+| Nanopore       | [![Pip Nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml) | [![Docker Nanopore](https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml) |
+| Circtest       | [![Pip Circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml) | [![Docker Circtest](https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml) |
+| Conservation   | [![Pip Conservation](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml) | [![Docker Conservation](https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml) |
 
 
 
 
-[![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml)
+| [![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml) |
 
+| [![Docker Multi-arch Stable](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml) |
 
-[![Docker Multi-arch Stable](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml)
+| [![Docker Multi-arch Nightly](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml) |
 
-
- [![Docker Multi-arch Nightly](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml)
 
