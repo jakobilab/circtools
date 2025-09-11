@@ -155,6 +155,10 @@ The `primer` command is used to design and visualize primers required for follow
 
 ## Status
 
+### Individual Workflows
+
+#### Tested for Ubuntu 24.04, 22.04. MacOS 13 (Intel), MacOS 15 (Silicon)
+
 | **Workflow**   | **Pip** | **Docker** |
 |----------------|---------|------------|
 | Detect         | [![Pip Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml) | [![Docker Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml) |
