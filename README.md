@@ -166,8 +166,11 @@ The `primer` command is used to design and visualize primers required for follow
 
 ---
 
-### All Workflows (Pip)
-[![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml)
+
+|  | |
+| ------------- | ------------- |
+| ### All Workflows (Pip)  | [![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml) |
+
 
 ---
 
