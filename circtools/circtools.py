@@ -1290,6 +1290,15 @@ class CircTools(object):
                            help="The output name (prefix) for files created by " + program_name +
                                 " [Default: exon_analysis]"
                            )
+        
+        group.add_argument("-s",
+                         "--species",
+                         dest="species",
+                         required=True,
+                         choices=("hs", "mm", "rn", "ss"),
+                         help="Species code: hs = Homo sapiens, mm = Mus musculus, rn = Rattus norvegicus, ss = Sus scrofa"
+                         )
+
 
         # group.add_argument("-p",
         #                    "--max-plots",
