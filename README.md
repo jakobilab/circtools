@@ -168,18 +168,8 @@ The `primer` command is used to design and visualize primers required for follow
 
 
 
-|  | |
-| ------------- | ------------- |
-| All Workflows (Pip)  | [![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml) |
+**All Workflows (Pip):** [![Pip All](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml)
 
+**Docker Build (Stable):** [![Docker Multi-arch Stable](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml)
 
-
-
-|  | |
-| ------------- | ------------- |
-|Docker Build Stable|[![Docker Multi-arch Stable](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml)|
-
-
-|  | |
-| ------------- | ------------- |
-|Docker Build (Nightly)| [![Docker Multi-arch Nightly](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml)|
+**Docker Build (Nightly):** [![Docker Multi-arch Nightly](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml)
