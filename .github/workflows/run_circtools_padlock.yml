@@ -1,9 +1,8 @@
 name: circtools padlock (pip)
 
 on:
-  workflow_run:
-    workflows: ["API Health Check"]
-    types: [completed]
+  schedule:
+    - cron: '0 11 * * *'
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
