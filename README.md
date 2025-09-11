@@ -157,7 +157,7 @@ The `primer` command is used to design and visualize primers required for follow
 
 ### Individual Workflows
 
-#### Tested for Ubuntu 24.04, 22.04. MacOS 13 (Intel), MacOS 15 (Silicon)
+#### Tested for Ubuntu 24.04, Ubuntu 22.04, MacOS 13 (Intel), MacOS 15 (Silicon)
 
 | **Workflow**   | **Pip** | **Docker** |
 |----------------|---------|------------|
