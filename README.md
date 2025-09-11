@@ -157,7 +157,9 @@ The `primer` command is used to design and visualize primers required for follow
 
 ### Individual Workflows
 
-#### Tested for Ubuntu 24.04, Ubuntu 22.04, MacOS 13 (Intel), MacOS 15 (Silicon)
+#### Tested for Ubuntu 24.04, Ubuntu 22.04, MacOS 13 (Intel), MacOS 15 (Silicon). 
+
+Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python versions 3.8, 3.9, 3.10, 3.11, 3.12, 3.13. 
 
 | **Workflow**   | **Pip** | **Docker** |
 |----------------|---------|------------|
