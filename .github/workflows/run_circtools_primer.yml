@@ -1,8 +1,9 @@
 name: circtools primex (pip)
 
 on:
-  schedule:
-    - cron: '0 11 * * *'
+  workflow_run:
+    workflows: ["API Health Check"]
+    types: [completed]
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
