@@ -155,8 +155,6 @@ The `primer` command is used to design and visualize primers required for follow
 
 ## Status
 
-## Status
-
 | **Workflow**   | **Pip** | **Docker** |
 |----------------|---------|------------|
 | Detect         | [![Pip Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml) | [![Docker Detect](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master)](https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml) |
