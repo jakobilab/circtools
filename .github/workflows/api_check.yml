@@ -60,3 +60,31 @@ jobs:
             echo "❌ UCSC Genome Browser is down"
             exit 1
           fi
+
+  check-blast:
+      name: NCBI BLAST API health check
+      runs-on: ubuntu-latest
+      steps:
+        - name: HEAD request to NCBI BLAST with retries
+          id: blast
+          shell: bash
+          run: |
+            set -euo pipefail
+            url="https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+
+            ok="false"
+            for i in $(seq 1 12); do
+              status=$(curl -sS -m 10 -I -w "%{http_code}" -o /dev/null "$url" || echo "000")
+              if [ "$status" = "200" ]; then
+                ok="true"
+                break
+              fi
+              sleep $((i * 5))
+            done
+
+            if [ "$ok" = "true" ]; then
+              echo "✅ NCBI BLAST API is up"
+            else
+              echo "❌ NCBI BLAST API is down"
+              exit 1
+            fi

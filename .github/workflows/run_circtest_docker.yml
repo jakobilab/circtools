@@ -2,35 +2,50 @@ name: circtools circtest (docker)
 
 on:
   workflow_run:
-    workflows: ["Multi-arch docker container"]
+    workflows: ["Multi-arch docker container", "Multi-arch docker nightly"]
     types: [completed]
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  GHCR_IMAGE: ghcr.io/jakobilab/circtools:master
-
 jobs:
   run-circtest-docker:
     name: circtools circtest (Docker)
     runs-on: ubuntu-24.04
-
+    env:
+      GHCR_REPO: ghcr.io/jakobilab/circtools
     steps:
+      - name: Set image tag based on triggering workflow
+        run: |
+          if [[ "${{ github.event.workflow_run.workflow }}" == "Multi-arch docker nightly" ]]; then
+            echo "GHCR_IMAGE=${GHCR_REPO}:nightly" >> $GITHUB_ENV
+          else
+            echo "GHCR_IMAGE=${GHCR_REPO}:latest" >> $GITHUB_ENV
+          fi
+          echo "Using image: $(cat $GITHUB_ENV | grep GHCR_IMAGE)"
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Pull  image
+      - name: Pull image
+        run: docker pull "${GHCR_IMAGE}"
+
+          
+      - name: Fix zcat on macOS
+        if: runner.os == 'macOS'
         run: |
-          docker pull "${GHCR_IMAGE}"
+          sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
       - name: Unpack test dataset
         run: |
           tar xvf ./tests/data/circtools_example.tar.bz2
-          ls -la circtools_example
+          cd circtools_example
+          if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+          if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+          ls -lh
 
       - name: Fix missing Strand column (if needed)
         run: |

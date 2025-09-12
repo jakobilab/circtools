@@ -16,9 +16,45 @@
 # See the LICENSE file in the root directory for the full terms of the GPL.
 #
 
+# -----------------------------
+# Platform detection for pblat
+# -----------------------------
+system=$(uname -s)
+machine=$(uname -m)
 
-# This is version 5.5 of the Nanopore circRNA datection pipeline
-# This version uses blat to map reads.  NanoFilt is used to trim low quality reads (q 7). Parallel BLAT is used to map nanopore reads to genome.
+if [ "$system" = "Darwin" ]; then
+    if [ "$machine" = "x86_64" ]; then
+        platform_dir="AMD64/mac"
+    elif [ "$machine" = "arm64" ]; then
+        platform_dir="AMD64/mac"
+    else
+        echo "Unsupported Mac architecture: $machine"
+        exit 1
+    fi
+elif [ "$system" = "Linux" ]; then
+    if [ "$machine" = "x86_64" ] || [ "$machine" = "amd64" ]; then
+        platform_dir="AMD64/linux"
+    elif [ "$machine" = "aarch64" ] || [ "$machine" = "arm64" ]; then
+        platform_dir="AMD64/linux"
+    else
+        echo "Unsupported Linux architecture: $machine"
+        exit 1
+    fi
+else
+    echo "Unsupported operating system: $system"
+    exit 1
+fi
+
+# Resolve path to script dir → contrib/pblat/[platform]/pblat
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+parent_dir="$(cd "$script_dir/.." && pwd)"
+pblat_bin="$parent_dir/contrib/pblat/$platform_dir/pblat"
+
+if [ ! -x "$pblat_bin" ]; then
+    echo "Error: pblat binary not found at: $pblat_bin"
+    exit 1
+fi
+
 
 if [ $# -ne 8 ]; then
     echo "This script is called directly by the circtools nanopore pipeline and not meant for direct user interaction."
@@ -34,7 +70,7 @@ output_path=$6
 threads=$7
 sample_ext=$8
 
-mkdir "$output_path"
+mkdir -p "$output_path"
 cd "$output_path" || exit
 
 fa=$reference_path/$genome/genome.fa
@@ -43,35 +79,35 @@ exon=$reference_path/$genome/refFlat.csv.merged.bed
 single_exon=$reference_path/$genome/refFlat.csv.sort.bed
 est=$reference_path/$genome/est.bed
 genomeSize=$reference_path/$genome/genome.chrom.sizes
-circRNA_prefix="$genome"_circ_
-
+circRNA_prefix="${genome}_circ_"
 
 # Temp folder
 temp_sort=$(mktemp -d /tmp/foo.XXXXXXXXX)
 
 date
 
-echo "Sample: "$sample
+echo "Sample: $sample"
 echo
 echo "Number of raw reads before NanoFilt -q 7 -l 250"
-zcat $data_folder/$sample.$sample_ext | wc -l | awk '{print $1/4}'
+zcat "$data_folder/$sample.$sample_ext" | wc -l | awk '{print $1/4}'
 
 echo
 date
 echo "NanoFilt to remove reads under quality 7 and conversion to fasta"
-zcat $data_folder/$sample.$sample_ext | NanoFilt -q 7 -l 250 | sed -n '1~4s/^@/>/p;2~4p' > $sample.fa
+zcat "$data_folder/$sample.$sample_ext" | NanoFilt -q 7 -l 250 | sed -n '1~4s/^@/>/p;2~4p' > "$sample.fa"
 echo
 date
 echo "Number of filtered reads after NanoFilt -q 7 -l 250"
-cat $sample.fa | wc -l | awk '{print $1/2}'
+wc -l < "$sample.fa" | awk '{print $1/2}'
 echo
 date
 echo "Mapping with pblat - parallelized blat with multi-threads support (http://icebert.github.io/pblat/)"
 echo "lower case sequences in the genome file are masked out"
 echo "Showing a dot for every 50k sequences processed"
-pblat  -threads=$threads -trimT -dots=50000 -mask=lower $fa $sample.fa $sample.psl
+"$pblat_bin" -threads="$threads" -trimT -dots=50000 -mask=lower "$fa" "$sample.fa" "$sample.psl"
 echo "Blat done"
 date
+
 
 # Remove non-standard chromosomes
 cat $sample.psl | grep -v "_random" | grep -v "_hap" | grep -v "chrUn_" > $sample.temp.psl
