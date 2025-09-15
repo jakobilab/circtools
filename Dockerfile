@@ -23,6 +23,7 @@ RUN apt-get update && \
     g++  \
     gfortran \
     r-base  \
+    pandoc \
     python3 \
     python3-dev  \
     python3-pip  \
