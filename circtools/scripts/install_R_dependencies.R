@@ -71,7 +71,11 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats
 # --- GitHub packages ---
 message("\nInstalling GitHub R packages (circTest and primex)...")
 
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  install.packages("devtools", repos="https://cloud.r-project.org")
+}
 library(devtools)
+
 
 devtools::install_github("dieterich-lab/CircTest")
 devtools::install_github("dieterich-lab/primex")
