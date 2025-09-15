@@ -1,6 +1,7 @@
 name: Multi-arch docker nightly
 
 on:
+  push:
   schedule:
     - cron: '0 11 * * *'
 
