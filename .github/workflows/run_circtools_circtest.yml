@@ -1,7 +1,6 @@
 name: circtools circtest (pip)
 
 on:
-  push:
   workflow_run:
     workflows: ["API Health Check"]
     types: [completed]
