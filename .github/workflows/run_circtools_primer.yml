@@ -74,7 +74,7 @@ jobs:
         max_attempts: 3
         retry_on: error
         command: |
-          Rscript circtools/scripts/install_R_dependencies.R)
+          Rscript circtools/scripts/install_R_dependencies.R
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
