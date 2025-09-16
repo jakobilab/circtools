@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL stage=builder
 LABEL maintainer="tjakobi@arizona.edu"
@@ -23,6 +23,7 @@ RUN apt-get update && \
     g++  \
     gfortran \
     r-base  \
+    pandoc \
     python3 \
     python3-dev  \
     python3-pip  \
