@@ -21,8 +21,7 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
   <thead>
     <tr>
       <th>Workflow</th>
-      <th>Pip</th>
-      <th>Docker</th>
+      <th>Status</th>
     </tr>
   </thead>
   <tbody>
@@ -74,7 +73,7 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
     <tr>
       <td>Circtest</td>
       <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master" alt="Pip Circtest"/></a></td>
-      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml/badge.svg?branch=master" alt="Docker Circtest"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtest_docker.yml/badge.svg?branch=master" alt="Docker Circtest"/></a></td>
     </tr>
     <tr>
       <td>Conservation</td>
