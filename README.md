@@ -21,14 +21,14 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
   <thead>
     <tr>
       <th>Workflow</th>
-      <th>Status</th>
+      <th colspan="2">Status</th>
     </tr>
   </thead>
   <tbody>
     <!-- General Workflows -->
     <tr>
       <td>All Workflows (Pip)</td>
-      <td>
+      <td colspan="2">
         <a href="https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml">
           <img src="https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master" alt="Pip All"/>
         </a>
@@ -36,7 +36,7 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
     </tr>
     <tr>
       <td>Docker Build (Stable)</td>
-      <td>
+      <td colspan="2">
         <a href="https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml">
           <img src="https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml/badge.svg?branch=master" alt="Docker Stable"/>
         </a>
@@ -44,57 +44,45 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
     </tr>
     <tr>
       <td>Docker Build (Nightly)</td>
-      <td>
+      <td colspan="2">
         <a href="https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml">
           <img src="https://github.com/jakobilab/circtools/actions/workflows/multi_docker_nightly.yml/badge.svg?branch=master" alt="Docker Nightly"/>
         </a>
       </td>
     </tr>
-    <tr><td colspan="2"><strong>Individual Workflows</strong></td></tr>
     <tr>
       <td>Detect</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master" alt="Pip Detect"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master" alt="Docker Detect"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master" alt="Pip Detect"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect_docker.yml/badge.svg?branch=master" alt="Docker Detect"/></a></td>
     </tr>
     <tr>
       <td>Primer</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master" alt="Pip Primer"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master" alt="Docker Primer"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_primer.yml/badge.svg?branch=master" alt="Pip Primer"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_primer_docker.yml/badge.svg?branch=master" alt="Docker Primer"/></a></td>
     </tr>
     <tr>
       <td>Padlock</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master" alt="Pip Padlock"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master" alt="Docker Padlock"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_padlock.yml/badge.svg?branch=master" alt="Pip Padlock"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_padlock_docker.yml/badge.svg?branch=master" alt="Docker Padlock"/></a></td>
     </tr>
     <tr>
       <td>Nanopore</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master" alt="Pip Nanopore"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master" alt="Docker Nanopore"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_nanopore.yml/badge.svg?branch=master" alt="Pip Nanopore"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_nanopore_docker.yml/badge.svg?branch=master" alt="Docker Nanopore"/></a></td>
     </tr>
     <tr>
       <td>Circtest</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master" alt="Pip Circtest"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml/badge.svg?branch=master" alt="Docker Circtest"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest.yml/badge.svg?branch=master" alt="Pip Circtest"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_circtest_docker.yml/badge.svg?branch=master" alt="Docker Circtest"/></a></td>
     </tr>
     <tr>
       <td>Conservation</td>
-      <td>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master" alt="Pip Conservation"/></a>
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master" alt="Docker Conservation"/></a>
-      </td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_conservation.yml/badge.svg?branch=master" alt="Pip Conservation"/></a></td>
+      <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_conservation_docker.yml/badge.svg?branch=master" alt="Docker Conservation"/></a></td>
     </tr>
   </tbody>
 </table>
+
 
 
 ---
