@@ -51,8 +51,6 @@ Pip individual workflows tested across R versions 4.4.0 and 4.5.1 and python ver
         </a>
       </td>
     </tr>
-
-    <!-- Individual Workflows (separate Pip & Docker columns) -->
     <tr>
       <td>Detect</td>
       <td><a href="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml"><img src="https://github.com/jakobilab/circtools/actions/workflows/run_circtools_detect.yml/badge.svg?branch=master" alt="Pip Detect"/></a></td>
