@@ -131,18 +131,25 @@ jobs:
         if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
         if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
         ls -lh
-    - name: Run primex
-      run: |
-        cd circtools_example
-        mkdir -p primer_output
-        circtools primex \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Slc16a9 \
-          -T "Slc16a9_primer" \
-          -o ./primer_output/ || true
+    
+    - name: Run primex (with retry)
+      uses: nick-fields/retry@v3
+      with:
+        max_attempts: 3
+        retry_on: error
+        retry_wait_seconds: 7200   
+        command: |
+          cd circtools_example
+          mkdir -p primer_output
+          circtools primex \
+            -d ./circtools_ci_master/CircCoordinates \
+            -f ./genome.fa \
+            -g ./annotation.gtf \
+            -O mm \
+            -G Slc16a9 \
+            -T "Slc16a9_primer" \
+            -o ./primer_output/
+
 
 
 
