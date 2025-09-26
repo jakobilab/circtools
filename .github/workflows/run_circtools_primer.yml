@@ -132,12 +132,12 @@ jobs:
         if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
         ls -lh
     
-    - name: Run primex (with retry)
+    - name: Run circtools primer design with retry
       uses: nick-fields/retry@v3
       with:
+        timeout_minutes: 10
         max_attempts: 3
-        retry_on: error
-        retry_wait_seconds: 7200   
+        retry_wait_seconds: 7200
         command: |
           cd circtools_example
           mkdir -p primer_output
@@ -149,6 +149,8 @@ jobs:
             -G Slc16a9 \
             -T "Slc16a9_primer" \
             -o ./primer_output/
+
+
 
 
 
