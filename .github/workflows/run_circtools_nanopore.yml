@@ -84,7 +84,7 @@ jobs:
           sudo ln -sf "$(which gsed)" /usr/local/bin/sed
           sudo ln -sf "$(which ggrep)" /usr/local/bin/grep
 
-          # Resolve prefixes
+          # Resolve Homebrew prefixes (works for both Intel & Apple Silicon)
           OPENSSL_PREFIX="$(brew --prefix openssl@3)"
           ZLIB_PREFIX="$(brew --prefix zlib)"
 
@@ -116,7 +116,7 @@ jobs:
             # Install Intel OpenSSL + zlib
             arch -x86_64 /usr/local/bin/brew install openssl@3 zlib
 
-            # Resolve Intel prefixes
+            # Resolve Intel Homebrew prefixes
             OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
             ZLIB_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix zlib)"
 
@@ -138,6 +138,7 @@ jobs:
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
+
 
 
 
