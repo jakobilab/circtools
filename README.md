@@ -197,8 +197,9 @@ Fix zcat symlink for MacOS. Some circtools workflows expect zcat, which macOS do
 ```console
 sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 ```
-
 These steps should enable macOS users to perform the same installation as shown above using either 'pip3 install circtools' or 'python3 setup.py install'.
+
+
 ---
 
 ### Via git (development version)
