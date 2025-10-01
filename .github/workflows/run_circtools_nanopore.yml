@@ -78,7 +78,6 @@ jobs:
           cd ..
 
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          brew update
           brew install make gcc wget zlib samtools openssl@3
           brew install gnu-sed grep
           sudo ln -sf "$(which gsed)" /usr/local/bin/sed
@@ -113,10 +112,7 @@ jobs:
               arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
             fi
 
-            # Install Intel OpenSSL + zlib
             arch -x86_64 /usr/local/bin/brew install openssl@3 zlib
-
-            # Resolve Intel Homebrew prefixes
             OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
             ZLIB_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix zlib)"
 
