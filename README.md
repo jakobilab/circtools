@@ -174,6 +174,39 @@ circtools_install_R_dependencies
 ```
 
 
+#### Notes for macOS pip installation
+
+Make sure that **Python** is installed via [Homebrew](https://brew.sh) before running the installation steps.  
+You can check your Python version with:
+
+```console
+python3 --version
+```
+
+If not installed run 
+
+```console 
+brew install python
+```
+
+Upgrade pip and setuptools
+```console
+python3 -m pip install --upgrade pip setuptools
+```
+
+Install Xcode Command Line Tools (needed for compiling dependencies)
+```console
+sudo rm -rf /Library/Developer/CommandLineTools
+xcode-select --install
+```
+
+Fix zcat symlink for MacOS. Some circtools workflows expect zcat, which macOS does not natively support.
+```console
+sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+```
+These steps should enable macOS users to perform the same installation as shown above using either 'pip3 install circtools' or 'python3 setup.py install'.
+
+
 ---
 
 ### Via git (development version)
@@ -188,6 +221,8 @@ pip install git+https://github.com/jakobilab/circtools.git
 The primer-design module as well as the exon analysis and circRNA testing module require a working installation of [R](https://cran.r-project.org/) with [BioConductor](https://www.bioconductor.org/install/). All R packages required can be automatically installed during the setup. Please see the [Installing circtools](http://docs.circ.tools/en/latest/Installation.html) chapter of the main circtools documentation for more detailed installation instructions.
 
 ---
+
+
 
 ## Modules
 
