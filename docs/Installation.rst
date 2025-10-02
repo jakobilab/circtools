@@ -29,7 +29,6 @@ An bash alias to call circtools "natively" and skip the unwieldy full docker com
 
 This line can be added to the `.bashrc` or `.profile` file to be automatically loaded after login.
 
-
 Installation via PyPi
 -----------------------------------
 
@@ -44,6 +43,27 @@ The default installation will install everything needed to run circtools *except
 .. note::
 
     The required R libraries will be installed in the default location in the home directory - unless the environment variable $R_LIBS_USER is set.
+
+.. note::
+
+    **macOS users:** A few additional steps may be required before installing circtools.
+
+    1. Ensure Python is installed via Homebrew. Check with ``python3 --version``.  
+       If not installed, run ``brew install python``.
+
+    2. Upgrade pip and setuptools with  
+       ``python3 -m pip install --upgrade pip setuptools``.
+
+    3. Install Xcode Command Line Tools (needed for compiling dependencies) with  
+       ``sudo rm -rf /Library/Developer/CommandLineTools`` and ``xcode-select --install``.
+
+    4. Fix the ``zcat`` symlink (needed for some circtools workflows).  
+       macOS does not include ``zcat`` by default, so link it to ``gzcat``:  
+       ``sudo ln -sf $(which gzcat) /usr/local/bin/zcat``.
+
+    After these steps, macOS users can install circtools as described above using either  
+    ``pip3 install circtools`` or ``python3 setup.py install``.
+
 
 
 Installation via GitHub

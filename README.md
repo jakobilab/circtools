@@ -11,6 +11,30 @@
 
 ---
 
+## Table of Contents
+
+- [Software Status](#software-status)
+- [Introduction](#introduction)
+- [Documentation](#documentation)
+- [Installation](#installation)
+  - [Via docker](#via-docker-new-in-20)
+  - [Via pip](#via-pip)
+    - [Notes for macOS pip installation](#notes-for-macos-pip-installation)
+  - [Via git (development version)](#via-git-development-version)
+- [Modules](#modules)
+  - [nanopore](#nanopore-detailed-documentation-new-in-20)
+  - [padlock](#padlock-detailed-documentation-new-in-20)
+  - [conservation](#conservation-detailed-documentation-new-in-20)
+  - [detect/metatool](#detectmetatool-detailed-documentation-updated-in-20)
+  - [quickcheck](#quickcheck-detailed-documentation)
+  - [reconstruct](#reconstruct-detailed-documentation)
+  - [circtest](#circtest-detailed-documentation)
+  - [exon](#exon-detailed-documentation)
+  - [enrich](#enrich-detailed-documentation)
+  - [primer](#primer-detailed-documentation)
+
+---
+
 ## Software Status
 
 #### Tested for Ubuntu 24.04, Ubuntu 22.04, MacOS 13 (Intel), MacOS 15 (Silicon). 
