@@ -179,6 +179,17 @@ jobs:
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         fi
 
+    - name: Upload circtools primex (pip) artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: circtools primex (pip)
+        path: |
+          circtools_example/primer_output/*.csv
+          circtools_example/primer_output/*.xlsx
+        retention-days: 30
+
+
 
 
   

@@ -5,6 +5,9 @@ suppressMessages(library(formattable))
 suppressMessages(library(kableExtra))
 suppressMessages(library(dplyr))
 suppressMessages(library(RColorBrewer))
+suppressMessages(library(readr))   # for write_csv()
+suppressMessages(library(openxlsx)) # for Excel writing
+
 # suppressMessages(library(colortools))
 
 # switch to red warning color if more blast hits are found
@@ -160,6 +163,17 @@ data_table$Strand<- gsub("\\b0\\b", "", data_table$Strand )
 # clean up rownames to hide them lateron
 rownames(data_table) <- c()
 
+output_dir <- dirname(data_file_name)
+csv_out <- file.path(output_dir, paste0(experiment_name, "_primers.csv"))
+xlsx_out <- file.path(output_dir, paste0(experiment_name, "_primers.xlsx"))
+
+# Export before building HTML
+write_csv(data_table, csv_out)
+write.xlsx(data_table, xlsx_out, sheetName = "PrimerResults", rowNames = FALSE)
+
+cat(paste("Wrote primer results to:", csv_out, "and", xlsx_out, "\n"))
+
+
 # main output table generation
 output_table <- data_table %>%
     mutate(
@@ -211,5 +225,8 @@ output_table <- data_table %>%
     # group_rows("Group 1", 4, 7) %>%
     # group_rows("Group 1", 8, 10)
     # collapse_rows(columns = 1)
+
+
+
 
 write(paste(html_header, output_table, sep=""), file = "")
