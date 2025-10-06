@@ -8,14 +8,31 @@ suppressMessages(library(RColorBrewer))
 suppressMessages(library(readr))   # for write_csv()
 suppressMessages(library(openxlsx)) # for Excel writing
 
+cat("DEBUG: running local circtools_primex_formatter.R\n")
+
+
 # suppressMessages(library(colortools))
 
 # switch to red warning color if more blast hits are found
 high_count_number = 0
 
 args <- commandArgs(trailingOnly = TRUE)
+data_file_name <- args[1]
 
 experiment_name <- args[2]
+# Always write to the same directory as the HTML output (Python’s -o)
+if (length(args) >= 3 && dir.exists(args[3])) {
+  output_dir <- args[3]
+} else {
+  output_dir <- dirname(normalizePath(data_file_name))
+}
+output_dir <- normalizePath(output_dir, mustWork = FALSE)
+
+# Make sure directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+csv_out <- file.path(output_dir, paste0(experiment_name, "_primers.csv"))
+xlsx_out <- file.path(output_dir, paste0(experiment_name, "_primers.xlsx"))
 
 # set output to HTML
 options(knitr.table.format = 'html')
@@ -164,8 +181,7 @@ data_table$Strand<- gsub("\\b0\\b", "", data_table$Strand )
 rownames(data_table) <- c()
 
 output_dir <- dirname(data_file_name)
-csv_out <- file.path(output_dir, paste0(experiment_name, "_primers.csv"))
-xlsx_out <- file.path(output_dir, paste0(experiment_name, "_primers.xlsx"))
+
 
 # Export before building HTML
 write_csv(data_table, csv_out)

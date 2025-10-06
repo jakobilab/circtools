@@ -485,15 +485,29 @@ class Primex(circ_module.circ_template.CircTemplate):
 
         # ------------------------------------ run script and check output -----------------------
 
-        primex_data_formatted = os.popen(primer_script + " " +
-                                         blast_storage_tmp + " "
-                                         + "\"" + self.experiment_title + "\""
-                                         ).read()
+        # Call the R formatter, passing the output directory as a third argument
+        primex_cmd = f'{primer_script} "{blast_storage_tmp}" "{self.experiment_title}" "{self.output_dir}"'
+        primex_data_formatted = os.popen(primex_cmd).read()
+
+
 
         with open(output_html_file, 'w') as data_store:
             data_store.write(primex_data_formatted)
 
-        print("Writing results to "+output_html_file)
+        # Define expected R-generated files
+        csv_file = os.path.join(self.output_dir, f"{self.experiment_title}_primers.csv")
+        xlsx_file = os.path.join(self.output_dir, f"{self.experiment_title}_primers.xlsx")
+
+        # Write the main HTML output
+        with open(output_html_file, 'w') as data_store:
+            data_store.write(primex_data_formatted)
+
+        # Print all final output files together
+        print("Writing results to:")
+        print("  HTML : " + output_html_file)
+        print("  CSV  : " + csv_file)
+        print("  XLSX : " + xlsx_file)
+
 
         # here we create the circular graphics for primer visualisation
         for line in primex_data_with_blast_results.splitlines():
