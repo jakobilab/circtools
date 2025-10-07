@@ -158,17 +158,17 @@ jobs:
         set -x
         cd circtools_example/primer_output
         if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../primer_master"
+          MASTER_DIR="../primer_output_master"
           diff Slc16a9_primer_primers.csv \
                 "$MASTER_DIR/Slc16a9_primer_primers.csv"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../primer_master_mac_amd"
+          MASTER_DIR="../primer_output_master_mac_amd"
           diff Slc16a9_primer_primers.csv \
                 "$MASTER_DIR/Slc16a9_primer_primers.csv"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../primer_master_mac"
+          MASTER_DIR="../primer_output_master_mac"
           diff Slc16a9_primer_primers.csv \
                 "$MASTER_DIR/Slc16a9_primer_primers.csv"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
