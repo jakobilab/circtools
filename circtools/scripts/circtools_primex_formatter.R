@@ -8,8 +8,6 @@ suppressMessages(library(RColorBrewer))
 suppressMessages(library(readr))   # for write_csv()
 suppressMessages(library(openxlsx)) # for Excel writing
 
-cat("DEBUG: running local circtools_primex_formatter.R\n")
-
 
 # suppressMessages(library(colortools))
 
