@@ -155,38 +155,27 @@ jobs:
 
     - name: Checking generated output against master output
       run: |
+        set -x
         cd circtools_example/primer_output
-        ls -la
-        wc -l *
-
         if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../primer_output_master"
+          MASTER_DIR="../primer_master"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../primer_output_master_mac_amd"
+          MASTER_DIR="../primer_master_mac_amd"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../primer_output_master_mac"
+          MASTER_DIR="../primer_master_mac"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
-
-        diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        else
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        fi
-
-    - name: Upload circtools primex (pip) artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: circtools-primex-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
-        path: |
-          circtools_example/primer_output/*.csv
-          circtools_example/primer_output/*.xlsx
-        retention-days: 2
-
 
 
 
