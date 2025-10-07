@@ -1,7 +1,9 @@
 name: circtools primex (pip)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["API Health Check"]
+    types: [completed]
   
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
