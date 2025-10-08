@@ -282,21 +282,65 @@ def process_data(configuration: str, data_path: str):
 
                     if not os.path.exists(file_name_unzipped):
 
-                        with requests.get(url, stream=True) as r:
-                            r.raise_for_status()
-                            total_size = int(
-                                r.headers.get('content-length', 0))
+                        try:
+                            with requests.get(url, stream=True, timeout=60) as r:
+                                try:
+                                    r.raise_for_status()
+                                except requests.exceptions.HTTPError as e:
+                                    print(f"Server error {r.status_code} while downloading {url}: {e}")
+                                    if os.path.exists(file_name):
+                                        os.remove(file_name)
+                                    import sys
+                                    sys.exit(1)
 
-                            with open(file_name, 'wb') as f:
-                                with tqdm(total=total_size, unit='B',
-                                          unit_scale=True,
-                                          desc="Downloading " +
-                                               config[item][
-                                                   'name']) as pbar:
-                                    for chunk in r.iter_content(
-                                            chunk_size=8192):
-                                        f.write(chunk)
-                                        pbar.update(len(chunk))
+                                except requests.exceptions.RequestException as e:
+                                    print(f"Request failed while connecting to {url}: {e}")
+                                    if os.path.exists(file_name):
+                                        os.remove(file_name)
+                                    import sys
+                                    sys.exit(1)
+
+                                total_size = int(r.headers.get('content-length', 0))
+
+                                with open(file_name, 'wb') as f:
+                                    with tqdm(total=total_size, unit='B',
+                                            unit_scale=True,
+                                            desc="Downloading " + config[item]['name']) as pbar:
+                                        for chunk in r.iter_content(chunk_size=8192):
+                                            if not chunk:
+                                                continue
+                                            f.write(chunk)
+                                            pbar.update(len(chunk))
+
+                            # --- verify download complete ---
+                            if total_size > 0 and os.path.getsize(file_name) < total_size:
+                                print(f"Incomplete download detected for {file_name}. Exiting.")
+                                if os.path.exists(file_name):
+                                    os.remove(file_name)
+                                import sys
+                                sys.exit(1)
+
+                        except requests.exceptions.Timeout:
+                            print(f"Timeout occurred while downloading {url}")
+                            if os.path.exists(file_name):
+                                os.remove(file_name)
+                            import sys
+                            sys.exit(1)
+
+                        except requests.exceptions.ConnectionError:
+                            print(f"Connection error while downloading {url}")
+                            if os.path.exists(file_name):
+                                os.remove(file_name)
+                            import sys
+                            sys.exit(1)
+
+                        except Exception as e:
+                            print(f"Unexpected error while downloading {url}: {e}")
+                            if os.path.exists(file_name):
+                                os.remove(file_name)
+                            import sys
+                            sys.exit(1)
+
 
                         # most files need to be unpacked
                         if file_type == 'gz':
