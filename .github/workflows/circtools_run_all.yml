@@ -411,38 +411,27 @@ jobs:
           -T "Slc16a9_primer" \
           -o ./primer_output/ || true
 
-    - name: Upload macOS-15 primer output as artifact
-      if: matrix.os == 'macos-15'
-      uses: actions/upload-artifact@v4
-      with:
-        name: primer_output_macos15
-        path: circtools_example/primer_output/**
-        retention-days: 7
-
-
-
 
     - name: Checking generated output against master output
       run: |
+        set -x
         cd circtools_example/primer_output
-        ls -la
-        wc -l *
-
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../primer_output_master"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
           MASTER_DIR="../primer_output_master_mac_amd"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../primer_output_master_mac"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
-
-        diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        else
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        fi
-

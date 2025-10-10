@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["API Health Check"]
     types: [completed]
-
+  
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -152,27 +152,28 @@ jobs:
 
     - name: Checking generated output against master output
       run: |
+        set -x
         cd circtools_example/primer_output
-        ls -la
-        wc -l *
-
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../primer_output_master"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
           MASTER_DIR="../primer_output_master_mac_amd"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../primer_output_master_mac"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
 
-        diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        else
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        fi
 
 
 

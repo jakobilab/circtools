@@ -56,18 +56,24 @@ jobs:
           zcat human_nanopore.fastq.gz | head -n 4000000 | gzip > human_nanopore_1M.fastq.gz
           ls -lh human_nanopore_1M.fastq.gz
 
-      - name: Download reference data
-        run: |
-          cd circtools_example
-          mkdir -p reference
-          docker run --rm \
-            -v "$(pwd):/host_rel/" \
-            -w /host_rel \
-            "${GHCR_IMAGE}" \
-            nanopore \
-              -d \
-              -R reference \
-              -C hg38
+      - name: Download reference data with retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 7200
+          command: |
+            cd circtools_example
+            mkdir -p reference
+            docker run --rm \
+              -v "$(pwd):/host_rel/" \
+              -w /host_rel \
+              "${GHCR_IMAGE}" \
+              nanopore \
+                -d \
+                -R reference \
+                -C hg38
+
 
 
 
