@@ -76,5 +76,5 @@ jobs:
         run: |
           cd circtools_example/primer_output
           MASTER_DIR="../primer_output_master"
-          diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
+          diff Slc16a9_primer_primers.csv "$MASTER_DIR/Slc16a9_primer_primers.csv"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
