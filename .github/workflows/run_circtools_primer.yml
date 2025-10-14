@@ -104,26 +104,37 @@ jobs:
       run: |
         sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
-    - name: Install BEDTools from source (v2.31.1)
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          brew update
-          brew install make zlib
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
+    - name: Install bedtools (with retry, build from source)
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 30
+        max_attempts: 3
+        retry_on: error
+        command: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+          
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            # Skip Homebrew update if network is unreliable
+            brew update || echo "brew update failed — continuing with install"
+            brew install make zlib || true
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+          
+          else
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
+          fi
+      env:
+        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
