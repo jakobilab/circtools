@@ -64,6 +64,7 @@ jobs:
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools) with retry
       uses: nick-fields/retry@v3
       with:
+        timeout_minutes: 200
         max_attempts: 3
         retry_on: error
         command: |
