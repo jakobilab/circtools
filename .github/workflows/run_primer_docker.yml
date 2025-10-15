@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run-circtest-docker:
-    name: circtools circtest (Docker)
+  run-primer-docker:
+    name: circtools primer (Docker)
     runs-on: ubuntu-24.04
     env:
       GHCR_REPO: ghcr.io/jakobilab/circtools
