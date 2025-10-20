@@ -890,6 +890,15 @@ class CircTools(object):
         group.add_argument("-A", "--refseq", dest="refseq",
                            help="Reference sequence FASTA file")
         parser.add_argument_group(group)
+        
+        parser.add_argument(
+          "--hdf5-output",
+          dest="hdf5_output",
+          help="Optional path to a single HDF5 file combining all major outputs (CircCoordinates, CircRNACount, CircSkipJunctions, LinearCount)",
+          required=False,
+          default=None
+          )
+
 
         # ciriquant merging
         group = parser.add_argument_group("CIRIquant Options", "Options for merging Circtools and CIRIquant matches")
@@ -1363,7 +1372,7 @@ class CircTools(object):
                             help='feature name separator.')
         parser.add_argument('-e', '--exonIndex', dest='exon_index', default=3, type=int,
                             help='Field indicating the exon number after splitting feature name by split_character (for the annotation file).')
-        parser.add_argument('-p', '--annotationFormat', dest='ref_platform', default='refseq',
+        parser.add_argument('-p' , '--annotationFormat', dest='ref_platform', default='refseq',
                             help='Specifies the annotation platform which was used (refseq or ensembl)')
         parser.add_argument('-s', '--skipSteps', dest='skipped_steps', default='none',
                             help='Comma separated list of steps that should be skipped (e.g. step3,step4,step6)')

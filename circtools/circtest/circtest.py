@@ -18,6 +18,8 @@
 import circ_module.circ_template
 
 
+
+
 class CircTest(circ_module.circ_template.CircTemplate):
     def __init__(self, argparse_arguments, program_name, version):
 
@@ -48,20 +50,25 @@ class CircTest(circ_module.circ_template.CircTemplate):
             self.log_entry("Output directory %s not writable." % self.cli_params.output_directory)
             # exit with -1 error if we can't use it
             exit(-1)
+            
+        detect_path = self.cli_params.detect_dir
 
-        # check DCC directory
-        if not (os.path.exists(self.cli_params.detect_dir)):
-            self.log_entry("DCC/detect data directory %s does not exist (or is not accessible)."
-                           % self.cli_params.detect_dir)
-            # exit with -1 error if we can't use it
-            exit(-1)
+        # Check whether it's an HDF5 file or a directory
+        if detect_path.endswith((".h5", ".hdf5")):
+            self.log_entry(f"Detected HDF5 input file: {detect_path}")
+            # Skip directory + file existence checks — HDF5 is handled directly in R
+        else:
+            if not os.path.exists(detect_path):
+                self.log_entry(f"DCC/detect data directory {detect_path} does not exist or is not accessible.")
+                exit(-1)
 
-        # check DCC files (only existence, not the content)
-        self.check_input_files([
-            self.cli_params.detect_dir + "CircRNACount",
-            self.cli_params.detect_dir + "LinearCount",
-            self.cli_params.detect_dir + "CircCoordinates"
-        ])
+            # Check required DCC files only for directory input
+            self.check_input_files([
+                os.path.join(detect_path, "CircRNACount"),
+                os.path.join(detect_path, "LinearCount"),
+                os.path.join(detect_path, "CircCoordinates")
+            ])
+
 
         # check sample names
         if len(self.cli_params.condition_list.split(",")) < 2:
@@ -132,7 +139,11 @@ class CircTest(circ_module.circ_template.CircTemplate):
         # ------------------------------------ need to call the correct R script here -----------------------
 
         # need to define path top R wrapper
-        primer_script = 'circtools_circtest_wrapper'
+        
+        primer_script = os.path.join(
+            os.path.dirname(__file__),
+            "../scripts/circtools_circtest_wrapper.R"
+        )
 
         # Variable number of args in a list
         args = [
@@ -157,4 +168,9 @@ class CircTest(circ_module.circ_template.CircTemplate):
         # ------------------------------------ run script and check output -----------------------
 
         import os
-        os.system(primer_script + " " + ' '.join(str(e) for e in args))
+        cmd = primer_script + " " + ' '.join(str(e) for e in args)
+        print(f"Running command: {cmd}")  # or self.log_entry(f"Running command: {cmd}")
+        os.system(cmd)
+
+                
+                

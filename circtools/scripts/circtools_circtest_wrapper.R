@@ -17,6 +17,7 @@
 
 #install.packages("/home/tjakobi/repos/dieterichlab/CircTest/", repos = NULL, type="source")
 
+
 library(CircTest)
 
 # pre load libraries so we don't get messages later:
@@ -38,12 +39,14 @@ MAX_LINES <- 50000
 
 # quiet mode
 options(echo=FALSE)
-
-# read arguments
 args <- commandArgs(trailingOnly = TRUE)
 
-# assign input to script variables
-arg_dcc_data <- args[1] # path is string
+# read arguments
+message("Raw args[1]: '", args[1], "'")
+arg_dcc_data <- trimws(gsub("['\"\r\n]", "", args[1]))
+message("Sanitized arg_dcc_data: '", arg_dcc_data, "'")
+message("basename(arg_dcc_data): '", basename(arg_dcc_data), "'")
+
 arg_replictes <- as.integer(args[2]) # integer
 arg_condition_list <- strsplit(args[3],",")[[1]] # list of strings
 arg_condition_columns <- lapply(strsplit(args[4],","), as.numeric) # list of integers
@@ -67,6 +70,7 @@ if (arg_colour_mode != "colour" & arg_colour_mode != "bw" ) {
     message("Please specify the colour model: colour or bw")
     quit()
 }
+
 
 run_CircTest = function(CircRNACount, LinearCount, CircCoordinates, groups, indicators, label, filename, filer.sample,
                         filter.count, max_fdr, max.plots, replicates, percent_filter, only_negative_direction, header, range, colour_mode) {
@@ -150,14 +154,86 @@ run_CircTest = function(CircRNACount, LinearCount, CircCoordinates, groups, indi
 ###########################################################
 
 ## load complete data set
-message("Loading CircRNACount")
-CircRNACount <- read.delim(paste(arg_dcc_data, "CircRNACount", sep="/"), header = T)
+## load complete data set
+# --- HDF5 OR directory detection ---
+if (grepl("\\.h5$|\\.hdf5$", basename(arg_dcc_data), ignore.case = TRUE)) {
+  message("Detected HDF5 input file: ", arg_dcc_data)
+  suppressMessages(library(rhdf5))
+  
+  keys <- h5ls(arg_dcc_data)$name
+  message("Available datasets: ", paste(keys, collapse = ", "))
 
-message("Loading LinearRNACount")
-LinearCount <- read.delim(paste(arg_dcc_data, "LinearCount", sep="/"), header = T)
+  safe_h5_read <- function(file, key) {
+    if (key %in% h5ls(file)$name) {
+      df <- as.data.frame(h5read(file, key))
+      return(df)
+    } else {
+      stop(paste("Dataset", key, "not found in", file))
+    }
+  }
 
-message("Loading CircCoordinates")
-CircCoordinates <- read.delim(paste(arg_dcc_data, "CircCoordinates", sep="/"), header = T)
+  message("Loading CircRNACount from HDF5")
+  CircRNACount <- safe_h5_read(arg_dcc_data, "CircRNACount")
+
+  message("Loading LinearCount from HDF5")
+  LinearCount <- safe_h5_read(arg_dcc_data, "LinearCount")
+
+  message("Loading CircCoordinates from HDF5")
+  CircCoordinates <- safe_h5_read(arg_dcc_data, "CircCoordinates")
+
+  message("Loaded all datasets from HDF5")
+
+} else {
+  # --- Classic directory input ---
+  message("Loading CircRNACount File")
+  CircRNACount <- read.delim(file.path(arg_dcc_data, "CircRNACount"), header = TRUE)
+  
+  message("Loading LinearRNACount FIle")
+  LinearCount <- read.delim(file.path(arg_dcc_data, "LinearCount"), header = TRUE)
+  
+  message("Loading CircCoordinates File")
+  CircCoordinates <- read.delim(file.path(arg_dcc_data, "CircCoordinates"), header = TRUE)
+}
+
+# --- Ensure Strand column exists in LinearCount and CircRNACount ---
+# --- Standardize and order columns for all datasets ---
+
+# canonical coordinate order
+# --- Standardize and order columns for all datasets ---
+coord_cols <- c("Chr", "Start", "End", "Strand")
+
+order_columns <- function(df, name) {
+  # add missing coordinate columns *before* reordering
+  if (!"Chr" %in% colnames(df)) {
+    message(paste("➕ Adding missing Chr column to", name))
+    df$Chr <- NA
+  }
+  if (!"Start" %in% colnames(df)) {
+    message(paste("➕ Adding missing Start column to", name))
+    df$Start <- NA
+  }
+  if (!"End" %in% colnames(df)) {
+    message(paste("➕ Adding missing End column to", name))
+    df$End <- NA
+  }
+  if (!"Strand" %in% colnames(df)) {
+    message(paste("➕ Adding missing Strand column to", name))
+    df$Strand <- "+"
+  }
+
+  # now reorder cleanly
+  present_coords <- intersect(coord_cols, colnames(df))
+  remaining_cols <- setdiff(colnames(df), present_coords)
+  df <- df[, c(present_coords, remaining_cols), drop = FALSE]
+
+  message(paste("✅ Ordered columns for", name, "→", paste(colnames(df)[1:6], collapse = ", "), "..."))
+  return(df)
+}
+
+CircCoordinates <- order_columns(CircCoordinates, "CircCoordinates")
+CircRNACount    <- order_columns(CircRNACount, "CircRNACount")
+LinearCount     <- order_columns(LinearCount, "LinearCount")
+
 
 group_length <- length(arg_condition_list)
 

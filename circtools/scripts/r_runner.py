@@ -17,6 +17,8 @@
 
 # runner idea from https://stackoverflow.com/a/73649412/1900920
 
+
+
 import subprocess
 import sys
 import circtools as _
@@ -29,6 +31,7 @@ def _run(r_script):
 
 
 def circtools_circtest_wrapper():
+    print(f"running crictest wrapper {base_path} ")
     return _run("Rscript " +
                 base_path + "/scripts/circtools_circtest_wrapper.R " +
                 " ".join(sys.argv[1:]))

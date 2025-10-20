@@ -33,6 +33,7 @@ from . import findcircRNA as Fc
 from . import genecount as Gc
 from .fix2chimera import Fix2Chimera
 from . import CombineCirctoolsCiriquant as Ccc
+import pandas as pd, h5py
 
 import circ_module.circ_template
 
@@ -116,6 +117,15 @@ class Detect(circ_module.circ_template.CircTemplate):
         output_circ_counts = options.out_dir + "CircRNACount"
         output_linear_counts = options.out_dir + "LinearCount"
         output_skips = options.out_dir + "CircSkipJunctions"
+        
+        # If HDF5 output is requested, suppress final text outputs
+        if getattr(options, "hdf5_output", None):
+            print(f"[HDF5] Detected HDF5 mode — suppressing .txt output files.")
+            output_coordinates = os.path.join(options.tmp_dir, "CircCoordinates")
+            output_circ_counts = os.path.join(options.tmp_dir, "CircRNACount")
+            output_linear_counts = os.path.join(options.tmp_dir, "LinearCount")
+            output_skips = os.path.join(options.tmp_dir, "CircSkipJunctions")
+
 
         circfiles = []  # A list for .circRNA file names
 
@@ -582,6 +592,37 @@ class Detect(circ_module.circ_template.CircTemplate):
                 cq.merging(options.list_ciriquant[0], output_circ_counts,
                            output_coordinates, output_linear_counts, 
                            options.cleanup, options.out_dir)
+                # ✅ Add HDF5 export for final results only
+
+
+        def write_dataframe_to_hdf5(df, h5_filename, key):
+            with h5py.File(h5_filename, "a") as h5:
+                if key in h5:
+                    del h5[key]
+                group = h5.create_group(key)
+                for col in df.columns:
+                    group.create_dataset(col, data=df[col].astype(str).values)
+
+        if getattr(options, "hdf5_output", None):
+            print(f"[HDF5] Exporting final results to {options.hdf5_output} ...")
+            files_dict = {
+                "CircCoordinates": output_coordinates,
+                "CircRNACount": output_circ_counts,
+                "LinearCount": output_linear_counts,
+                "CircSkipJunctions": output_skips
+            }
+
+            for key, path in files_dict.items():
+                if not os.path.exists(path):
+                    print(f"[HDF5] ⚠️ Missing file: {path}")
+                    continue
+                try:
+                    df = pd.read_csv(path, sep="\t", comment="#", low_memory=False)
+                    write_dataframe_to_hdf5(df, options.hdf5_output, key)
+                    print(f"[HDF5] ✅ Wrote {key}")
+                except Exception as e:
+                    print(f"[HDF5] ⚠️ Could not write {key}: {e}")
+
 
 
 def fixall(joinedfnames, mate1filenames, mate2filenames, out_dir, tmp_dir):
@@ -715,7 +756,6 @@ def convertjunctionfile2bamfile(junctionfilelist):
     # only works for STAR-like names: Aligned.noS.bam
     def getbamfname(junctionfname):
         import re
-        import os
         # Get the stored directory
         dirt = "/".join((junctionfname.split("/")[:-1])) + "/"
         p = r".*Aligned\..*bam"
