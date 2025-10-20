@@ -2,9 +2,7 @@ name: circtools primex (docker)
 
 
 on:
-  workflow_run:
-    workflows: ["Multi-arch docker container", "Multi-arch docker nightly"]
-    types: [completed]
+  push:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +18,7 @@ jobs:
       - name: Set image tag based on triggering workflow
         run: |
           if [[ "${{ github.event.workflow_run.workflow }}" == "Multi-arch docker nightly" ]]; then
-            echo "GHCR_IMAGE=${GHCR_REPO}:nightly" >> $GITHUB_ENV
+            echo "GHCR_IMAGE=${GHCR_REPO}:master" >> $GITHUB_ENV
           else
             echo "GHCR_IMAGE=${GHCR_REPO}:latest" >> $GITHUB_ENV
           fi
