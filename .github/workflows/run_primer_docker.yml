@@ -17,15 +17,21 @@ jobs:
     env:
       GHCR_REPO: ghcr.io/jakobilab/circtools
     steps:
-      - name: Set image tag based on triggering workflow
+      - name: Set image tag based on triggering workflow ref
         run: |
-          WORKFLOW="$(echo "${{ github.event.workflow_run.workflow }}" | xargs)"
-          if [[ "$WORKFLOW" == "Multi-arch docker nightly" ]]; then
-            echo "GHCR_IMAGE=${GHCR_REPO}:nightly" >> $GITHUB_ENV
-          else
+          REF="${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_ref }}"
+          
+          echo "Triggered by ref: $REF"
+
+          if [[ "$REF" == refs/tags/* ]]; then
+            echo "Tag push detected → using normal Docker build (latest)"
             echo "GHCR_IMAGE=${GHCR_REPO}:latest" >> $GITHUB_ENV
+          else
+            echo "Non-tag build → using nightly image"
+            echo "GHCR_IMAGE=${GHCR_REPO}:nightly" >> $GITHUB_ENV
           fi
-          echo "Using image: $(cat $GITHUB_ENV | grep GHCR_IMAGE)"
+
+          echo "Using image: $(grep GHCR_IMAGE $GITHUB_ENV)"
 
 
       - name: Checkout repo
