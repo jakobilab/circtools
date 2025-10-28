@@ -44,7 +44,7 @@ jobs:
                 libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
             python3 -m pip install ./
          fi
-         if [ "$RUNNER_OS" == "macOS" ]; then
+         if [ "$RUNNER_OS" == "macOS"]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
