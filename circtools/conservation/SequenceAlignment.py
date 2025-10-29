@@ -1,6 +1,7 @@
 from Bio import AlignIO
-from Bio.Align.Applications import MafftCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
+from scripts.MafftCommandLine import MafftCommandline
+import subprocess
 import matplotlib.pyplot as plt
 from Bio import Phylo
 from itertools import combinations
