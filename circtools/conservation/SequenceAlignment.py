@@ -1,6 +1,5 @@
 from Bio import AlignIO
 from Bio.Phylo.TreeConstruction import DistanceCalculator
-from scripts.MafftCommandLine import MafftCommandline
 import subprocess
 import matplotlib.pyplot as plt
 from Bio import Phylo
@@ -19,6 +18,7 @@ class Alignment(object):
         temp_name = circle_name.split("_")
         self.circle_name = temp_name[0] + "(" + temp_name[1] + ":" + temp_name[2] + "-" + temp_name[3] + ")"
         self.output_dir = output_dir
+        
 
     def alignment_to_distance_matrix(self):
         # convert the output from mafft into a distance matrix
@@ -56,12 +56,27 @@ class Alignment(object):
         print(f"Running MAFFT from: {mafft_utility}")
 
         self.out_fasta = self.fasta_file + ".aligned"
+        
+        cmd = [
+            mafft_utility,
+            "--clustalout",
+            "--treeout",
+            self.fasta_file
+        ]
 
-        mafft_cline = MafftCommandline(mafft_utility,input=self.fasta_file, clustalout=True, treeout=True)
-        stdout, stderr = mafft_cline()
 
-        with open(self.out_fasta, "w") as handle:
-            handle.write(stdout)
+        print(f"Running command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        with open(self.out_fasta, "w") as f:
+            f.write(result.stdout)
+
+        # Check for errors
+        if result.returncode != 0:
+            print("MAFFT failed:")
+            print(result.stderr)
+        else:
+            print(f"Alignment written to: {self.out_fasta}")
+            print(f"Guide tree written to: {self.fasta_file}.tree")
 
         self.alignment_to_distance_matrix()
 
