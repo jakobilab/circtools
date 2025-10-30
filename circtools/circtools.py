@@ -900,6 +900,67 @@ class CircTools(object):
         group.add_argument("-S", "--cleanup", dest="cleanup", help="String to be removed from each sample name so that the names of Circtools and CIRIquant are the same [Default: \"_STARmapping.*Chimeric.out.junction\"]", default="*Chimeric.out.junction")
         parser.add_argument_group(group)
         
+        
+        # Pre-parse validation for missing '@' prefixes and missing values
+
+        argv = sys.argv[2:]  # skip "circtools detect"
+
+     # Positional Input check (samplesheet or junctions)
+        if len(argv) == 0 or argv[0].startswith('-'):
+          print("ERROR: Missing required Input argument (e.g., @samplesheet or Chimeric.out.junction file).")
+          sys.exit(1)
+
+        first_arg = argv[0]
+        if os.path.isfile(first_arg) and not first_arg.startswith("@"):
+          print(
+               f"ERROR: Detected file '{first_arg}' provided as Input.\n"
+               f"If this is a samplesheet, it must be prefixed with '@'.\n"
+               f"Example: circtools detect @{first_arg}"
+          )
+          sys.exit(1)
+
+          if first_arg.startswith("@"):
+               fpath = first_arg[1:]
+          if not os.path.isfile(fpath):
+               print(f"ERROR: Samplesheet file '{fpath}' not found.")
+               sys.exit(1)
+
+     # Flags
+        flags_to_check = {
+        "-B": "BAM file list",
+        "-mt1": "mate1 list",
+        "-mt2": "mate2 list",
+        }
+
+        for i, arg in enumerate(argv):
+          if arg in flags_to_check:
+               desc = flags_to_check[arg]
+
+               # Case 1: flag with no following value
+               if i == len(argv) - 1 or argv[i + 1].startswith("-"):
+                    print(f"ERROR: Missing value after {arg} ({desc}).")
+                    sys.exit(1)
+
+               next_arg = argv[i + 1]
+
+               # Case 2: file exists but no '@' prefix
+               if os.path.isfile(next_arg) and not next_arg.startswith("@"):
+                    print(
+                         f"ERROR: Detected file '{next_arg}' after {arg}.\n"
+                         f"You must prefix list files with '@'.\n"
+                         f"Example: {arg} @{next_arg}"
+                    )
+                    sys.exit(1)
+
+               # Case 3: '@file' given but file missing
+               if next_arg.startswith("@"):
+                    fpath = next_arg[1:]
+                    if not os.path.isfile(fpath):
+                         print(f"ERROR: List file '{fpath}' referenced by {arg} not found.")
+                         sys.exit(1)
+
+
+        
 
         args = parser.parse_args(sys.argv[2:])
 
