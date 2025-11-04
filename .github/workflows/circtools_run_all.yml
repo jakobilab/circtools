@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-14, macos-15-arm64, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
+        # os: [ macos-14, macos-15-arm64, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
+        os: [ macos-15-intel ]
         R:  [ '4.5.1' ]
         python-version: ["3.14"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -44,7 +45,7 @@ jobs:
                 libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
             python3 -m pip install ./
          fi
-         if [ "$RUNNER_OS" == "macOS"]; then
+         if [ "$RUNNER_OS" == "macOS" ]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
