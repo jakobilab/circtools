@@ -1,7 +1,9 @@
 name: circtools detect (pip)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["API Health Check"]
+    types: [completed]
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
@@ -14,10 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ macos-14, macos-15-arm64, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
-        os: [ macos-15-intel ]
+        os: [ macos-14, macos-15-arm64, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
         R: ['4.4.0', '4.5.1']
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
@@ -44,11 +45,10 @@ jobs:
                 libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
             python3 -m pip install ./
          fi
-         if [ "$RUNNER_OS" == "macOS" ]; then
+         if [ "$RUNNER_OS" == "macOS"]; then
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
-            brew install xz
             python3 -m pip install ./
          else
             python3 -m pip install ./
