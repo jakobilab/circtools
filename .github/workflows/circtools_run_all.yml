@@ -48,6 +48,7 @@ jobs:
             export SYSTEM_VERSION_COMPAT=1
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
+            brew install xz
             python3 -m pip install ./
          else
             python3 -m pip install ./
