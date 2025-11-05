@@ -36,7 +36,12 @@
 
 ## Software Status
 
-#### Tested on Ubuntu 24.04, Ubuntu 22.04, macOS 13 (Intel), and macOS 15 (Apple Silicon).
+#### Tested on 
+<ul><li>Ubuntu 24.04</li>
+  <li>Ubuntu 22.04</li> 
+  <li>macOS 15 (Intel)</li> 
+  <li>macOS 15 (Apple Silicon)</li> 
+  <li>macOS 26 (Apple Silicon)</li> </ul>
 
 `pip` workflows are tested daily across R versions 4.4.0 and 4.5.1, and Python versions 3.8 through 3.13.
 
