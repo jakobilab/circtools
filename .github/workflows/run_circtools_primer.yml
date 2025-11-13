@@ -177,11 +177,6 @@ jobs:
             -T "Slc16a9_primer" \
             -o ./primer_output/
 
-
-
-
-
-
     - name: Checking generated output against master output
       run: |
         set -x
