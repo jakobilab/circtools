@@ -14,432 +14,454 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15,ubuntu-24.04 ]
-        R:  [ '4.5.1' ]
-        python-version: ["3.13"]
+        os: [macos-14, macos-15-arm64, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04]
+        R: ['4.5.1']
+        python-version: ['3.14']
+
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+
     steps:
-    - name: Create files
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.ref }}
-        fetch-depth: 0   # full history to allow diff/merge
-        persist-credentials: false
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Updating setuptools
-      run: |
-         python3 -m pip install -U pip setuptools
-    - name: Installing circtools & Python dependencies
-      run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y \
-                make g++ zlib1g-dev \
-                libblas-dev libatlas-base-dev liblapack-dev \
-                libcurl4-openssl-dev libssl-dev libxml2-dev \
-                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-            python3 -m pip install ./
-         fi
-         if [ "$RUNNER_OS" == "macOS"]; then
-            export SYSTEM_VERSION_COMPAT=1
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'      # 🧠 enable pip caching for all environments
+
+      - name: Update pip & setuptools
+        run: python3 -m pip install -U pip setuptools wheel
+
+      - name: Install build tools and fix ARCHFLAGS for macOS Intel
+        if: matrix.os == 'macos-15-intel'
+        run: |
+          echo "Applying macOS Intel-specific build setup"
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
+          brew install xz pkg-config make autoconf automake libtool || true
+          export LDFLAGS="-L/opt/homebrew/lib"
+          export CPPFLAGS="-I/opt/homebrew/include"
+          export ARCHFLAGS="-arch x86_64"
+          # Disable LZMA if headers still not found
+          export HTSLIB_CONFIGURE_OPTIONS="--disable-lzma"
+          python3 -m pip install -v ./
+
+      - name: Install dependencies on macOS ARM
+        if: startsWith(matrix.os, 'macos-15-arm64') || matrix.os == 'macos-26'
+        run: |
+          brew install xz pkg-config || true
+          python3 -m pip install ./
+
+      - name: Install dependencies on macOS 14
+        if: matrix.os == 'macos-14'
+        run: |
+          brew install xz pkg-config || true
+          python3 -m pip install ./
+
+      - name: Install Linux dependencies
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+              make g++ zlib1g-dev \
+              libblas-dev libatlas-base-dev liblapack-dev \
+              libcurl4-openssl-dev libssl-dev libxml2-dev \
+              libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+              libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+          python3 -m pip install ./
+
 
     
-    - name: Set up R
-      id: setup-r
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-      continue-on-error: true
+      - name: Set up R
+        id: setup-r
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.R }}
+        continue-on-error: true
 
-    - name: Retry Set up R if failed
-      if: steps.setup-r.outcome == 'failure'
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
+      - name: Retry Set up R if failed
+        if: steps.setup-r.outcome == 'failure'
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.R }}
 
-    - name: Install R dependencies (with retry, prefer binaries)
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 40  
-        max_attempts: 3
-        retry_on: error
-        command: |
-          # Configure CRAN binaries on Linux runners
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            UBUNTU_VERSION=$(lsb_release -cs)  # e.g. jammy, noble
-            echo "options(repos = c(RSPM = sprintf('https://packagemanager.posit.co/cran/__linux__/%s/latest', '$UBUNTU_VERSION')))" >> ~/.Rprofile
+      - name: Install R dependencies (with retry, prefer binaries)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 40  
+          max_attempts: 3
+          retry_on: error
+          command: |
+            # Configure CRAN binaries on Linux runners
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              UBUNTU_VERSION=$(lsb_release -cs)  # e.g. jammy, noble
+              echo "options(repos = c(RSPM = sprintf('https://packagemanager.posit.co/cran/__linux__/%s/latest', '$UBUNTU_VERSION')))" >> ~/.Rprofile
+            fi
+
+            # Run your dependency installer
+            Rscript circtools/scripts/install_R_dependencies.R $(pwd)
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+
+    
+      - name: Checking library loading
+        run: Rscript -e 'library(primex)'
+      - name: Check if circtools starts
+        run: |
+          circtools --version
+          which circtools
+
+
+      - name: Fix zcat on macOS
+        if: runner.os == 'macOS'
+        run: |
+          sudo ln -sf $(which gzcat) /usr/local/bin/zcat
+
+      - name: Install bedtools (with retry, build from source)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+              tar -xzf bedtools-2.31.1.tar.gz
+              cd bedtools2
+              make -j4
+              sudo cp bin/* /usr/local/bin/
+            
+            elif [ "$RUNNER_OS" = "macOS" ]; then
+              # Skip Homebrew update if network is unreliable
+              brew update || echo "brew update failed — continuing with install"
+              brew install make zlib || true
+              wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+              tar -xzf bedtools-2.31.1.tar.gz
+              cd bedtools2
+              make -j4
+              sudo cp bin/* /usr/local/bin/
+            
+            else
+              echo "Unsupported OS: $RUNNER_OS" >&2
+              exit 1
+            fi
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Unpack test dataset
+        run: |
+          tar xvf ./tests/data/circtools_example.tar.bz2
+          cd circtools_example
+
+          if [ -f genome.fa.gz ]; then 
+            echo "Decompressing genome.fa.gz..."
+            gunzip -f genome.fa.gz
+          fi
+          if [ -f annotation.gtf.gz ]; then 
+            echo "Decompressing annotation.gtf.gz..."
+            gunzip -f annotation.gtf.gz
           fi
 
-          # Run your dependency installer
-          Rscript circtools/scripts/install_R_dependencies.R $(pwd)
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          echo "Checking for expected files:"
+          ls -lh genome.fa annotation.gtf || true
 
 
+      - name: Running circtools detect with minimal data set
+        run: |
+          cd circtools_example
+          circtools detect \
+            @samplesheet \
+            -ss -T 2 -D \
+            -an annotation.gtf \
+            -A genome.fa \
+            -B @bam_files.txt \
+            -D -M -G \
+            -Nr 5 6 \
+            -O ./circtools_ci -k
 
+      - name: Checking generated output against master output
+        run: |
+          cd circtools_example
+          cd circtools_ci
+          ls -la
+          wc -l *
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              MASTER_DIR="../circtools_ci_master"
+              diff CircRNACount "$MASTER_DIR/CircRNACount"
+              sha1sum -c "$MASTER_DIR/sha1sums.txt"
+            elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+              MASTER_DIR="../circtools_ci_master_mac_amd"
+              diff CircRNACount "$MASTER_DIR/CircRNACount"
+              shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+            elif [ "$RUNNER_OS" = "macOS" ]; then
+              MASTER_DIR="../circtools_ci_master_mac"
+              diff CircRNACount "$MASTER_DIR/CircRNACount"
+              shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+            else
+              echo "Unsupported OS: $RUNNER_OS" >&2
+              exit 1
+            fi
+      - name: Fix missing Strand column (if needed)
+        run: |
+          cd circtools_example/circtools_ci_master
+          if [ "$(head -n1 LinearCount | awk -F'\t' '{sum=0; for(i=1;i<=NF;i++) if($i=="Strand") sum++; print sum}')" -eq 0 ]; then
+            echo "➕ Adding missing Strand column..."
+            awk 'BEGIN {OFS=FS="\t"}
+                NR==1 {
+                  for (i=1; i<=NF; i++) {
+                    if (i==4) printf "Strand%s", OFS;
+                    printf "%s%s", $i, (i<NF ? OFS : ORS)
+                  }
+                  next
+                }
+                {
+                  for (i=1; i<=NF; i++) {
+                    if (i==4) printf "+%s", OFS;
+                    printf "%s%s", $i, (i<NF ? OFS : ORS)
+                  }
+                }' LinearCount > LinearCount_fixed && mv LinearCount_fixed LinearCount
+          else
+            echo "✅ Strand column already exists — skipping."
+          fi
 
-   
-    - name: Checking library loading
-      run: Rscript -e 'library(primex)'
-    - name: Check if circtools starts
-      run: |
-         circtools --version
-         which circtools
+      - name: Run circtest
+        run: |
+          cd circtools_example
+          circtools circtest \
+            -d ./circtools_ci_master/ \
+            -c 5,6,7 \
+            -g 2,1,1 \
+            -l control,treatment \
+            -r 3 \
+            -f 0.9 \
+            -p 0.01 \
+            -s 1 \
+            -C 1 \
+            -o ./circtest_output \
+            -n test_output \
+            -M bw
 
+      - name: Check outputs (tolerant CSV + strict hashes for non-CSV)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd circtools_example/circtest_output
+          ls -la
+          wc -l *
 
-    - name: Fix zcat on macOS
-      if: runner.os == 'macOS'
-      run: |
-        sudo ln -sf $(which gzcat) /usr/local/bin/zcat
-
-    - name: Install bedtools (with retry, build from source)
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 30
-        max_attempts: 3
-        retry_on: error
-        command: |
           if [ "$RUNNER_OS" = "Linux" ]; then
-            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-            tar -xzf bedtools-2.31.1.tar.gz
-            cd bedtools2
-            make -j4
-            sudo cp bin/* /usr/local/bin/
-          
+            MASTER_DIR="../circtest_output_master"
+            HASH_TOOL="sha1sum"
+          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+            MASTER_DIR="../circtest_output_master_mac_amd"
+            HASH_TOOL="shasum -a 1"
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            # Skip Homebrew update if network is unreliable
-            brew update || echo "brew update failed — continuing with install"
-            brew install make zlib || true
-            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-            tar -xzf bedtools-2.31.1.tar.gz
-            cd bedtools2
-            make -j4
-            sudo cp bin/* /usr/local/bin/
-          
+            MASTER_DIR="../circtest_output_master_mac"
+            HASH_TOOL="shasum -a 1"
           else
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          
+          export MASTER_DIR HASG_TOOL
 
-    - name: Unpack test dataset
-      run: |
-        tar xvf ./tests/data/circtools_example.tar.bz2
-        cd circtools_example
+          # ---------- Tolerant CSV comparison ----------
+          python - <<'PY'
+          import csv, math, os, sys
 
-        if [ -f genome.fa.gz ]; then 
-          echo "Decompressing genome.fa.gz..."
-          gunzip -f genome.fa.gz
-        fi
-        if [ -f annotation.gtf.gz ]; then 
-          echo "Decompressing annotation.gtf.gz..."
-          gunzip -f annotation.gtf.gz
-        fi
+          ATOL = 1e-6
+          RTOL = 1e-9
+          MAX_REPORT = 20
 
-        echo "Checking for expected files:"
-        ls -lh genome.fa annotation.gtf || true
+          def is_float(s):
+              try:
+                  float(s)
+                  return True
+              except Exception:
+                  return False
 
+          def rows_equal(a, b, atol=ATOL, rtol=RTOL):
+              if len(a) != len(b):
+                  return False, "different column count"
+              for idx, (x, y) in enumerate(zip(a, b), 1):
+                  if is_float(x) and is_float(y):
+                      fx, fy = float(x), float(y)
+                      if not math.isclose(fx, fy, rel_tol=rtol, abs_tol=atol):
+                          return False, f"numeric mismatch col {idx}: {fx} vs {fy}"
+                  else:
+                      if x != y:
+                          return False, f"string mismatch col {idx}: '{x}' vs '{y}'"
+              return True, ""
 
-    - name: Running circtools detect with minimal data set
-      run: |
-        cd circtools_example
-        circtools detect \
-          @samplesheet \
-          -ss -T 2 -D \
-          -an annotation.gtf \
-          -A genome.fa \
-          -B @bam_files.txt \
-          -D -M -G \
-          -Nr 5 6 \
-          -O ./circtools_ci -k
+          md = os.environ["MASTER_DIR"]
+          test_p = "test_output.csv"
+          gold_p = os.path.join(md, "test_output.csv")
 
-    - name: Checking generated output against master output
-      run: |
-         cd circtools_example
-         cd circtools_ci
-         ls -la
-         wc -l *
+          mismatches = 0
+          reported = 0
+
+          with open(test_p, newline='') as f1, open(gold_p, newline='') as f2:
+              r1, r2 = csv.reader(f1, delimiter='\t'), csv.reader(f2, delimiter='\t')
+              for i, (a, b) in enumerate(zip(r1, r2), start=1):
+                  eq, why = rows_equal(a, b)
+                  if not eq:
+                      mismatches += 1
+                      if reported < MAX_REPORT:
+                          print(f"::warning::CSV diff at line {i}: {why}")
+                          print(f"::warning::  test: {a}")
+                          print(f"::warning::  gold: {b}")
+                          reported += 1
+
+          test_lines = sum(1 for _ in open(test_p, 'r'))
+          gold_lines = sum(1 for _ in open(gold_p, 'r'))
+          if test_lines != gold_lines:
+              print(f"::warning::CSV line count differs: test={test_lines}, gold={gold_lines}")
+              mismatches += abs(test_lines - gold_lines)
+
+          with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as s:
+              if mismatches == 0:
+                  s.write(f"✅ CSV matches within tolerance (abs≤{ATOL}, rel≤{RTOL}).\\n")
+              else:
+                  s.write(f"⚠️ CSV has {mismatches} line-level differences (reported up to {MAX_REPORT}); allowing pass.\\n")
+
+          sys.exit(0)
+          PY
+
+          # ---------- Strict hashes for non-CSV artifacts ----------
+          if [ -f "$MASTER_DIR/sha1sums.txt" ]; then
+            TMP_SHA="$(mktemp)"
+            grep -v ' test_output\.csv$' "$MASTER_DIR/sha1sums.txt" > "$TMP_SHA" || true
+            if [ -s "$TMP_SHA" ]; then
+              echo "Verifying hashes for non-CSV artifacts:"
+              $HASH_TOOL -c "$TMP_SHA"
+            else
+              echo "No non-CSV hashes to verify."
+            fi
+            rm -f "$TMP_SHA"
+          else
+            echo "::warning::No sha1sums.txt found in $MASTER_DIR; skipping hash verification."
+          fi
+
+      - name: Run padlock
+        run: |
+          cd circtools_example
+          mkdir -p padlock_output
+          circtools padlock \
+            -f ./genome.fa \
+            -g ./annotation.gtf \
+            -O mm \
+            -G Slc16a9 \
+            -T Slc16a9_padlock_design \
+            -r 1 \
+            -b \
+            -o ./padlock_output
+
+      - name: Checking generated output against master output
+        run: |
+          cd circtools_example/padlock_output
+          ls -la
+          wc -l *
+
           if [ "$RUNNER_OS" = "Linux" ]; then
-            MASTER_DIR="../circtools_ci_master"
-            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            MASTER_DIR="../padlock_output_master"
+          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+            MASTER_DIR="../padlock_output_master_mac_amd"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            MASTER_DIR="../padlock_output_master_mac"
+          else
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
+          fi
+
+          diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sha1sum -c "$MASTER_DIR/sha1sums.txt"
+          else
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+          fi
+      - name: Run conservation with PDF output
+        env:
+          MPLBACKEND: pdf
+          MPLCONFIGDIR: ${{ github.workspace }}/.mplconfig
+        run: |
+          cd circtools_example
+          mkdir -p conservation/temp "$MPLCONFIGDIR"
+          circtools conservation \
+            -d ./circtools_ci_master/CircCoordinates \
+            -f ./genome.fa \
+            -g ./annotation.gtf \
+            -O mm \
+            -G Map3k5 \
+            -o ./conservation/ \
+            -t ./conservation/temp/ \
+            -TS hs \
+            -pairwise
+
+
+      - name: Checking generated output against master output
+        run: |
+          set -x
+          cd circtools_example/conservation
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            MASTER_DIR="../conservation_master"
+            diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                  "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
             sha1sum -c "$MASTER_DIR/sha1sums.txt"
           elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-            MASTER_DIR="../circtools_ci_master_mac_amd"
-            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            MASTER_DIR="../conservation_master_mac_amd"
+            diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                  "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            MASTER_DIR="../circtools_ci_master_mac"
-            diff CircRNACount "$MASTER_DIR/CircRNACount"
+            MASTER_DIR="../conservation_master_mac"
+            diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
+                  "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
           else
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
-    - name: Fix missing Strand column (if needed)
-      run: |
-        cd circtools_example/circtools_ci_master
-        if [ "$(head -n1 LinearCount | awk -F'\t' '{sum=0; for(i=1;i<=NF;i++) if($i=="Strand") sum++; print sum}')" -eq 0 ]; then
-          echo "➕ Adding missing Strand column..."
-          awk 'BEGIN {OFS=FS="\t"}
-               NR==1 {
-                 for (i=1; i<=NF; i++) {
-                   if (i==4) printf "Strand%s", OFS;
-                   printf "%s%s", $i, (i<NF ? OFS : ORS)
-                 }
-                 next
-               }
-               {
-                 for (i=1; i<=NF; i++) {
-                   if (i==4) printf "+%s", OFS;
-                   printf "%s%s", $i, (i<NF ? OFS : ORS)
-                 }
-               }' LinearCount > LinearCount_fixed && mv LinearCount_fixed LinearCount
-        else
-          echo "✅ Strand column already exists — skipping."
-        fi
+      - name: Run primex
+        run: |
+          cd circtools_example
+          mkdir -p primer_output
+          circtools primex \
+            -d ./circtools_ci_master/CircCoordinates \
+            -f ./genome.fa \
+            -g ./annotation.gtf \
+            -O mm \
+            -G Slc16a9 \
+            -T "Slc16a9_primer" \
+            -o ./primer_output/ || true
 
-    - name: Run circtest
-      run: |
-        cd circtools_example
-        circtools circtest \
-          -d ./circtools_ci_master/ \
-          -c 5,6,7 \
-          -g 2,1,1 \
-          -l control,treatment \
-          -r 3 \
-          -f 0.9 \
-          -p 0.01 \
-          -s 1 \
-          -C 1 \
-          -o ./circtest_output \
-          -n test_output \
-          -M bw
 
-    - name: Check outputs (tolerant CSV + strict hashes for non-CSV)
-      shell: bash
-      run: |
-        set -euo pipefail
-        cd circtools_example/circtest_output
-        ls -la
-        wc -l *
-
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../circtest_output_master"
-          HASH_TOOL="sha1sum"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../circtest_output_master_mac_amd"
-          HASH_TOOL="shasum -a 1"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../circtest_output_master_mac"
-          HASH_TOOL="shasum -a 1"
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
-        
-        export MASTER_DIR HASG_TOOL
-
-        # ---------- Tolerant CSV comparison ----------
-        python - <<'PY'
-        import csv, math, os, sys
-
-        ATOL = 1e-6
-        RTOL = 1e-9
-        MAX_REPORT = 20
-
-        def is_float(s):
-            try:
-                float(s)
-                return True
-            except Exception:
-                return False
-
-        def rows_equal(a, b, atol=ATOL, rtol=RTOL):
-            if len(a) != len(b):
-                return False, "different column count"
-            for idx, (x, y) in enumerate(zip(a, b), 1):
-                if is_float(x) and is_float(y):
-                    fx, fy = float(x), float(y)
-                    if not math.isclose(fx, fy, rel_tol=rtol, abs_tol=atol):
-                        return False, f"numeric mismatch col {idx}: {fx} vs {fy}"
-                else:
-                    if x != y:
-                        return False, f"string mismatch col {idx}: '{x}' vs '{y}'"
-            return True, ""
-
-        md = os.environ["MASTER_DIR"]
-        test_p = "test_output.csv"
-        gold_p = os.path.join(md, "test_output.csv")
-
-        mismatches = 0
-        reported = 0
-
-        with open(test_p, newline='') as f1, open(gold_p, newline='') as f2:
-            r1, r2 = csv.reader(f1, delimiter='\t'), csv.reader(f2, delimiter='\t')
-            for i, (a, b) in enumerate(zip(r1, r2), start=1):
-                eq, why = rows_equal(a, b)
-                if not eq:
-                    mismatches += 1
-                    if reported < MAX_REPORT:
-                        print(f"::warning::CSV diff at line {i}: {why}")
-                        print(f"::warning::  test: {a}")
-                        print(f"::warning::  gold: {b}")
-                        reported += 1
-
-        test_lines = sum(1 for _ in open(test_p, 'r'))
-        gold_lines = sum(1 for _ in open(gold_p, 'r'))
-        if test_lines != gold_lines:
-            print(f"::warning::CSV line count differs: test={test_lines}, gold={gold_lines}")
-            mismatches += abs(test_lines - gold_lines)
-
-        with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as s:
-            if mismatches == 0:
-                s.write(f"✅ CSV matches within tolerance (abs≤{ATOL}, rel≤{RTOL}).\\n")
-            else:
-                s.write(f"⚠️ CSV has {mismatches} line-level differences (reported up to {MAX_REPORT}); allowing pass.\\n")
-
-        sys.exit(0)
-        PY
-
-        # ---------- Strict hashes for non-CSV artifacts ----------
-        if [ -f "$MASTER_DIR/sha1sums.txt" ]; then
-          TMP_SHA="$(mktemp)"
-          grep -v ' test_output\.csv$' "$MASTER_DIR/sha1sums.txt" > "$TMP_SHA" || true
-          if [ -s "$TMP_SHA" ]; then
-            echo "Verifying hashes for non-CSV artifacts:"
-            $HASH_TOOL -c "$TMP_SHA"
+      - name: Checking generated output against master output
+        run: |
+          set -x
+          cd circtools_example/primer_output
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            MASTER_DIR="../primer_output_master"
+            diff Slc16a9_primer_primers.csv \
+                  "$MASTER_DIR/Slc16a9_primer_primers.csv"
+            sha1sum -c "$MASTER_DIR/sha1sums.txt"
+          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+            MASTER_DIR="../primer_output_master_mac_amd"
+            diff Slc16a9_primer_primers.csv \
+                  "$MASTER_DIR/Slc16a9_primer_primers.csv"
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            MASTER_DIR="../primer_output_master_mac"
+            diff Slc16a9_primer_primers.csv \
+                  "$MASTER_DIR/Slc16a9_primer_primers.csv"
+            shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
           else
-            echo "No non-CSV hashes to verify."
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
           fi
-          rm -f "$TMP_SHA"
-        else
-          echo "::warning::No sha1sums.txt found in $MASTER_DIR; skipping hash verification."
-        fi
-
-    - name: Run padlock
-      run: |
-        cd circtools_example
-        mkdir -p padlock_output
-        circtools padlock \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Slc16a9 \
-          -T Slc16a9_padlock_design \
-          -r 1 \
-          -b \
-          -o ./padlock_output
-
-    - name: Checking generated output against master output
-      run: |
-        cd circtools_example/padlock_output
-        ls -la
-        wc -l *
-
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../padlock_output_master"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../padlock_output_master_mac_amd"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../padlock_output_master_mac"
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
-
-        diff Slc16a9_padlock_design_linear_FSJ.csv "$MASTER_DIR/Slc16a9_padlock_design_linear_FSJ.csv"
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        else
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        fi
-    - name: Run conservation with PDF output
-      env:
-        MPLBACKEND: pdf
-        MPLCONFIGDIR: ${{ github.workspace }}/.mplconfig
-      run: |
-        cd circtools_example
-        mkdir -p conservation/temp "$MPLCONFIGDIR"
-        circtools conservation \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Map3k5 \
-          -o ./conservation/ \
-          -t ./conservation/temp/ \
-          -TS hs \
-          -pairwise
-
-
-    - name: Checking generated output against master output
-      run: |
-        set -x
-        cd circtools_example/conservation
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../conservation_master"
-          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
-                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../conservation_master_mac_amd"
-          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
-                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../conservation_master_mac"
-          diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
-                "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
-    - name: Run primex
-      run: |
-        cd circtools_example
-        mkdir -p primer_output
-        circtools primex \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Slc16a9 \
-          -T "Slc16a9_primer" \
-          -o ./primer_output/ || true
-
-
-    - name: Checking generated output against master output
-      run: |
-        set -x
-        cd circtools_example/primer_output
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../primer_output_master"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
-          MASTER_DIR="../primer_output_master_mac_amd"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          MASTER_DIR="../primer_output_master_mac"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
