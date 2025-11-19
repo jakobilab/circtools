@@ -252,11 +252,11 @@ jobs:
           MASTER_DIR="../nanopore_master"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../nanopore_master_mac_amd"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
           MASTER_DIR="../nanopore_master_mac"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"

@@ -150,12 +150,12 @@ jobs:
           diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
                 "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../conservation_master_mac_amd"
           diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
                 "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
           MASTER_DIR="../conservation_master_mac"
           diff alignment_Map3k5_10_20000698_20007954_+.fasta.aligned \
                 "$MASTER_DIR/alignment_Map3k5_10_20000698_20007954_+.fasta.aligned"

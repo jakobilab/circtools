@@ -107,11 +107,11 @@ jobs:
             MASTER_DIR="../circtools_ci_master"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             sha1sum -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
             MASTER_DIR="../circtools_ci_master_mac_amd"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
             MASTER_DIR="../circtools_ci_master_mac"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"

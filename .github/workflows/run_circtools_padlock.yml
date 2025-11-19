@@ -195,9 +195,9 @@ jobs:
 
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../padlock_output_master"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../padlock_output_master_mac_amd"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
           MASTER_DIR="../padlock_output_master_mac"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
