@@ -137,7 +137,7 @@ jobs:
             sudo cp bin/* /usr/local/bin/
             cd ..
 
-            if [ "${{ matrix.os }}" = "macos-15" ]; then
+            if [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; then
               echo "Building pblat for Apple Silicon via Rosetta (Intel Homebrew)"
               softwareupdate --install-rosetta --agree-to-license
 
