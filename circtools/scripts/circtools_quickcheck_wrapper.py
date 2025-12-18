@@ -13,6 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 sns.set(style="whitegrid")
 
@@ -174,6 +176,33 @@ def main():
         "num": ratio_values,
         "group": [str(g) for g in groups]
     }).sort_values("num")
+    
+        # --- PCA on circRNA counts ---
+    circ_matrix = circ.iloc[:, circ_data_start:].T  # samples x circRNAs
+
+    # safety: numeric + fill
+    circ_matrix = circ_matrix.apply(pd.to_numeric, errors="coerce").fillna(0)
+
+    do_pca = circ_matrix.shape[0] >= 2 and circ_matrix.sum(axis=1).gt(0).all()
+
+    if do_pca:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(circ_matrix)
+
+        pca = PCA(n_components=2)
+        pcs = pca.fit_transform(X_scaled)
+
+        pca_df = pd.DataFrame(
+            pcs,
+            columns=["PC1", "PC2"],
+            index=samples
+        )
+        pca_df["group"] = groups
+
+        explained = pca.explained_variance_ratio_
+    else:
+        print("⚠️  Skipping PCA — insufficient or zero-count samples")
+
 
     # --- debug prints for verification ---
     print("DEBUG df_raw info:")
@@ -269,6 +298,41 @@ def main():
             plt.tight_layout()
             pdf.savefig()
             plt.close()
+            
+                # --- Plot 4: PCA of circRNA counts ---
+        if do_pca:
+            print("DEBUG generating Plot 4 (PCA of circRNA counts)")
+
+            plt.figure(figsize=(11.69, 8.27))
+            sns.scatterplot(
+                data=pca_df,
+                x="PC1",
+                y="PC2",
+                hue="group",
+                style="group",
+                s=100,
+                edgecolor="black"
+            )
+
+            for sample, row in pca_df.iterrows():
+                plt.text(
+                    row["PC1"],
+                    row["PC2"],
+                    clean_label(sample),
+                    fontsize=9,
+                    ha="left",
+                    va="bottom"
+                )
+
+            plt.xlabel(f"PC1 ({explained[0]*100:.1f}%)")
+            plt.ylabel(f"PC2 ({explained[1]*100:.1f}%)")
+            plt.title("PCA of circRNA Read Counts", fontweight="bold")
+            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
+            plt.legend(title="Group", loc="best", frameon=True)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+
 
     print(f"✅ QuickCheck report saved: {pdf_name}\n")
 
