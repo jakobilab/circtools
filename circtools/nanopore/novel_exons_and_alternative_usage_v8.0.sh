@@ -104,7 +104,9 @@ bedtools intersect -nonamecheck -wo -a $sample.novel.exons.2reads.filter.bed -b 
 # Combine novel exons with atleast 2 supporting reads (not found in Gencode) with all Gencode exons
 cat $exon $sample.novel.exons.2reads.filter.bed | bedtools sort | uniq | awk 'OFS="\t"{print $1,$2,$3,$4,$5,$6}' > New_exon_and_Gencode_exon.bed
 
-bedtools map -nonamecheck -split -c 4 -o distinct -a $sample.scan.circRNA.psl.bed -b New_exon_and_Gencode_exon.bed > $sample.scan.circRNA.psl.circRNA-exons.bed
+# fix for Error: line number XXXXX of file XXXX.scan.circRNA.psl.circRNA-exons.bed has 12 fields, but 13 were expected.
+# use awk to only let 13 column lines pass
+bedtools map -nonamecheck -split -c 4 -o distinct -a $sample.scan.circRNA.psl.bed -b New_exon_and_Gencode_exon.bed | awk -F' ' 'NF == 13'   > $sample.scan.circRNA.psl.circRNA-exons.bed
 bedtools map -nonamecheck -c 4 -o distinct -a $sample.scan.circRNA.psl.circRNA-exons.bed -b New_exon_and_Gencode_exon.bed > $sample.scan.circRNA.psl.genomic-exons.bed
 
 # Prepare for comparison
