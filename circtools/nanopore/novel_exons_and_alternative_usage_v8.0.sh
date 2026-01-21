@@ -159,6 +159,7 @@ while IFS='' read -r circRNA || [[ -n "$circRNA" ]]; do
 #        echo "exons in circRNA"
 #        cat temp_exon_list
 #        echo
+        truncated="${circRNA:0:50}"
 
 	#Note: This removes novel exons with fewer than 50 reads. Only for panel datasets. Otherwise use cut off 10
         grep $circRNA $input | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -v "^[123456789]read_novelExon" | grep -v "^[123][1234567890]read_novelExon" | grep -v "^4[123456789]read_novelExon" > temp_exon_list
@@ -172,7 +173,7 @@ while IFS='' read -r circRNA || [[ -n "$circRNA" ]]; do
         while IFS='' read -r exon || [[ -n "$exon" ]]; do
                 exon_hit=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$2}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
                 circRNA_coverage=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$3}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
-                printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$circRNA.circRNA_exon_usage.txt 2>> exon_usage.log
+                printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
 
         done < temp_exon_list
 
