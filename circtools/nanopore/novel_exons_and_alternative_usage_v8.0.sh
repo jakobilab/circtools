@@ -244,7 +244,7 @@ cat $sample.circRNA_candidates.annotated.txt | grep -v internal_circRNA_name | a
 cat $sample.introns.uniq.exon_remove.coverage.circ.bed | grep circ_ >  $sample.introns.uniq.exon_remove.coverage.onlyCirc.bed
 # Mapping novel exons on introns
 # This step fails on bedtools==2.30.0!
-mapBed -s -F 1.0 -c 4 -o distinct_only -a $sample.introns.uniq.exon_remove.coverage.onlyCirc.bed -b $sample.novel.exons.2reads.bed > $sample.introns.uniq.exon_remove.coverage.onlyCirc.novelExonMap.bed
+bedtools map -s -F 1.0 -c 4 -o distinct_only -a $sample.introns.uniq.exon_remove.coverage.onlyCirc.bed -b $sample.novel.exons.2reads.bed > $sample.introns.uniq.exon_remove.coverage.onlyCirc.novelExonMap.bed
 
 # List of all unique introns in circRNA regions:
 cat $sample.circRNA_candidates.annotated.txt | grep -v internal_circRNA_name | awk 'OFS="\t"{print $2,$3,$4,$1,$6,$7}' | bedtools intersect -s -u -a introns.uniq.bed -b - > $sample.all_circRNA_introns.bed
