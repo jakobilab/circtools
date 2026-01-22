@@ -144,24 +144,9 @@ echo
 echo "Getting circRNA exon usage"
 while IFS='' read -r circRNA || [[ -n "$circRNA" ]]; do
         ## Getting the exons the specific circRNA checked now. Both novel and annotated exons are included, but  novel only if they have 50 or more reads.
-
-#       ### If running on a system with SLURM queueing system (This will take a long time):
-#	## Run 50 read version for panel
-#	sbatch --account mtv_AU_project core_circ_grep_50reads.sh $circRNA $input $sample
-#	## Run 10 read version for non-panel
-#	sbatch --account mtv_AU_project core_circ_grep_10reads.sh $circRNA $input $sample
-#
-#	### If no SLURM queueing system - Or this script is already a sbatch script:
-#        #Note: This removes novel exons with fewer than 10 reads.
-#        grep $circRNA $input | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -v "^[123456789]read_novelExon" > temp_exon_list
-#        echo
-#        echo "circRNA: "$circRNA
-#        echo "exons in circRNA"
-#        cat temp_exon_list
-#        echo
         truncated="${circRNA:0:50}"
 
-	#Note: This removes novel exons with fewer than 50 reads. Only for panel datasets. Otherwise use cut off 10
+	      #Note: This removes novel exons with fewer than 50 reads. Only for panel datasets. Otherwise use cut off 10
         grep $circRNA $input | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -v "^[123456789]read_novelExon" | grep -v "^[123][1234567890]read_novelExon" | grep -v "^4[123456789]read_novelExon" > temp_exon_list
         #echo
         echo "circRNA: "$circRNA > exon_usage.log
