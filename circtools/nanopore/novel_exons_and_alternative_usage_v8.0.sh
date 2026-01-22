@@ -184,7 +184,9 @@ done < circRNA-list
 echo
 
 ### after novel exons and alternative usage
-cat exon_usage_data/*.circRNA_exon_usage.txt | sort -k 5,5 | sort -k 1,1 | uniq > $sample.circRNA_exon_usage.txt
+#fixes the "argument list too long error" when there are too many circRNAs
+find  exon_usage_data/ -type f -iname "*.circRNA_exon_usage.txt" -exec cat {} + | sort -k 5,5 | sort -k 1,1 | uniq > $sample.circRNA_exon_usage.txt
+
 # Filter to only keep rows with 5 columns. These are the real hits:
 cat $sample.circRNA_exon_usage.txt | awk 'NF==5{print}{}' > $sample.circRNA_exon_usage_filter.txt
 
