@@ -23,7 +23,7 @@ pkgs <- c(
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings"
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
 )
 
 # Remove already installed packages

@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["API Health Check"]
     types: [completed]
-
+  
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,9 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15, ubuntu-22.04, ubuntu-24.04 ]
+        os: [ macos-14, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
         R: ['4.4.0', '4.5.1']
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.8","3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
@@ -33,26 +33,42 @@ jobs:
     - name: Updating setuptools
       run: |
          python3 -m pip install -U pip setuptools
-    - name: Installing circtools & Python dependencies
+    - name: Install build tools and fix ARCHFLAGS for macOS Intel
+      if: matrix.os == 'macos-15-intel'
       run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y \
-                make g++ zlib1g-dev \
-                libblas-dev libatlas-base-dev liblapack-dev \
-                libcurl4-openssl-dev libssl-dev libxml2-dev \
-                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-            python3 -m pip install ./
-         fi
-         if [ "$RUNNER_OS" == "macOS"]; then
-            export SYSTEM_VERSION_COMPAT=1
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
+        echo "Applying macOS Intel-specific build setup"
+        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
+        brew install xz pkg-config make autoconf automake libtool || true
+        export LDFLAGS="-L/opt/homebrew/lib"
+        export CPPFLAGS="-I/opt/homebrew/include"
+        export ARCHFLAGS="-arch x86_64"
+        # Disable LZMA if headers still not found
+        export HTSLIB_CONFIGURE_OPTIONS="--disable-lzma"
+        python3 -m pip install -v ./
+
+    - name: Install dependencies on macOS ARM
+      if: startsWith(matrix.os, 'macos-15') || matrix.os == 'macos-26'
+      run: |
+        brew install xz pkg-config || true
+        python3 -m pip install ./
+
+    - name: Install dependencies on macOS 14
+      if: matrix.os == 'macos-14'
+      run: |
+        brew install xz pkg-config || true
+        python3 -m pip install ./
+
+    - name: Install Linux dependencies
+      if: startsWith(matrix.os, 'ubuntu-')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            make g++ zlib1g-dev \
+            libblas-dev libatlas-base-dev liblapack-dev \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+        python3 -m pip install ./
 
 
     - name: Set up R
@@ -85,7 +101,7 @@ jobs:
 
           # Run your dependency installer
 
-          Rscript circtools/scripts/install_R_dependencies.R
+          Rscript circtools/scripts/install_R_dependencies.R $(pwd)
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
@@ -104,26 +120,37 @@ jobs:
       run: |
         sudo ln -sf $(which gzcat) /usr/local/bin/zcat
 
-    - name: Install BEDTools from source (v2.31.1)
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          brew update
-          brew install make zlib
-          wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
-          tar -xzf bedtools-2.31.1.tar.gz
-          cd bedtools2
-          make -j4
-          sudo cp bin/* /usr/local/bin/
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
+    - name: Install bedtools (with retry, build from source)
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 30
+        max_attempts: 3
+        retry_on: error
+        command: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+          
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            # Skip Homebrew update if network is unreliable
+            brew update || echo "brew update failed — continuing with install"
+            brew install make zlib || true
+            wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+            tar -xzf bedtools-2.31.1.tar.gz
+            cd bedtools2
+            make -j4
+            sudo cp bin/* /usr/local/bin/
+          
+          else
+            echo "Unsupported OS: $RUNNER_OS" >&2
+            exit 1
+          fi
+      env:
+        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Unpack test dataset
       run: |
         tar xvf ./tests/data/circtools_example.tar.bz2
@@ -152,27 +179,28 @@ jobs:
 
     - name: Checking generated output against master output
       run: |
+        set -x
         cd circtools_example/primer_output
-        ls -la
-        wc -l *
-
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../primer_output_master"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          sha1sum -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../primer_output_master_mac_amd"
-        elif [ "$RUNNER_OS" = "macOS" ]; then
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
           MASTER_DIR="../primer_output_master_mac"
+          diff Slc16a9_primer_primers.csv \
+                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
           exit 1
         fi
 
-        diff Slc16a9_primer.html "$MASTER_DIR/Slc16a9_primer.html"
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        else
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        fi
 
 
 

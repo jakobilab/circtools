@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, macos-15, ubuntu-22.04, ubuntu-24.04 ]
+        os: [ macos-14, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
         R: ['4.4.0', '4.5.1']
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -33,26 +33,42 @@ jobs:
     - name: Updating setuptools
       run: |
          python3 -m pip install -U pip setuptools
-    - name: Installing circtools & Python dependencies
+    - name: Install build tools and fix ARCHFLAGS for macOS Intel
+      if: matrix.os == 'macos-15-intel'
       run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y \
-                make g++ zlib1g-dev \
-                libblas-dev libatlas-base-dev liblapack-dev \
-                libcurl4-openssl-dev libssl-dev libxml2-dev \
-                libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-                libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-            python3 -m pip install ./
-         fi
-         if [ "$RUNNER_OS" == "macOS"]; then
-            export SYSTEM_VERSION_COMPAT=1
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
-            python3 -m pip install ./
-         else
-            python3 -m pip install ./
-         fi
+        echo "Applying macOS Intel-specific build setup"
+        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
+        brew install xz pkg-config make autoconf automake libtool || true
+        export LDFLAGS="-L/opt/homebrew/lib"
+        export CPPFLAGS="-I/opt/homebrew/include"
+        export ARCHFLAGS="-arch x86_64"
+        # Disable LZMA if headers still not found
+        export HTSLIB_CONFIGURE_OPTIONS="--disable-lzma"
+        python3 -m pip install -v ./
+
+    - name: Install dependencies on macOS ARM
+      if: startsWith(matrix.os, 'macos-15') || matrix.os == 'macos-26'
+      run: |
+        brew install xz pkg-config || true
+        python3 -m pip install ./
+
+    - name: Install dependencies on macOS 14
+      if: matrix.os == 'macos-14'
+      run: |
+        brew install xz pkg-config || true
+        python3 -m pip install ./
+
+    - name: Install Linux dependencies
+      if: startsWith(matrix.os, 'ubuntu-')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            make g++ zlib1g-dev \
+            libblas-dev libatlas-base-dev liblapack-dev \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+        python3 -m pip install ./
 
 
 
@@ -91,11 +107,11 @@ jobs:
             MASTER_DIR="../circtools_ci_master"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             sha1sum -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
             MASTER_DIR="../circtools_ci_master_mac_amd"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
             MASTER_DIR="../circtools_ci_master_mac"
             diff CircRNACount "$MASTER_DIR/CircRNACount"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
