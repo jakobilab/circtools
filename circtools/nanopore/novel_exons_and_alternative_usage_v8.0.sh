@@ -140,33 +140,86 @@ rm circRNA_exon_usage.txt
 mkdir exon_usage_data
 
 cat $input | awk '{print $4}' | sort | uniq | awk '{if ($1 != ".") print $1}'> circRNA-list
-echo
+
 echo "Getting circRNA exon usage"
-while IFS='' read -r circRNA || [[ -n "$circRNA" ]]; do
-        ## Getting the exons the specific circRNA checked now. Both novel and annotated exons are included, but  novel only if they have 50 or more reads.
+
+# parallel is installed
+if command -v parallel > /dev/null 2>&1; then
+
+    process_circRNA() {
+        circRNA="$1"
+        sample="$2"
+        input="$3"
+
         truncated="${circRNA:0:50}"
 
-	      #Note: This removes novel exons with fewer than 50 reads. Only for panel datasets. Otherwise use cut off 10
-        grep $circRNA $input | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -v "^[123456789]read_novelExon" | grep -v "^[123][1234567890]read_novelExon" | grep -v "^4[123456789]read_novelExon" > temp_exon_list
-        #echo
-        echo "circRNA: "$circRNA > exon_usage.log
-        #echo "exons in circRNA"
-        #cat temp_exon_list
-        #echo
+        # Generate the exon list in memory
+        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | \
+                    grep -vE "^([1-9]|[1-3][0-9]|4[0-9])read_novelExon")
+
+        # Loop through exons
+        while read -r exon; do
+            [ -z "$exon" ] && continue
+
+            exon_hit=$(awk -v circ="$circRNA" -v ex="$exon" '
+                $0 ~ circ && $0 ~ ex {
+                    split($1, a, ",");
+                    sum += a[1]
+                }
+                END { print sum + 0 }' "$sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed")
+
+            circRNA_coverage=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$3}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
+
+            printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | \
+            awk 'OFS="\t" {
+                # Check if $3 is empty, or zero, or non-numeric
+                if ($3 == "" || $3 == 0 || $2 == "" || $2 == 0) {
+                    div = "NA"
+                } else {
+                    div = $2 / $3
+                }
+                print $1, $2, $3, div, $4
+            }' >> "exon_usage_data/$truncated.circRNA_exon_usage.txt"
 
 
-        while IFS='' read -r exon || [[ -n "$exon" ]]; do
-                exon_hit=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$2}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
-                circRNA_coverage=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$3}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
-                printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
+        done <<< "$exon_list"
+    }
 
-        done < temp_exon_list
+    export -f process_circRNA
+    export sample=$sample
+    export input=$input
+
+    # run parallel with threads argument
+    parallel --jobs "$threads" process_circRNA {} "$sample" "$input" < circRNA-list
+
+# not installed, use linear approach
+else
+
+    while IFS='' read -r circRNA || [[ -n "$circRNA" ]]; do
+            ## Getting the exons the specific circRNA checked now. Both novel and annotated exons are included, but  novel only if they have 50 or more reads.
+            truncated="${circRNA:0:50}"
+
+            #Note: This removes novel exons with fewer than 50 reads. Only for panel datasets. Otherwise use cut off 10
+            grep $circRNA $input | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -v "^[123456789]read_novelExon" | grep -v "^[123][1234567890]read_novelExon" | grep -v "^4[123456789]read_novelExon" > temp_exon_list
+            #echo
+            echo "circRNA: "$circRNA > exon_usage.log
+            #echo "exons in circRNA"
+            #cat temp_exon_list
+            #echo
+
+
+            while IFS='' read -r exon || [[ -n "$exon" ]]; do
+                    exon_hit=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$2}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
+                    circRNA_coverage=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$3}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
+                    printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
+
+            done < temp_exon_list
 
 
 
-done < circRNA-list
+    done < circRNA-list
 
-echo
+fi
 
 ### after novel exons and alternative usage
 #fixes the "argument list too long error" when there are too many circRNAs
