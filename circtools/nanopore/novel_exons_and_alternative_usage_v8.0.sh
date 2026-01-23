@@ -209,9 +209,29 @@ else
 
 
             while IFS='' read -r exon || [[ -n "$exon" ]]; do
-                    exon_hit=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$2}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
+
+                    exon_hit=$(awk -v circ="$circRNA" -v ex="$exon" '
+                        $0 ~ circ && $0 ~ ex {
+                            split($1, a, ",");
+                            sum += a[1]
+                        }
+                        END { print sum + 0 }' "$sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed")
+
                     circRNA_coverage=$(grep $circRNA $sample.scan.circRNA.psl.genomic-exons.annot.uniq.bed | awk '{print $1,$3}' | grep $exon | awk '{split($0,a,","); sum += a[1]} END {print sum}')
-                    printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
+
+                    printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | \
+                    awk 'OFS="\t" {
+                        # Check if $3 is empty, or zero, or non-numeric
+                        if ($3 == "" || $3 == 0 || $2 == "" || $2 == 0) {
+                            div = "NA"
+                        } else {
+                            div = $2 / $3
+                        }
+                        print $1, $2, $3, div, $4
+                    }' >> "exon_usage_data/$truncated.circRNA_exon_usage.txt"
+
+
+#                    printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
 
             done < temp_exon_list
 
