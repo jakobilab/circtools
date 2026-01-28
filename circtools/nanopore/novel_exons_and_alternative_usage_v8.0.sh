@@ -139,7 +139,7 @@ rm circRNA_exon_usage.txt
 
 mkdir exon_usage_data
 
-cat $input | awk '{print $4}' | sort | uniq | awk '{if ($1 != ".") print $1}'> circRNA-list
+cat $input | awk '{print $4}' | sed 's/,hg38/\nhg38/g'  | sed 's/,.*//g'| sort | uniq | awk '{if ($1 != ".") print $1}'> circRNA-list
 
 echo "Getting circRNA exon usage"
 
@@ -154,8 +154,7 @@ if command -v parallel > /dev/null 2>&1; then
         truncated="${circRNA:0:50}"
 
         # Generate the exon list in memory
-        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | \
-                    grep -vE "^([1-9]|[1-3][0-9]|4[0-9])read_novelExon")
+        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -vE "^([1-9]|[1-3][0-9]|4[0-9])read_novelExon")
 
         # Loop through exons
         while read -r exon; do
@@ -230,12 +229,7 @@ else
                         print $1, $2, $3, div, $4
                     }' >> "exon_usage_data/$truncated.circRNA_exon_usage.txt"
 
-
-#                    printf "$circRNA\t$exon_hit\t$circRNA_coverage\t$exon" | awk 'OFS="\t"{if($3 != 0) {print $1,$2,$3,$2/$3,$4;}}' >> exon_usage_data/$truncated.circRNA_exon_usage.txt 2>> exon_usage.log
-
             done < temp_exon_list
-
-
 
     done < circRNA-list
 
@@ -353,16 +347,25 @@ paste $sample.novel.exons.2reads.tab temp_p0 temp_p1 temp_p2 | sed 's/(+)//g' | 
 if [[ $keep_temp == "no" ]]
 then
         echo "Cleaning up temporary output files"
-        rm -rf exon_usage_data
+        # rm -rf exon_usage_data # keep usage data for now
         rm OLD.*
 
         #Remove everything that doesn't match this
-        ls -I '*flank2.allExon*bed' -I '*circRNA_candidates.annotated.txt' \
-          -I '*novel.exons.2reads.filter.bed' -I '*novel.exons.2reads.phases.tab' \
-          -I '*novel.cryptic.spliced.exons.txt' -I '*circ_circRNA_exon_usage_length_of_exons.txt' \
-          -I '*introns.uniq.exon_remove.coverage.onlyCirc.novelExonMap.intronCov.bed' \
-          -I '*Potential_multi-round_circRNA.fa' -I '*Potential_multi-round_circRNA.psl.annot*' \
-          -I '*bam' -I '*bai' -I '*bw' | xargs rm
+        ls -I '*flank2.allExon*bed' \
+           -I '*circRNA_candidates.annotated.txt' \
+           -I '*novel.exons.2reads.filter.bed' \
+           -I '*novel.exons.2reads.phases.tab' \
+           -I '*novel.cryptic.spliced.exons.txt' \
+           -I '*circ_circRNA_exon_usage_length_of_exons.txt' \
+           -I '*introns.uniq.exon_remove.coverage.onlyCirc.novelExonMap.intronCov.bed' \
+           -I '*Potential_multi-round_circRNA.fa' \
+           -I '*Potential_multi-round_circRNA.psl.annot*' \
+           -I '*bam' -I '*bai' -I '*bw' \
+           -I '*circRNA_candidates.annotated.bed' \
+           -I '*.circRNA_exon_usage.txt' \
+           -I '.circRNA_alternative_exon_usage.txt' \
+           -I '*scan.circRNA.psl.split.merge.flank2.ACCT.bed'  \
+           -I '*scan.circRNA.psl.split.merge.flank2.AGGT.bed' | xargs rm
 
 else
         echo "Keeping all of the temporary output files"
