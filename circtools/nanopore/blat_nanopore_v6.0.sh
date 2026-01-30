@@ -310,7 +310,7 @@ cat no_exon_match_reads.bed | uniq | grep "\.[[:space:]]\.[[:space:]]\." |  bedt
 ## Delete temp files
 rm temp.circ.hits $sample.scan.circRNA.psl.annot.combine.sort.temp temp_exon-ends_nohit_uniq $sample.scan.circRNA.psl.annot.combine.correct.full.bed circRNA_name.temp $sample.scan.circRNA.psl.annot.combine.correct.bed
 rm -r $temp_sort
-rm temp* $sample.scan.Potential_multi-round_circRNA.bam $sample.scan.Potential_multi-round_circRNA.psl.bed $sample.scan.Potential_multi-round_circRNA.psl
+#rm temp* $sample.scan.Potential_multi-round_circRNA.bam $sample.scan.Potential_multi-round_circRNA.psl.bed $sample.scan.Potential_multi-round_circRNA.psl
 #rm $sample.scan.circRNA.psl.annot.combine.circID.bed $sample.scan.circRNA.psl.annot.combine.sort.txt $sample.base_list_exon-match.annot.bed
 rm $sample.scan.Potential_multi-round_circRNA.psl.merge.bed $sample.scan.Potential_multi-round_circRNA.sort.bam.bai
 rm $sample.scan.Potential_multi-round_circRNA.sort.bam
