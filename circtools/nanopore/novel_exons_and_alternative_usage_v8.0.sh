@@ -139,7 +139,7 @@ rm circRNA_exon_usage.txt
 
 mkdir exon_usage_data
 
-cat $input | awk '{print $4}' | sed 's/,hg38/\nhg38/g'  | sed 's/,.*//g'| sort | uniq | awk '{if ($1 != ".") print $1}'> circRNA-list
+cat $input | awk '{print $4}' | sed 's/,hg38/\nhg38/g' | sed 's/,mm10/\nmm10/g'  | sed 's/,.*//g'| sort | uniq | awk '{if ($1 != ".") print $1}'> circRNA-list
 
 echo "Getting circRNA exon usage"
 
