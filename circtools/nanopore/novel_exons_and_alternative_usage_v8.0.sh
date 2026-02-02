@@ -154,7 +154,8 @@ if command -v parallel > /dev/null 2>&1; then
         truncated="${circRNA:0:50}"
 
         # Generate the exon list in memory
-        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -vE "^([1-9]|[1-3][0-9]|4[0-9])read_novelExon")
+#        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -vE "^([1-9]|[1-3][0-9]|4[0-9])read_novelExon")
+        exon_list=$(grep "$circRNA" "$input" | awk '{print $3}' | sed 's/,/\n/g' | sort | uniq | grep -vE "^[0-1]read_novelExon")
 
         # Loop through exons
         while read -r exon; do
