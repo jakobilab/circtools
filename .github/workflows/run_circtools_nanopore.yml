@@ -247,7 +247,6 @@ jobs:
         cd circtools_example
         cd nanopore_output
         ls -la
-        wc -l *
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../nanopore_master"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
