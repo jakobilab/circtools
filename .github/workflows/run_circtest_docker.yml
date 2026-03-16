@@ -99,13 +99,6 @@ jobs:
               -n test_output \
               -M bw
 
-      - name: Upload circtest CSV artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: test_output-docker
-          path: circtools_example/circtest_output/test_output.csv
-          if-no-files-found: error
-
       - name: Check outputs (tolerant CSV + strict hashes for non-CSV)
         run: |
           set -euo pipefail
