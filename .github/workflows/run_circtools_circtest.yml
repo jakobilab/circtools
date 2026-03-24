@@ -22,11 +22,11 @@ jobs:
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
        ref: ${{ github.ref_name }}
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         cache: ''
@@ -89,7 +89,7 @@ jobs:
         use-public-rspm: false
 
     - name: Install R dependencies (with retry, prefer binaries)
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@v4
       with:
         timeout_minutes: 40  
         max_attempts: 3

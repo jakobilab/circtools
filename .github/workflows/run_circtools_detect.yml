@@ -22,11 +22,11 @@ jobs:
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
        ref: ${{ github.ref_name }}
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         cache: ''
