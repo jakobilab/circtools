@@ -2,6 +2,8 @@ name: Multi-arch docker container
 
 on:
   push:
+    tags:
+      - "v*"
 
 concurrency:
   group: docker-${{ github.ref }}-1
