@@ -42,7 +42,6 @@ jobs:
         export LDFLAGS="-L/opt/homebrew/lib"
         export CPPFLAGS="-I/opt/homebrew/include"
         export ARCHFLAGS="-arch x86_64"
-        # Disable LZMA if headers still not found
         export HTSLIB_CONFIGURE_OPTIONS="--disable-lzma"
         python3 -m pip install -v ./
 
@@ -75,7 +74,6 @@ jobs:
          circtools --version
          which circtools
 
-
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
       run: |
@@ -94,9 +92,7 @@ jobs:
             cd bedtools2
             make -j4
             sudo cp bin/* /usr/local/bin/
-          
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            # Skip Homebrew update if network is unreliable
             brew update || echo "brew update failed — continuing with install"
             brew install make zlib || true
             wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
@@ -104,14 +100,12 @@ jobs:
             cd bedtools2
             make -j4
             sudo cp bin/* /usr/local/bin/
-          
           else
             echo "Unsupported OS: $RUNNER_OS" >&2
             exit 1
           fi
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-
 
     - name: Unpack test dataset
       run: |
@@ -140,6 +134,21 @@ jobs:
           -TS hs \
           -pairwise
 
+    - name: Generate sha1sums
+      run: |
+        cd circtools_example/conservation
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sha1sum * > sha1sums.txt
+        else
+          shasum -a 1 * > sha1sums.txt
+        fi
+
+    - name: Upload conservation output as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: conservation-output-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
+        path: circtools_example/conservation/
+        retention-days: 7
 
     - name: Checking generated output against master output
       run: |
