@@ -135,20 +135,13 @@ jobs:
           -TS hs \
           -pairwise
 
-    - name: Generate sha1sums
-      run: |
-        cd circtools_example/conservation
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sha1sum * > sha1sums.txt
-        else
-          shasum -a 1 * > sha1sums.txt
-        fi
-
     - name: Upload conservation output as artifact
       uses: actions/upload-artifact@v4
       with:
         name: conservation-output-${{ matrix.os }}-R${{ matrix.R }}-py${{ matrix.python-version }}
-        path: circtools_example/conservation/
+        path: |
+          circtools_example/conservation/
+          !circtools_example/conservation/temp/
         retention-days: 7
 
     - name: Checking generated output against master output
