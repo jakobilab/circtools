@@ -80,8 +80,18 @@ while (length(current_line <- readLines(con, n = 1, warn = FALSE)) > 0) {
     # stop output redirect
     sink()
 
+
+
     # temporary data frame holds the primer results for this circRNA isoform
-    tmp_df <- primers$primers[-c(1,2,3,c(12:21))]
+    tmp_df <- primers$primers[c("PRIMER_LEFT_SEQUENCE",
+                             "PRIMER_RIGHT_SEQUENCE",
+                             "PRIMER_LEFT",
+                             "PRIMER_RIGHT",
+                             "PRIMER_LEFT_TM",
+                             "PRIMER_RIGHT_TM",
+                             "PRIMER_LEFT_GC_PERCENT",
+                             "PRIMER_RIGHT_GC_PERCENT",
+                             "PRIMER_PAIR_PRODUCT_SIZE")]
 
     # make sure we found any primers at all
     if (!is.null(primers$options$PRIMER_PAIR_NUM_RETURNED) && primers$options$PRIMER_PAIR_NUM_RETURNED > 0){

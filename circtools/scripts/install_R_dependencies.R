@@ -68,16 +68,6 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
 
-# --- GitHub packages ---
-message("\nInstalling GitHub R packages (circTest and primex)...")
-
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes", repos="https://cloud.r-project.org")
-}
-
-remotes::install_github("dieterich-lab/CircTest")
-remotes::install_github("dieterich-lab/primex")
-
 
 # --- Local source installs ---
 message("\nInstalling local R packages (primex, circtest)...")
