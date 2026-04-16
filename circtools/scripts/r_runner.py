@@ -88,7 +88,5 @@ def circtools_reconstruct_coverage_graph():
 
 
 def install_R_dependencies():
-    print(f"DEBUG: base_path = {base_path}", flush=True)
-    print(f"DEBUG: contrib path = {base_path}/contrib/primex", flush=True)
     return _run("Rscript " + base_path
                 + "/scripts/install_R_dependencies.R " + base_path)
