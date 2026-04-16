@@ -33,6 +33,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'      # 🧠 enable pip caching for all environments
 
+      - name: Diagnose circtools install path
+        run: |
+          python3 -c "import circtools; print(circtools.__path__[0])"
+          find $(python3 -c "import circtools; print(circtools.__path__[0])") -name "DESCRIPTION"
+
       - name: Update pip & setuptools
         run: python3 -m pip install -U pip setuptools wheel
 
