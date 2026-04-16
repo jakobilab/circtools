@@ -72,7 +72,16 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats
 # --- Local source installs ---
 message("\nInstalling local R packages (primex, circtest)...")
 
-install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
-install.packages(paste0(base_path, "/contrib/circtest"), repos = NULL, type = "source")
+for (pkg in c("primex", "circtest")) {
+  pkg_path <- paste0(base_path, "/contrib/", pkg)
+  pkg_path <- normalizePath(pkg_path, mustWork = FALSE)
+  
+  message("Attempting to install: '", pkg_path, "'")
+  message("Directory exists: ", dir.exists(pkg_path))
+  message("DESCRIPTION exists: ", file.exists(file.path(pkg_path, "DESCRIPTION")))
+  message("Contents: ", paste(list.files(pkg_path), collapse=", "))
+  
+  install.packages(pkg_path, repos = NULL, type = "source")
+}
 
 message("\n✅ All R dependencies for circtools are installed.")
