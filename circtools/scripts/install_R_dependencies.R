@@ -18,6 +18,11 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
+
+message("DEBUG: base_path received = '", base_path, "'")
+message("DEBUG: contrib path = '", paste0(base_path, "/contrib/primex"), "'")
+message("DEBUG: dir exists = ", dir.exists(paste0(base_path, "/contrib/primex")))
+
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
