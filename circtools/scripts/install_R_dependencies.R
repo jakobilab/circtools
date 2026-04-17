@@ -62,6 +62,12 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE)
   }
 
+} else {                                          # ← closing brace was missing
+  source("https://bioconductor.org/biocLite.R")
+  biocLite()
+  if (length(pkgs) > 0) biocLite(pkgs)
+}
+
 # --- Archive packages ---
 message("\nInstalling archived R packages...")
 
@@ -71,7 +77,6 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
                  repos = NULL, type = "source")
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
-
 
 # --- Local source installs ---
 message("\nInstalling local R packages (primex, circtest)...")
