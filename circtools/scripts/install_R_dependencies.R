@@ -48,9 +48,10 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org")
   }
 
-  bioc_minor <- as.numeric(BiocManager::version()[2])
+  bioc_version <- BiocManager::version()
+  bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
   if (bioc_minor <= 19) {
-    message("Bioconductor <= 3.19 detected — upgrading BiocGenerics from devel repo...")
+    message("Bioconductor <= 3.19 detected — upgrading BiocGenerics from Bioc 3.20...")
     install.packages(
       "https://bioconductor.org/packages/3.20/bioc/src/contrib/BiocGenerics_0.54.0.tar.gz",
       repos = NULL,
@@ -62,7 +63,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE)
   }
 
-} else {                                          # ← closing brace was missing
+} else {
   source("https://bioconductor.org/biocLite.R")
   biocLite()
   if (length(pkgs) > 0) biocLite(pkgs)
@@ -77,6 +78,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
                  repos = NULL, type = "source")
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
+
 
 # --- Local source installs ---
 message("\nInstalling local R packages (primex, circtest)...")
