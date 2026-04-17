@@ -59,8 +59,17 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
       type  = "source",
       lib   = lib_path
     )
-    .libPaths(lib_path)
+    # Detach old version if loaded, then reload upgraded version
+    if ("package:BiocGenerics" %in% search()) {
+      detach("package:BiocGenerics", unload = TRUE, force = TRUE)
+    }
     library(BiocGenerics, lib.loc = lib_path)
+    message(paste("BiocGenerics version now:", packageVersion("BiocGenerics")))
+
+    if ("S4Vectors" %in% pkgs) {
+      BiocManager::install("S4Vectors", ask = FALSE, update = FALSE)
+      pkgs <- pkgs[pkgs != "S4Vectors"]
+    }
   }
 
   if (length(pkgs) > 0) {
