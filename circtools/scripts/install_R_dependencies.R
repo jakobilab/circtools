@@ -28,7 +28,7 @@ message("Detected library paths:")
 for (path in .libPaths()) message(paste0("-> ", path))
 message("")
 
-# ── Step 1: Bootstrap BiocManager and upgrade Bioconductor FIRST ──────────────
+# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST ──────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
@@ -38,13 +38,25 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
 
   if (bioc_minor <= 19) {
-    message("Bioconductor <= 3.19 detected — upgrading to 3.20 before installing packages...")
-    BiocManager::install(version = "3.20", ask = FALSE, update = TRUE)
-    message(paste("Bioconductor upgraded. BiocGenerics version now:", packageVersion("BiocGenerics")))
+    message("Bioconductor <= 3.19 detected — force-installing BiocGenerics from Bioc 3.20 repo...")
+    lib_path <- .libPaths()[1]
+
+    # Install directly from Bioc 3.20 repo before BiocManager touches anything
+    install.packages(
+      "BiocGenerics",
+      repos = "https://bioconductor.org/packages/3.20/bioc",
+      lib   = lib_path,
+      type  = "source"
+    )
+
+    # Detach old version and reload new one into session
+    if ("package:BiocGenerics" %in% search()) detach("package:BiocGenerics", unload = TRUE, force = TRUE)
+    library(BiocGenerics, lib.loc = lib_path)
+    message(paste("BiocGenerics version now:", packageVersion("BiocGenerics")))
   }
 }
 
-# ── Step 2: Now determine what needs installing ───────────────────────────────
+# ── Step 2: Determine what needs installing ────────────────────────────────────
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
@@ -71,7 +83,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# ── Step 4: Archive packages ──────────────────────────────────────────────────
+# ── Step 4: Archive packages ───────────────────────────────────────────────────
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -81,7 +93,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
 
-# ── Step 5: Local source installs ────────────────────────────────────────────
+# ── Step 5: Local source installs ─────────────────────────────────────────────
 message("\nInstalling local R packages (primex, circtest)...")
 
 install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
