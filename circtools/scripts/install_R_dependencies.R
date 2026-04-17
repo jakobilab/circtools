@@ -28,7 +28,7 @@ message("Detected library paths:")
 for (path in .libPaths()) message(paste0("-> ", path))
 message("")
 
-# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST ──────
+# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
@@ -40,8 +40,13 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }, error = function(e) FALSE)
 
   if (!biocgenerics_ok) {
-    message("BiocGenerics < 0.53.2 or missing — force-installing from Bioc 3.21 (devel) repo...")
+    message("BiocGenerics < 0.53.2 or missing — installing 'generics' then BiocGenerics from Bioc 3.21...")
     lib_path <- .libPaths()[1]
+
+    # Install 'generics' from CRAN first (new dependency of BiocGenerics 0.54.x)
+    if (!requireNamespace("generics", quietly = TRUE)) {
+      install.packages("generics", repos = "https://cloud.r-project.org", lib = lib_path)
+    }
 
     install.packages(
       "BiocGenerics",
