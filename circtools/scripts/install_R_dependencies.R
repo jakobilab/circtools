@@ -47,16 +47,20 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org")
   }
-  
+
+  bioc_minor <- as.numeric(BiocManager::version()[2])
+  if (bioc_minor <= 19) {
+    message("Bioconductor <= 3.19 detected — upgrading BiocGenerics from devel repo...")
+    install.packages(
+      "https://bioconductor.org/packages/3.20/bioc/src/contrib/BiocGenerics_0.54.0.tar.gz",
+      repos = NULL,
+      type  = "source"
+    )
+  }
+
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE)
   }
-  
-} else {
-  source("https://bioconductor.org/biocLite.R")
-  biocLite()
-  if (length(pkgs) > 0) biocLite(pkgs)
-}
 
 # --- Archive packages ---
 message("\nInstalling archived R packages...")
