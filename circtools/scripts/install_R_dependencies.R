@@ -34,14 +34,16 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
   }
 
-  bioc_version <- BiocManager::version()
-  bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
+  # Check installed BiocGenerics version directly, not the repo version
+  biocgenerics_ok <- tryCatch({
+    current <- packageVersion("BiocGenerics")
+    current >= package_version("0.53.2")
+  }, error = function(e) FALSE)  # not installed at all → FALSE
 
-  if (bioc_minor <= 19) {
-    message("Bioconductor <= 3.19 detected — force-installing BiocGenerics from Bioc 3.20 repo...")
+  if (!biocgenerics_ok) {
+    message("BiocGenerics < 0.53.2 or missing — force-installing from Bioc 3.20 repo...")
     lib_path <- .libPaths()[1]
 
-    # Install directly from Bioc 3.20 repo before BiocManager touches anything
     install.packages(
       "BiocGenerics",
       repos = "https://bioconductor.org/packages/3.20/bioc",
@@ -49,10 +51,11 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
       type  = "source"
     )
 
-    # Detach old version and reload new one into session
     if ("package:BiocGenerics" %in% search()) detach("package:BiocGenerics", unload = TRUE, force = TRUE)
     library(BiocGenerics, lib.loc = lib_path)
     message(paste("BiocGenerics version now:", packageVersion("BiocGenerics")))
+  } else {
+    message(paste("BiocGenerics", packageVersion("BiocGenerics"), "already satisfies >= 0.53.2, skipping."))
   }
 }
 
