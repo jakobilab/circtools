@@ -52,11 +52,15 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
   if (bioc_minor <= 19) {
     message("Bioconductor <= 3.19 detected — upgrading BiocGenerics from Bioc 3.20...")
+    lib_path <- .libPaths()[1]
     install.packages(
       "https://bioconductor.org/packages/3.20/bioc/src/contrib/BiocGenerics_0.54.0.tar.gz",
       repos = NULL,
-      type  = "source"
+      type  = "source",
+      lib   = lib_path
     )
+    .libPaths(lib_path)
+    library(BiocGenerics, lib.loc = lib_path)
   }
 
   if (length(pkgs) > 0) {
