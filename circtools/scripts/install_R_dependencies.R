@@ -18,6 +18,33 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
+minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
+majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
+
+message("")
+message("This script will automatically install R packages required by circtools.\n")
+message(paste("Detected R version ", majorVersion, ".", version[['minor']], "\n", sep=""))
+message("Detected library paths:")
+for (path in .libPaths()) message(paste0("-> ", path))
+message("")
+
+# ── Step 1: Bootstrap BiocManager and upgrade Bioconductor FIRST ──────────────
+if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager", repos = "https://cloud.r-project.org")
+  }
+
+  bioc_version <- BiocManager::version()
+  bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
+
+  if (bioc_minor <= 19) {
+    message("Bioconductor <= 3.19 detected — upgrading to 3.20 before installing packages...")
+    BiocManager::install(version = "3.20", ask = FALSE, update = TRUE)
+    message(paste("Bioconductor upgraded. BiocGenerics version now:", packageVersion("BiocGenerics")))
+  }
+}
+
+# ── Step 2: Now determine what needs installing ───────────────────────────────
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
@@ -29,44 +56,22 @@ pkgs <- c(
 # Remove already installed packages
 pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
 
-minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
-majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
-
-message("")
-message("This script will automatically install R packages required by circtools.\n")
-message(paste("Detected R version ", majorVersion, ".", version[['minor']], "\n", sep=""))
-message("Detected library paths:")
-for (path in .libPaths()) message(paste0("-> ", path))
-message("")
-
 for (package in pkgs) {
   message(paste("Need to install package", package))
 }
 
+# ── Step 3: Install packages against the now-correct Bioc version ─────────────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
-  if (!requireNamespace("BiocManager", quietly = TRUE)) {
-    install.packages("BiocManager", repos="https://cloud.r-project.org")
-  }
-
-  # fix bioc version
-  bioc_version <- BiocManager::version()
-  bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
-  if (bioc_minor <= 19) {
-    message("Bioconductor <= 3.19 detected — upgrading to Bioc 3.20...")
-    BiocManager::install(version = "3.20", ask = FALSE)
-  }
-
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE)
   }
-
 } else {
   source("https://bioconductor.org/biocLite.R")
   biocLite()
   if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# --- Archive packages ---
+# ── Step 4: Archive packages ──────────────────────────────────────────────────
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -76,8 +81,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
 
-
-# --- Local source installs ---
+# ── Step 5: Local source installs ────────────────────────────────────────────
 message("\nInstalling local R packages (primex, circtest)...")
 
 install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
