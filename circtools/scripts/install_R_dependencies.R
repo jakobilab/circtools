@@ -48,33 +48,12 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org")
   }
 
-  #bypass both
+  # fix bioc version
   bioc_version <- BiocManager::version()
   bioc_minor <- as.numeric(strsplit(as.character(bioc_version), "\\.")[[1]][2])
   if (bioc_minor <= 19) {
-    message("Bioconductor <= 3.19 detected — installing BiocGenerics and S4Vectors from Bioc 3.20 tarballs...")
-    lib_path <- .libPaths()[1]
-
-    install.packages(
-      "https://bioconductor.org/packages/3.20/bioc/src/contrib/BiocGenerics_0.54.0.tar.gz",
-      repos = NULL, type = "source", lib = lib_path
-    )
-    install.packages(
-      "https://bioconductor.org/packages/3.20/bioc/src/contrib/S4Vectors_0.44.0.tar.gz",
-      repos = NULL, type = "source", lib = lib_path
-    )
-
-    if ("package:BiocGenerics" %in% search()) detach("package:BiocGenerics", unload = TRUE, force = TRUE)
-    if ("package:S4Vectors" %in% search()) detach("package:S4Vectors", unload = TRUE, force = TRUE)
-
-    library(BiocGenerics, lib.loc = lib_path)
-    library(S4Vectors, lib.loc = lib_path)
-
-    message(paste("BiocGenerics version now:", packageVersion("BiocGenerics")))
-    message(paste("S4Vectors version now:", packageVersion("S4Vectors")))
-
-    # Remove both from pkgs so BiocManager doesn't overwrite them
-    pkgs <- pkgs[!pkgs %in% c("BiocGenerics", "S4Vectors")]
+    message("Bioconductor <= 3.19 detected — upgrading to Bioc 3.20...")
+    BiocManager::install(version = "3.20", ask = FALSE)
   }
 
   if (length(pkgs) > 0) {
