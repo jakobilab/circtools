@@ -34,19 +34,18 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
   }
 
-  # Check installed BiocGenerics version directly, not the repo version
   biocgenerics_ok <- tryCatch({
     current <- packageVersion("BiocGenerics")
     current >= package_version("0.53.2")
-  }, error = function(e) FALSE)  # not installed at all → FALSE
+  }, error = function(e) FALSE)
 
   if (!biocgenerics_ok) {
-    message("BiocGenerics < 0.53.2 or missing — force-installing from Bioc 3.20 repo...")
+    message("BiocGenerics < 0.53.2 or missing — force-installing from Bioc 3.21 (devel) repo...")
     lib_path <- .libPaths()[1]
 
     install.packages(
       "BiocGenerics",
-      repos = "https://bioconductor.org/packages/3.20/bioc",
+      repos = "https://bioconductor.org/packages/3.21/bioc",
       lib   = lib_path,
       type  = "source"
     )
@@ -58,7 +57,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     message(paste("BiocGenerics", packageVersion("BiocGenerics"), "already satisfies >= 0.53.2, skipping."))
   }
 }
-
 # ── Step 2: Determine what needs installing ────────────────────────────────────
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
