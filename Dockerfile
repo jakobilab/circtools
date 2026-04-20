@@ -13,8 +13,8 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install --no-install-recommends -y wget gpg ca-certificates && \
     wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | \
-    gpg --dearmor -o /usr/share/keyrings/r-project.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu noble-cran44/" \
+    tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc && \
+    echo "deb https://cloud.r-project.org/bin/linux/ubuntu noble-cran40/" \
     > /etc/apt/sources.list.d/r-project.list
 
 RUN apt-get update && \
