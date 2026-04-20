@@ -2,7 +2,6 @@ name: circtools primex (docker)
 
 
 on:
-  push:
   workflow_run:
     workflows: ["Multi-arch docker container", "Multi-arch docker nightly"]
     types: [completed]
