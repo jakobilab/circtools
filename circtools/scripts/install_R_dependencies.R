@@ -43,7 +43,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     message("BiocGenerics < 0.53.2 or missing — installing 'generics' then BiocGenerics from Bioc 3.21...")
     lib_path <- .libPaths()[1]
 
-    # Install 'generics' from CRAN first (new dependency of BiocGenerics 0.54.x)
     if (!requireNamespace("generics", quietly = TRUE)) {
       install.packages("generics", repos = "https://cloud.r-project.org", lib = lib_path)
     }
@@ -63,7 +62,15 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
 }
 
-# ── Step 2: Determine what needs installing ────────────────────────────────────
+# ── Step 2: Pre-install critical CRAN dependencies ────────────────────────────
+message("Pre-installing critical CRAN dependencies...")
+install.packages(
+  c("rmarkdown", "htmlwidgets", "pkgload", "pkgdown", "usethis",
+    "fs", "miniUI", "profvis", "roxygen2", "testthat"),
+  repos = "https://cloud.r-project.org"
+)
+
+# ── Step 3: Determine what needs installing ────────────────────────────────────
 bioc_pkgs <- c(
   "ballgown", "biomaRt", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggbio",
@@ -85,7 +92,7 @@ for (package in c(bioc_pkgs, cran_pkgs)) {
   message(paste("Need to install package", package))
 }
 
-# ── Step 3: Install packages ───────────────────────────────────────────────────
+# ── Step 4: Install packages ───────────────────────────────────────────────────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   if (length(bioc_pkgs) > 0) {
@@ -104,7 +111,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (length(c(bioc_pkgs, cran_pkgs)) > 0) biocLite(c(bioc_pkgs, cran_pkgs))
 }
 
-# ── Step 4: Verify all packages installed correctly ───────────────────────────
+# ── Step 5: Verify all packages installed correctly ───────────────────────────
 all_pkgs <- c(bioc_pkgs, cran_pkgs)
 missing <- all_pkgs[!all_pkgs %in% installed.packages()[, 1]]
 if (length(missing) > 0) {
@@ -112,7 +119,7 @@ if (length(missing) > 0) {
              paste(missing, collapse = ", ")))
 }
 
-# ── Step 5: Archive packages ───────────────────────────────────────────────────
+# ── Step 6: Archive packages ───────────────────────────────────────────────────
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -122,7 +129,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
 
-# ── Step 6: Local source installs ─────────────────────────────────────────────
+# ── Step 7: Local source installs ─────────────────────────────────────────────
 message("\nInstalling local R packages (primex, circtest)...")
 
 install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
