@@ -68,7 +68,7 @@ RUN python3 -m venv /circtools && \
     pip install psutil && \
     pip install /build/circtools/ --verbose && \
     pip cache purge && \
-    Rscript /build/circtools/circtools/scripts/install_R_dependencies.R /build/circtools/
+    circtools_install_R_dependencies
 
 RUN cd /build && \
     wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
