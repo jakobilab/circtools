@@ -28,7 +28,7 @@ message("Detected library paths:")
 for (path in .libPaths()) message(paste0("-> ", path))
 message("")
 
-# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST
+# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST ──────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
@@ -62,34 +62,57 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     message(paste("BiocGenerics", packageVersion("BiocGenerics"), "already satisfies >= 0.53.2, skipping."))
   }
 }
+
 # ── Step 2: Determine what needs installing ────────────────────────────────────
-pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
-  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
-  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
-  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
+bioc_pkgs <- c(
+  "ballgown", "biomaRt", "edgeR",
+  "GenomicFeatures", "GenomicRanges", "ggbio",
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings"
 )
 
-# Remove already installed packages
-pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
+cran_pkgs <- c(
+  "aod", "amap", "devtools", "data.table", "ggfortify", "ggplot2",
+  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
+  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
+  "readr"
+)
 
-for (package in pkgs) {
+# Filter out already installed
+bioc_pkgs <- bioc_pkgs[!bioc_pkgs %in% installed.packages()[, 1]]
+cran_pkgs <- cran_pkgs[!cran_pkgs %in% installed.packages()[, 1]]
+
+for (package in c(bioc_pkgs, cran_pkgs)) {
   message(paste("Need to install package", package))
 }
 
-# ── Step 3: Install packages against the now-correct Bioc version ─────────────
+# ── Step 3: Install packages ───────────────────────────────────────────────────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
-  if (length(pkgs) > 0) {
-    BiocManager::install(pkgs, ask = FALSE, update = FALSE)
+
+  if (length(bioc_pkgs) > 0) {
+    message("Installing Bioconductor packages...")
+    BiocManager::install(bioc_pkgs, ask = FALSE, update = FALSE)
   }
+
+  if (length(cran_pkgs) > 0) {
+    message("Installing CRAN packages...")
+    install.packages(cran_pkgs, repos = "https://cloud.r-project.org")
+  }
+
 } else {
   source("https://bioconductor.org/biocLite.R")
   biocLite()
-  if (length(pkgs) > 0) biocLite(pkgs)
+  if (length(c(bioc_pkgs, cran_pkgs)) > 0) biocLite(c(bioc_pkgs, cran_pkgs))
 }
 
-# ── Step 4: Archive packages ───────────────────────────────────────────────────
+# ── Step 4: Verify all packages installed correctly ───────────────────────────
+all_pkgs <- c(bioc_pkgs, cran_pkgs)
+missing <- all_pkgs[!all_pkgs %in% installed.packages()[, 1]]
+if (length(missing) > 0) {
+  stop(paste("ERROR: The following packages failed to install:",
+             paste(missing, collapse = ", ")))
+}
+
+# ── Step 5: Archive packages ───────────────────────────────────────────────────
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -99,7 +122,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                  repos = NULL, type = "source")
 
-# ── Step 5: Local source installs ─────────────────────────────────────────────
+# ── Step 6: Local source installs ─────────────────────────────────────────────
 message("\nInstalling local R packages (primex, circtest)...")
 
 install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
