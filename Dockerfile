@@ -11,6 +11,12 @@ ENV PATH="/circtools/bin:$PATH"
 # set standard shell to bash for source to work
 SHELL ["/bin/bash", "-c"]
 
+# Newer r version
+RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | \
+    gpg --dearmor -o /usr/share/keyrings/r-project.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu noble-cran45/" \
+    > /etc/apt/sources.list.d/r-project.list
+
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     wget  \
@@ -60,7 +66,6 @@ RUN apt-get update && \
 
 COPY Makevars /root/.R/Makevars
 ADD . /build/circtools/
-
 
 RUN python3 -m venv /circtools && \
     . /circtools/bin/activate && \
