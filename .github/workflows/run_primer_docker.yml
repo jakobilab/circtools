@@ -2,7 +2,6 @@ name: circtools primex (docker)
 
 
 on:
-  push:
   workflow_run:
     workflows: ["Multi-arch docker container", "Multi-arch docker nightly"]
     types: [completed]
@@ -15,6 +14,7 @@ jobs:
   run-primer-docker:
     name: circtools primer (Docker)
     runs-on: ubuntu-24.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       GHCR_REPO: ghcr.io/jakobilab/circtools
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Pull image
         run: docker pull "${GHCR_IMAGE}"
