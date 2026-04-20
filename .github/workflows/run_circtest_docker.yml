@@ -27,7 +27,7 @@ jobs:
             echo "GHCR_IMAGE=${GHCR_REPO}:latest" >> $GITHUB_ENV
           else
             echo "Non-tag build → using nightly image"
-            echo "GHCR_IMAGE=${GHCR_REPO}:nightly" >> $GITHUB_ENV
+            echo "GHCR_IMAGE=${GHCR_REPO}:master" >> $GITHUB_ENV
           fi
 
           echo "Using image: $(grep GHCR_IMAGE $GITHUB_ENV)"
