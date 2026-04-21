@@ -52,8 +52,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  # --- Step 1: Install deps for archived packages FIRST ---
-
   message("\nInstalling dependencies for archived R packages...")
   archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
@@ -61,7 +59,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
   }
 
-  # --- Step 2: Install pinned archive packages ---
 
   message("\nInstalling archived R packages...")
 
@@ -119,6 +116,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 }
 
 # --- Verify all core package installs succeeded ---
+# BiocManager silently skips failures, so we check explicitly and retry any missing ones
 message("\nVerifying core package installations...")
 core_pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
