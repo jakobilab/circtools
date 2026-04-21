@@ -62,7 +62,40 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# --- Archive packages ---
+# --- Verify core package installs succeeded ---
+# BiocManager silently skips failures, so we check explicitly and retry any missing ones
+message("\nVerifying core package installations...")
+core_pkgs <- c(
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
+  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
+  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
+  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
+)
+failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
+if (length(failed_pkgs) > 0) {
+  message("Warning: The following packages were not installed, retrying:")
+  for (p in failed_pkgs) message(paste0("  -> ", p))
+  BiocManager::install(failed_pkgs, ask = FALSE, update = FALSE, lib = lib_path)
+  # Hard stop if still missing after retry
+  still_missing <- failed_pkgs[!failed_pkgs %in% installed.packages()[, 1]]
+  if (length(still_missing) > 0) {
+    stop(paste("Could not install required packages:",
+               paste(still_missing, collapse = ", ")))
+  }
+} else {
+  message("All core packages installed successfully")
+}
+
+# --- Archive packages: pre-install their dependencies first ---
+# These old pinned versions need deps that BiocManager may not pull in automatically
+message("\nInstalling dependencies for archived R packages...")
+archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
+archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
+if (length(archive_deps) > 0) {
+  BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
+}
+
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -74,7 +107,7 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats
 
 
 # --- Local source installs ---
-message("\nInstalling local R packages (primex, circtest)...")
+message("\nInstalling local R packages (primex, CircTest)...")
 
 primex_path <- paste0(base_path, "/contrib/primex")
 circtest_path <- paste0(base_path, "/contrib/circtest")
@@ -88,16 +121,16 @@ message(paste("circtest exists:", dir.exists(circtest_path)))
 tryCatch({
   install.packages(primex_path, repos = NULL, type = "source", lib = lib_path)
 }, error = function(e) {
-  stop(paste("❌ primex install.packages() threw an error:", e$message))
+  stop(paste("primex install.packages() threw an error:", e$message))
 })
 
-# Verify primex before proceeding to circtest
+# Verify primex before proceeding to CircTest
 if (!"primex" %in% installed.packages(lib.loc = lib_path)[, 1]) {
-  stop("❌ primex installation failed — aborting before circtest install")
+  stop("primex installation failed - aborting before CircTest install")
 }
-message("✅ primex installed successfully")
+message("primex installed successfully")
 
-# Make primex available on the search path for circtest's build
+# Make primex available on the search path for CircTest's build
 library(primex, lib.loc = lib_path)
 
 # Install CircTest with error propagation
@@ -110,17 +143,17 @@ tryCatch({
     INSTALL_opts = c("--no-multiarch", "--with-keep.source")
   )
 }, error = function(e) {
-  stop(paste("❌ CircTest install.packages() threw an error:", e$message))
+  stop(paste("CircTest install.packages() threw an error:", e$message))
 })
 
-# Verify CircTest — if present but broken, try loading it for a descriptive error
+# Verify CircTest - if present but broken, try loading it for a descriptive error
 if (!"CircTest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
   tryCatch(
     library(CircTest, lib.loc = lib_path),
-    error = function(e) stop(paste("❌ CircTest failed to load:", e$message))
+    error = function(e) stop(paste("CircTest failed to load:", e$message))
   )
-  stop("❌ CircTest installation failed (package not found after install)")
+  stop("CircTest installation failed (package not found after install)")
 }
-message("✅ CircTest installed successfully")
+message("CircTest installed successfully")
 
-message("\n✅ All R dependencies for circtools are installed.")
+message("\nAll R dependencies for circtools are installed.")
