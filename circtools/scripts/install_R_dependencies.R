@@ -18,8 +18,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-# NOTE: ggbio is intentionally excluded here — it depends on Hmisc which is
-# installed from archive below. ggbio is installed after the archive step.
+
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
@@ -54,9 +53,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  # --- Step 1: Install archived package dependencies first ---
-  # Hmisc (archive) is a dependency of ggbio, so it must come before the
-  # main BiocManager install. We pre-install its deps here.
+  # --- Step 1: Install dependencies for archived packages ---
   message("\nInstalling dependencies for archived R packages...")
   archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
@@ -65,7 +62,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
 
   # --- Step 2: Install archived packages ---
-  # These must come before the main install because ggbio depends on Hmisc
   message("\nInstalling archived R packages...")
   install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
                    repos = NULL, type = "source", lib = lib_path)
@@ -74,14 +70,21 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                    repos = NULL, type = "source", lib = lib_path)
 
-  # --- Step 3: Main BiocManager install (now includes ggbio which needs Hmisc) ---
+  message(paste("Hmisc version after archive install:", packageVersion("Hmisc")))
+
+  # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
+  message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
+  if (!"biovizBase" %in% installed.packages()[, 1]) {
+    BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
+  }
+  if (!"ggbio" %in% installed.packages()[, 1]) {
+    BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
+  }
+
+  # --- Step 4: Main BiocManager install ---
   message("\nInstalling core packages via BiocManager...")
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
-  }
-  # ggbio is installed after Hmisc is available
-  if (!"ggbio" %in% installed.packages()[, 1]) {
-    BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
   }
 
 } else {
@@ -91,7 +94,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 }
 
 # --- Verify all core package installs succeeded ---
-# BiocManager silently skips failures, so we check explicitly and retry any missing ones
 message("\nVerifying core package installations...")
 core_pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",

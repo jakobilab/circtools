@@ -55,6 +55,7 @@ RUN apt-get update && \
     libgmp-dev  \
     libmpfr-dev  \
     libnlopt-dev  \
+    libuv1-dev \ 
     nano \
     curl && \
     useradd -ms /bin/bash circtools && \
