@@ -32,7 +32,6 @@ pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
 minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
 majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
 
-# Determine explicit library path (first writable path)
 lib_path <- .libPaths()[1]
 
 message("")
@@ -52,19 +51,14 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  message("\nInstalling dependencies for archived R packages...")
-  archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
-  archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-  if (length(archive_deps) > 0) {
-    BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
-  }
-
-
-  message("\nInstalling archived R packages...")
+  message("\nInstalling archived R packages (with automatic dependency resolution)...")
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org",
+                     dependencies = TRUE,
+                     type = "source",
+                     lib = lib_path)
   }, error = function(e) {
     stop(paste("Hmisc archive install failed:", e$message))
   })
@@ -75,7 +69,10 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org",
+                     dependencies = TRUE,
+                     type = "source",
+                     lib = lib_path)
   }, error = function(e) {
     stop(paste("GGally archive install failed:", e$message))
   })
@@ -85,15 +82,16 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org",
+                     dependencies = TRUE,
+                     type = "source",
+                     lib = lib_path)
   }, error = function(e) {
     stop(paste("ggstats archive install failed:", e$message))
   })
   if (!"ggstats" %in% installed.packages()[, 1]) {
     stop("ggstats archive install failed - non-zero exit status")
   }
-
-  # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
 
   message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
   if (!"biovizBase" %in% installed.packages()[, 1]) {
@@ -103,7 +101,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
   }
 
-  # --- Step 4: Main BiocManager install ---
+  # --- Step 3: Main BiocManager install ---
   message("\nInstalling core packages via BiocManager...")
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
