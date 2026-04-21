@@ -18,9 +18,11 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
+# NOTE: ggbio is intentionally excluded here — it depends on Hmisc which is
+# installed from archive below. ggbio is installed after the archive step.
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
-  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
+  "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
   "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
@@ -52,8 +54,34 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
+  # --- Step 1: Install archived package dependencies first ---
+  # Hmisc (archive) is a dependency of ggbio, so it must come before the
+  # main BiocManager install. We pre-install its deps here.
+  message("\nInstalling dependencies for archived R packages...")
+  archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
+  archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
+  if (length(archive_deps) > 0) {
+    BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
+  }
+
+  # --- Step 2: Install archived packages ---
+  # These must come before the main install because ggbio depends on Hmisc
+  message("\nInstalling archived R packages...")
+  install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
+                   repos = NULL, type = "source", lib = lib_path)
+  install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
+                   repos = NULL, type = "source", lib = lib_path)
+  install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
+                   repos = NULL, type = "source", lib = lib_path)
+
+  # --- Step 3: Main BiocManager install (now includes ggbio which needs Hmisc) ---
+  message("\nInstalling core packages via BiocManager...")
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
+  }
+  # ggbio is installed after Hmisc is available
+  if (!"ggbio" %in% installed.packages()[, 1]) {
+    BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
   }
 
 } else {
@@ -62,7 +90,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# --- Verify core package installs succeeded ---
+# --- Verify all core package installs succeeded ---
 # BiocManager silently skips failures, so we check explicitly and retry any missing ones
 message("\nVerifying core package installations...")
 core_pkgs <- c(
@@ -77,7 +105,6 @@ if (length(failed_pkgs) > 0) {
   message("Warning: The following packages were not installed, retrying:")
   for (p in failed_pkgs) message(paste0("  -> ", p))
   BiocManager::install(failed_pkgs, ask = FALSE, update = FALSE, lib = lib_path)
-  # Hard stop if still missing after retry
   still_missing <- failed_pkgs[!failed_pkgs %in% installed.packages()[, 1]]
   if (length(still_missing) > 0) {
     stop(paste("Could not install required packages:",
@@ -86,24 +113,6 @@ if (length(failed_pkgs) > 0) {
 } else {
   message("All core packages installed successfully")
 }
-
-# --- Archive packages: pre-install their dependencies first ---
-# These old pinned versions need deps that BiocManager may not pull in automatically
-message("\nInstalling dependencies for archived R packages...")
-archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
-archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-if (length(archive_deps) > 0) {
-  BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
-}
-
-message("\nInstalling archived R packages...")
-
-install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                 repos = NULL, type = "source", lib = lib_path)
-install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
-                 repos = NULL, type = "source", lib = lib_path)
-install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
-                 repos = NULL, type = "source", lib = lib_path)
 
 
 # --- Local source installs ---
