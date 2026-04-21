@@ -18,7 +18,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
@@ -53,7 +52,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  # --- Step 1: Install dependencies for archived packages ---
+  # --- Step 1: Install deps for archived packages FIRST ---
+
   message("\nInstalling dependencies for archived R packages...")
   archive_deps <- c("latticeExtra", "viridis", "forcats", "reshape", "broom.helpers")
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
@@ -61,18 +61,43 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
   }
 
-  # --- Step 2: Install archived packages ---
-  message("\nInstalling archived R packages...")
-  install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                   repos = NULL, type = "source", lib = lib_path)
-  install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
-                   repos = NULL, type = "source", lib = lib_path)
-  install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
-                   repos = NULL, type = "source", lib = lib_path)
+  # --- Step 2: Install pinned archive packages ---
 
-  message(paste("Hmisc version after archive install:", packageVersion("Hmisc")))
+  message("\nInstalling archived R packages...")
+
+  tryCatch({
+    install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
+                     repos = NULL, type = "source", lib = lib_path)
+  }, error = function(e) {
+    stop(paste("Hmisc archive install failed:", e$message))
+  })
+  if (!"Hmisc" %in% installed.packages()[, 1]) {
+    stop("Hmisc archive install failed - non-zero exit status")
+  }
+  message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
+
+  tryCatch({
+    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
+                     repos = NULL, type = "source", lib = lib_path)
+  }, error = function(e) {
+    stop(paste("GGally archive install failed:", e$message))
+  })
+  if (!"GGally" %in% installed.packages()[, 1]) {
+    stop("GGally archive install failed - non-zero exit status")
+  }
+
+  tryCatch({
+    install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
+                     repos = NULL, type = "source", lib = lib_path)
+  }, error = function(e) {
+    stop(paste("ggstats archive install failed:", e$message))
+  })
+  if (!"ggstats" %in% installed.packages()[, 1]) {
+    stop("ggstats archive install failed - non-zero exit status")
+  }
 
   # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
+
   message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
   if (!"biovizBase" %in% installed.packages()[, 1]) {
     BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
@@ -100,7 +125,8 @@ core_pkgs <- c(
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
+  "Hmisc", "GGally", "ggstats"
 )
 failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
 if (length(failed_pkgs) > 0) {
