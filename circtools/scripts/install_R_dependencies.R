@@ -51,11 +51,11 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
-  
+
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
   }
-  
+
 } else {
   source("https://bioconductor.org/biocLite.R")
   biocLite()
@@ -84,20 +84,43 @@ message(paste("circtest path:", circtest_path))
 message(paste("primex exists:", dir.exists(primex_path)))
 message(paste("circtest exists:", dir.exists(circtest_path)))
 
-install.packages(primex_path, repos = NULL, type = "source", lib = lib_path)
-install.packages(circtest_path, repos = NULL, type = "source", lib = lib_path)
+# Install primex with error propagation
+tryCatch({
+  install.packages(primex_path, repos = NULL, type = "source", lib = lib_path)
+}, error = function(e) {
+  stop(paste("❌ primex install.packages() threw an error:", e$message))
+})
 
-# Verify installation
-if ("primex" %in% installed.packages(lib.loc = lib_path)[, 1]) {
-  message("✅ primex installed successfully")
-} else {
-  stop("❌ primex installation failed")
+# Verify primex before proceeding to circtest
+if (!"primex" %in% installed.packages(lib.loc = lib_path)[, 1]) {
+  stop("❌ primex installation failed — aborting before circtest install")
 }
+message("✅ primex installed successfully")
 
-if ("circtest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
-  message("✅ circtest installed successfully")
-} else {
-  stop("❌ circtest installation failed")
+# Make primex available on the search path for circtest's build
+library(primex, lib.loc = lib_path)
+
+# Install circtest with error propagation
+tryCatch({
+  install.packages(
+    circtest_path,
+    repos = NULL,
+    type = "source",
+    lib = lib_path,
+    INSTALL_opts = c("--no-multiarch", "--with-keep.source")
+  )
+}, error = function(e) {
+  stop(paste("❌ circtest install.packages() threw an error:", e$message))
+})
+
+# Verify circtest — if present but broken, try loading it for a descriptive error
+if (!"circtest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
+  tryCatch(
+    library(circtest, lib.loc = lib_path),
+    error = function(e) stop(paste("❌ circtest failed to load:", e$message))
+  )
+  stop("❌ circtest installation failed (package not found after install)")
 }
+message("✅ circtest installed successfully")
 
 message("\n✅ All R dependencies for circtools are installed.")
