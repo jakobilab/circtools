@@ -100,7 +100,7 @@ message("✅ primex installed successfully")
 # Make primex available on the search path for circtest's build
 library(primex, lib.loc = lib_path)
 
-# Install circtest with error propagation
+# Install CircTest with error propagation
 tryCatch({
   install.packages(
     circtest_path,
@@ -110,17 +110,17 @@ tryCatch({
     INSTALL_opts = c("--no-multiarch", "--with-keep.source")
   )
 }, error = function(e) {
-  stop(paste("❌ circtest install.packages() threw an error:", e$message))
+  stop(paste("❌ CircTest install.packages() threw an error:", e$message))
 })
 
-# Verify circtest — if present but broken, try loading it for a descriptive error
-if (!"circtest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
+# Verify CircTest — if present but broken, try loading it for a descriptive error
+if (!"CircTest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
   tryCatch(
-    library(circtest, lib.loc = lib_path),
-    error = function(e) stop(paste("❌ circtest failed to load:", e$message))
+    library(CircTest, lib.loc = lib_path),
+    error = function(e) stop(paste("❌ CircTest failed to load:", e$message))
   )
-  stop("❌ circtest installation failed (package not found after install)")
+  stop("❌ CircTest installation failed (package not found after install)")
 }
-message("✅ circtest installed successfully")
+message("✅ CircTest installed successfully")
 
 message("\n✅ All R dependencies for circtools are installed.")
