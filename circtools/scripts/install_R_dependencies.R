@@ -21,6 +21,8 @@ base_path <- args[1]
 # NOTE: Hmisc, GGally, ggstats, ggbio, biovizBase are excluded from the main
 # BiocManager pass. Hmisc/GGally/ggstats are pinned archive versions installed
 # from source. biovizBase and ggbio depend on Hmisc and are installed after it.
+# IMPORTANT: ggstats MUST be installed before GGally — GGally imports ggstats
+# at lazy-load time, so GGally's install verification fails if ggstats is absent.
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
@@ -99,16 +101,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
   message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
 
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
-  }, error = function(e) {
-    stop(paste("GGally archive install failed:", e$message))
-  })
-  if (!"GGally" %in% installed.packages()[, 1]) {
-    stop("GGally archive install failed - non-zero exit status")
-  }
-
+  # ggstats BEFORE GGally — GGally imports it at lazy-load time
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
                      repos = NULL, type = "source", lib = lib_path)
@@ -118,10 +111,20 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!"ggstats" %in% installed.packages()[, 1]) {
     stop("ggstats archive install failed - non-zero exit status")
   }
+  message(paste("ggstats installed, version:", packageVersion("ggstats")))
+
+  tryCatch({
+    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
+                     repos = NULL, type = "source", lib = lib_path)
+  }, error = function(e) {
+    stop(paste("GGally archive install failed:", e$message))
+  })
+  if (!"GGally" %in% installed.packages()[, 1]) {
+    stop("GGally archive install failed - non-zero exit status")
+  }
+  message(paste("GGally installed, version:", packageVersion("GGally")))
 
   # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
-  # Installed before the main BiocManager pass so BiocManager does not try to
-  # resolve and overwrite our pinned Hmisc when pulling in ggbio.
   message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
   if (!"biovizBase" %in% installed.packages()[, 1]) {
     BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
@@ -143,7 +146,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 }
 
 # --- Verify all core package installs succeeded ---
-# BiocManager silently skips failures, so we check explicitly and retry any missing ones
 message("\nVerifying core package installations...")
 core_pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
