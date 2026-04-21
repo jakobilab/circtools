@@ -18,121 +18,86 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
+pkgs <- c(
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
+  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
+  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
+  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
+)
+
+# Remove already installed packages
+pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
+
 minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
 majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
+
+# Determine explicit library path (first writable path)
+lib_path <- .libPaths()[1]
 
 message("")
 message("This script will automatically install R packages required by circtools.\n")
 message(paste("Detected R version ", majorVersion, ".", version[['minor']], "\n", sep=""))
+message(paste("Installing all packages to:", lib_path))
 message("Detected library paths:")
 for (path in .libPaths()) message(paste0("-> ", path))
 message("")
 
-# ── Step 1: Bootstrap BiocManager, then force BiocGenerics upgrade FIRST ──────
-if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
-  if (!requireNamespace("BiocManager", quietly = TRUE)) {
-    install.packages("BiocManager", repos = "https://cloud.r-project.org")
-  }
-
-  biocgenerics_ok <- tryCatch({
-    current <- packageVersion("BiocGenerics")
-    current >= package_version("0.53.2")
-  }, error = function(e) FALSE)
-
-  if (!biocgenerics_ok) {
-    message("BiocGenerics < 0.53.2 or missing — installing 'generics' then BiocGenerics from Bioc 3.21...")
-    lib_path <- .libPaths()[1]
-
-    if (!requireNamespace("generics", quietly = TRUE)) {
-      install.packages("generics", repos = "https://cloud.r-project.org", lib = lib_path)
-    }
-
-    install.packages(
-      "BiocGenerics",
-      repos = "https://bioconductor.org/packages/3.21/bioc",
-      lib   = lib_path,
-      type  = "source"
-    )
-
-    if ("package:BiocGenerics" %in% search()) detach("package:BiocGenerics", unload = TRUE, force = TRUE)
-    library(BiocGenerics, lib.loc = lib_path)
-    message(paste("BiocGenerics version now:", packageVersion("BiocGenerics")))
-  } else {
-    message(paste("BiocGenerics", packageVersion("BiocGenerics"), "already satisfies >= 0.53.2, skipping."))
-  }
-}
-
-# ── Step 2: Pre-install critical CRAN dependencies ────────────────────────────
-message("Pre-installing critical CRAN dependencies...")
-install.packages(
-  c("rmarkdown", "htmlwidgets", "pkgload", "pkgdown", "usethis",
-    "fs", "miniUI", "profvis", "roxygen2", "testthat"),
-  repos = "https://cloud.r-project.org"
-)
-
-# ── Step 3: Determine what needs installing ────────────────────────────────────
-bioc_pkgs <- c(
-  "ballgown", "biomaRt", "edgeR",
-  "GenomicFeatures", "GenomicRanges", "ggbio",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings"
-)
-
-cran_pkgs <- c(
-  "aod", "amap", "devtools", "data.table", "ggfortify", "ggplot2",
-  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
-  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "readr"
-)
-
-# Filter out already installed
-bioc_pkgs <- bioc_pkgs[!bioc_pkgs %in% installed.packages()[, 1]]
-cran_pkgs <- cran_pkgs[!cran_pkgs %in% installed.packages()[, 1]]
-
-for (package in c(bioc_pkgs, cran_pkgs)) {
+for (package in pkgs) {
   message(paste("Need to install package", package))
 }
 
-# ── Step 4: Install packages ───────────────────────────────────────────────────
 if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
-
-  if (length(bioc_pkgs) > 0) {
-    message("Installing Bioconductor packages...")
-    BiocManager::install(bioc_pkgs, ask = FALSE, update = FALSE)
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
-
-  if (length(cran_pkgs) > 0) {
-    message("Installing CRAN packages...")
-    install.packages(cran_pkgs, repos = "https://cloud.r-project.org")
+  
+  if (length(pkgs) > 0) {
+    BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
   }
-
+  
 } else {
   source("https://bioconductor.org/biocLite.R")
   biocLite()
-  if (length(c(bioc_pkgs, cran_pkgs)) > 0) biocLite(c(bioc_pkgs, cran_pkgs))
+  if (length(pkgs) > 0) biocLite(pkgs)
 }
 
-# ── Step 5: Verify all packages installed correctly ───────────────────────────
-all_pkgs <- c(bioc_pkgs, cran_pkgs)
-missing <- all_pkgs[!all_pkgs %in% installed.packages()[, 1]]
-if (length(missing) > 0) {
-  stop(paste("ERROR: The following packages failed to install:",
-             paste(missing, collapse = ", ")))
-}
-
-# ── Step 6: Archive packages ───────────────────────────────────────────────────
+# --- Archive packages ---
 message("\nInstalling archived R packages...")
 
 install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                 repos = NULL, type = "source")
+                 repos = NULL, type = "source", lib = lib_path)
 install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
-                 repos = NULL, type = "source")
+                 repos = NULL, type = "source", lib = lib_path)
 install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
-                 repos = NULL, type = "source")
+                 repos = NULL, type = "source", lib = lib_path)
 
-# ── Step 7: Local source installs ─────────────────────────────────────────────
+
+# --- Local source installs ---
 message("\nInstalling local R packages (primex, circtest)...")
 
-install.packages(paste0(base_path, "/contrib/primex"), repos = NULL, type = "source")
-install.packages(paste0(base_path, "/contrib/circtest"), repos = NULL, type = "source")
+primex_path <- paste0(base_path, "/contrib/primex")
+circtest_path <- paste0(base_path, "/contrib/circtest")
+
+message(paste("primex path:", primex_path))
+message(paste("circtest path:", circtest_path))
+message(paste("primex exists:", dir.exists(primex_path)))
+message(paste("circtest exists:", dir.exists(circtest_path)))
+
+install.packages(primex_path, repos = NULL, type = "source", lib = lib_path)
+install.packages(circtest_path, repos = NULL, type = "source", lib = lib_path)
+
+# Verify installation
+if ("primex" %in% installed.packages(lib.loc = lib_path)[, 1]) {
+  message("✅ primex installed successfully")
+} else {
+  stop("❌ primex installation failed")
+}
+
+if ("circtest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
+  message("✅ circtest installed successfully")
+} else {
+  stop("❌ circtest installation failed")
+}
 
 message("\n✅ All R dependencies for circtools are installed.")

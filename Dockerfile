@@ -70,7 +70,12 @@ RUN python3 -m venv /circtools && \
     pip install psutil && \
     pip install /build/circtools/ --verbose && \
     pip cache purge && \
-    circtools_install_R_dependencies
+    circtools_install_R_dependencies /build/circtools
+
+
+RUN . /circtools/bin/activate && \
+    circtools_install_R_dependencies /build/circtools && \
+    Rscript -e 'library(primex); cat("primex OK\n")'
 
 RUN cd /build && \
     wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
