@@ -120,7 +120,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = NULL, type = "source", lib = lib_path,
+                     INSTALL_opts = c("--no-byte-compile", "--no-staged-install"))
   }, error = function(e) {
     stop(paste("Hmisc archive install failed:", e$message))
   })
