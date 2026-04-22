@@ -53,40 +53,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  # --- Step 1: Pre-install deps for scales 1.3.0 before pinning it ---
-  # scales must be installed from archive BEFORE BiocManager runs, otherwise
-  # BiocManager pulls in current scales (>= 1.4.0) which removed trans_breaks,
-  # trans_format, and math_format used in circtools_quickcheck_wrapper.R
-  message("\nPre-installing dependencies for pinned scales 1.3.0...")
-  scales_deps <- c(
-    "munsell", "R6", "viridisLite", "labeling", "farver", "glue",
-    "cli", "lifecycle", "rlang", "RColorBrewer"
-  )
-  scales_deps <- scales_deps[!scales_deps %in% installed.packages()[, 1]]
-  if (length(scales_deps) > 0) {
-    BiocManager::install(scales_deps, ask = FALSE, update = FALSE, lib = lib_path)
-  }
-
-  still_missing <- scales_deps[!scales_deps %in% installed.packages()[, 1]]
-  if (length(still_missing) > 0) {
-    stop(paste("Could not install scales dependencies:", paste(still_missing, collapse = ", ")))
-  }
-
-  # --- Step 2: Pin scales 1.3.0 ---
-  message("\nInstalling pinned scales 1.3.0...")
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/scales/scales_1.3.0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
-  }, error = function(e) {
-    stop(paste("scales archive install failed:", e$message))
-  })
-  if (!"scales" %in% installed.packages()[, 1]) {
-    stop("scales archive install failed - non-zero exit status")
-  }
-  message(paste("scales installed, version:", packageVersion("scales")))
-
-  # --- Step 3: Main BiocManager install ---
-  # scales is already pinned so BiocManager won't upgrade it
   message("\nInstalling core packages via BiocManager...")
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
@@ -106,7 +72,7 @@ core_pkgs <- c(
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
   "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
-  "Hmisc", "biovizBase", "ggbio", "scales"
+  "Hmisc", "biovizBase", "ggbio"
 )
 failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
 if (length(failed_pkgs) > 0) {
@@ -121,7 +87,6 @@ if (length(failed_pkgs) > 0) {
 } else {
   message("All core packages installed successfully")
 }
-
 
 # --- Local source installs ---
 message("\nInstalling local R packages (primex, CircTest)...")
