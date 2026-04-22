@@ -19,6 +19,7 @@ args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
 
+
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
@@ -55,6 +56,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   # --- Step 1: Pre-install ALL dependencies for archived packages ---
 
+
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
     # Hmisc 4.6-0 Imports
@@ -68,7 +70,11 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     "stringr", "forcats", "lifecycle", "rlang", "scales", "tidyr",
 
     # GGally 2.2.1 Imports (beyond what ggstats already covers)
-    "progress", "colorspace"
+    "progress",
+
+    # Also in pkgs but required before Step 2 (archive installs) —
+    # safe to list here too since pkgs filters already-installed packages
+    "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
   )
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
   if (length(archive_deps) > 0) {
