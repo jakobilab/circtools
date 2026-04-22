@@ -18,11 +18,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-# NOTE: Hmisc, GGally, ggstats, ggbio, biovizBase are excluded from the main
-# BiocManager pass. Hmisc/GGally/ggstats are pinned archive versions installed
-# from source. biovizBase and ggbio depend on Hmisc and are installed after it.
-# IMPORTANT: ggstats MUST be installed before GGally — GGally imports ggstats
-# at lazy-load time, so GGally's install verification fails if ggstats is absent.
+
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
@@ -58,22 +54,21 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
 
   # --- Step 1: Pre-install ALL dependencies for archived packages ---
-  # Full Imports from Hmisc 4.6-0 DESCRIPTION:
-  #   latticeExtra, Formula, ggplot2, data.table, htmlTable, htmltools,
-  #   base64enc, colorspace, rms, viridis
-  # Full Imports from GGally 2.1.2 DESCRIPTION:
-  #   forcats, reshape, ggstats (not yet installed), progress, RColorBrewer
-  # Full Imports from ggstats 0.3.0 DESCRIPTION:
-  #   broom.helpers, forcats
+
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
-    # Hmisc 4.6-0 deps
-    "latticeExtra", "Formula", "data.table", "htmltools", "base64enc",
-    "colorspace", "viridis", "htmlTable",
-    # GGally 2.1.2 deps
-    "forcats", "reshape", "progress",
-    # ggstats 0.3.0 deps
-    "broom.helpers"
+    # Hmisc 4.6-0 Imports
+    "latticeExtra", "Formula", "base64enc", "htmltools", "htmlTable",
+    "viridis", "cluster", "foreign", "gtable", "nnet", "rpart",
+    # Hmisc 4.6-0 Depends (non-base)
+    "lattice", "survival",
+
+    # ggstats 0.5.0 Imports
+    "broom.helpers", "cli", "magrittr", "patchwork", "purrr",
+    "stringr", "forcats", "lifecycle", "rlang", "scales", "tidyr",
+
+    # GGally 2.2.1 Imports (beyond what ggstats already covers)
+    "progress", "colorspace"
   )
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
   if (length(archive_deps) > 0) {
@@ -101,9 +96,9 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
   message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
 
-  # ggstats BEFORE GGally — GGally imports it at lazy-load time
+  # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
   tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.3.0.tar.gz",
+    install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
                      repos = NULL, type = "source", lib = lib_path)
   }, error = function(e) {
     stop(paste("ggstats archive install failed:", e$message))
@@ -114,7 +109,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   message(paste("ggstats installed, version:", packageVersion("ggstats")))
 
   tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.1.2.tar.gz",
+    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.2.1.tar.gz",
                      repos = NULL, type = "source", lib = lib_path)
   }, error = function(e) {
     stop(paste("GGally archive install failed:", e$message))
