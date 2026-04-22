@@ -58,7 +58,10 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
 
   # --- Step 1: Pre-install ALL dependencies for archived packages ---
-
+  # Verified against DESCRIPTION files of each pinned archive version:
+  #   Hmisc 4.6-0, ggstats 0.5.0, GGally 2.2.1
+  # Some packages overlap with pkgs (e.g. ggplot2, dplyr) but must be listed here
+  # too — archive tarballs are installed in Step 2, before pkgs runs in Step 4.
 
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
@@ -74,8 +77,15 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
     # GGally 2.2.1 Imports (beyond what ggstats already covers)
     "progress",
-    "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
 
+    # scales 1.3.0 Imports
+    "munsell", "R6", "viridisLite", "labeling", "farver", "glue",
+
+    # Also in pkgs but required before Step 2 (archive installs) —
+    # safe to list here too since pkgs filters already-installed packages
+    "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
+    # NOTE: scales is intentionally excluded — pinned to 1.3.0 archive below
+    # because scales >= 1.4.0 removed is.rel() which GGally 2.2.1 depends on
   )
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
   if (length(archive_deps) > 0) {
