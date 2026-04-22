@@ -57,6 +57,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
+
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
     # Hmisc 4.6-0 Imports
@@ -88,13 +89,13 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
                paste(still_missing_deps, collapse = ", ")))
   }
 
-  # --- Step 2: Install pinned archive packages (repos=NULL for tarball) ---
+  # --- Step 2: Install pinned archive packages ---
+  # URL tarballs require repos=NULL. Dependencies are pre-installed in Step 1.
   message("\nInstalling archived R packages...")
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
+                     repos = NULL, type = "source", lib = lib_path)
   }, error = function(e) {
     stop(paste("Hmisc archive install failed:", e$message))
   })
@@ -106,8 +107,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
+                     repos = NULL, type = "source", lib = lib_path)
   }, error = function(e) {
     stop(paste("ggstats archive install failed:", e$message))
   })
@@ -118,8 +118,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.2.1.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
+                     repos = NULL, type = "source", lib = lib_path)
   }, error = function(e) {
     stop(paste("GGally archive install failed:", e$message))
   })
