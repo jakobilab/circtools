@@ -19,11 +19,12 @@ args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
 pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR", "Hmisc",
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
+  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
+  "Hmisc", "biovizBase", "ggbio"
 )
 
 # Remove already installed packages
@@ -52,49 +53,27 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
-  # --- Step 1: Pre-install ALL dependencies for archived packages ---
-  # Verified against DESCRIPTION files of each pinned archive version:
-  #   scales 1.3.0, ggstats 0.5.0, GGally 2.2.1
-  # Some packages overlap with pkgs (e.g. ggplot2, dplyr) but must be listed here
-  # too — archive tarballs are installed in Step 2, before pkgs runs in Step 4.
-
-  message("\nPre-installing all dependencies for archived R packages...")
-  archive_deps <- c(
-
-    # ggstats 0.5.0 Imports
-    "broom.helpers", "cli", "magrittr", "patchwork", "purrr",
-    "stringr", "forcats", "lifecycle", "rlang", "tidyr",
-
-    # GGally 2.2.1 Imports (beyond what ggstats already covers)
-    "progress",
-
-    # scales 1.3.0 Imports
+  # --- Step 1: Pre-install deps for scales 1.3.0 before pinning it ---
+  # scales must be installed from archive BEFORE BiocManager runs, otherwise
+  # BiocManager pulls in current scales (>= 1.4.0) which removed trans_breaks,
+  # trans_format, and math_format used in circtools_quickcheck_wrapper.R
+  message("\nPre-installing dependencies for pinned scales 1.3.0...")
+  scales_deps <- c(
     "munsell", "R6", "viridisLite", "labeling", "farver", "glue",
-
-    # Also in pkgs but required before Step 2 (archive installs) —
-    # safe to list here too since pkgs filters already-installed packages
-    "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
-    # NOTE: scales is intentionally excluded — pinned to 1.3.0 archive below
-    # because scales >= 1.4.0 removed is.rel() which GGally 2.2.1 depends on
+    "cli", "lifecycle", "rlang", "RColorBrewer"
   )
-  archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-  if (length(archive_deps) > 0) {
-    BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
+  scales_deps <- scales_deps[!scales_deps %in% installed.packages()[, 1]]
+  if (length(scales_deps) > 0) {
+    BiocManager::install(scales_deps, ask = FALSE, update = FALSE, lib = lib_path)
   }
 
-  # Verify all archive deps installed before proceeding
-  still_missing_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-  if (length(still_missing_deps) > 0) {
-    stop(paste("Could not install archive dependencies:",
-               paste(still_missing_deps, collapse = ", ")))
+  still_missing <- scales_deps[!scales_deps %in% installed.packages()[, 1]]
+  if (length(still_missing) > 0) {
+    stop(paste("Could not install scales dependencies:", paste(still_missing, collapse = ", ")))
   }
 
-  # --- Step 2: Install pinned archive packages ---
-  # URL tarballs require repos=NULL. Dependencies are pre-installed in Step 1.
-  message("\nInstalling archived R packages...")
-
-  # scales must be pinned to 1.3.0 — scales >= 1.4.0 removed is.rel()
-  # which GGally 2.2.1 calls at lazy-load time, causing "object 'is.rel' not found"
+  # --- Step 2: Pin scales 1.3.0 ---
+  message("\nInstalling pinned scales 1.3.0...")
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/scales/scales_1.3.0.tar.gz",
                      repos = NULL, type = "source", lib = lib_path)
@@ -106,49 +85,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
   message(paste("scales installed, version:", packageVersion("scales")))
 
-  # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
-  }, error = function(e) {
-    stop(paste("ggstats archive install failed:", e$message))
-  })
-  if (!"ggstats" %in% installed.packages()[, 1]) {
-    stop("ggstats archive install failed - non-zero exit status")
-  }
-  message(paste("ggstats installed, version:", packageVersion("ggstats")))
-
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.2.1.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
-  }, error = function(e) {
-    stop(paste("GGally archive install failed:", e$message))
-  })
-  if (!"GGally" %in% installed.packages()[, 1]) {
-    message("GGally not found after install — attempting load to expose root cause:")
-    tryCatch(
-      library(GGally, lib.loc = lib_path),
-      error = function(e) message(paste("GGally load error:", e$message))
-    )
-    message("ggstats namespace contents:")
-    tryCatch(
-      message(paste(ls(getNamespace("ggstats")), collapse = ", ")),
-      error = function(e) message(paste("Could not inspect ggstats namespace:", e$message))
-    )
-    stop("GGally archive install failed - non-zero exit status")
-  }
-  message(paste("GGally installed, version:", packageVersion("GGally")))
-
-  # --- Step 3: Install biovizBase and ggbio ---
-  message("\nInstalling biovizBase and ggbio...")
-  if (!"biovizBase" %in% installed.packages()[, 1]) {
-    BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
-  }
-  if (!"ggbio" %in% installed.packages()[, 1]) {
-    BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
-  }
-
-  # --- Step 4: Main BiocManager install ---
+  # --- Step 3: Main BiocManager install ---
+  # scales is already pinned so BiocManager won't upgrade it
   message("\nInstalling core packages via BiocManager...")
   if (length(pkgs) > 0) {
     BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
@@ -163,12 +101,12 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 # --- Verify all core package installs succeeded ---
 message("\nVerifying core package installations...")
 core_pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR", "Hmisc",
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
   "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
-  "Hmisc", "GGally", "ggstats", "scales"
+  "Hmisc", "biovizBase", "ggbio", "scales"
 )
 failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
 if (length(failed_pkgs) > 0) {
