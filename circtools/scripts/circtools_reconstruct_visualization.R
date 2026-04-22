@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Copyright (C) 2025 Tobias Jakobi
+# Copyright (C) 2017 Tobias Jakobi
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,210 +15,271 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+### imports
+message("Loading required packages")
+suppressMessages(library(ggplot2))
+suppressMessages(require(data.table))
+suppressMessages(require(ggsignif))
+message("Done loading packages")
+
+# may not be optimal, but we do not want warning for now
+options(warn = - 1)
+
+create_quantile_plot <- function(table) {
+
+  libs <- unique(table$group)
+  maxval <- max(table$length, na.rm=T)
+
+  for (lib in libs) {
+    subset <- table[table$group==lib,]
+    dt <- data.table(x=subset$group,y=subset$length)
+    dens <- density(dt$y)
+    df <- data.frame(x=dens$x, y=dens$y)
+    probs <- c(0.90, 0.95, 0.99)
+    quantiles <- quantile(dt$y, prob=probs)
+    probs <- c(probs,paste("> ",probs[length(probs-1)]))
+    df$quant <- factor(findInterval(df$x,quantiles))
+    plot <- ggplot(df, aes(x,y)) + geom_line(colour="black", size=0.1) + geom_ribbon(aes(ymin=0, ymax=y, fill=quant))
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9, guide="legend", labels=probs, name="Quantiles")
+    } else {
+        plot <- plot + scale_fill_hue(guide="legend", labels=probs, name="Quantiles")
+    }
+    plot <- plot +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = paste("CircRNA length - quantile plot for sample \"", lib, "\"", sep="")) +
+    labs(y = "Density") +
+    labs(x = "CircRNA length") +
+    xlim(0,maxval) +
+    theme(legend.position = c(.95, .95),
+    legend.justification = c("right", "top"))
+    print(plot)
+  }
+}
+
 args <- commandArgs(trailingOnly = TRUE)
-base_path <- args[1]
 
-# NOTE: Hmisc, GGally, ggstats, ggbio, biovizBase are excluded from the main
-# BiocManager pass. They are pinned archive versions installed from source.
-# biovizBase and ggbio depend on Hmisc and are installed after it.
-# Install order: Hmisc -> ggstats -> GGally (GGally imports ggstats at lazy-load time)
+arg_reconstruct_data <- args[1] # path is string
+arg_groups <-   unlist(lapply(strsplit(args[2],","), as.numeric)) # list of ints
+arg_condition_list  <- strsplit(args[3],",")[[1]] # list of strings
+arg_colour_mode <- args[4]
 
-pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
-  "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
-  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
-  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr"
-)
+geom_signif_list <- (combn(arg_condition_list,2, simplify=F))
 
-# Remove already installed packages
-pkgs <- pkgs[!pkgs %in% installed.packages()[, 1]]
-
-minorVersion <- as.numeric(strsplit(version[['minor']], '')[[1]][[1]])
-majorVersion <- as.numeric(strsplit(version[['major']], '')[[1]][[1]])
-
-# Determine explicit library path (first writable path)
-lib_path <- .libPaths()[1]
-
-message("")
-message("This script will automatically install R packages required by circtools.\n")
-message(paste("Detected R version ", majorVersion, ".", version[['minor']], "\n", sep=""))
-message(paste("Installing all packages to:", lib_path))
-message("Detected library paths:")
-for (path in .libPaths()) message(paste0("-> ", path))
-message("")
-
-for (package in pkgs) {
-  message(paste("Need to install package", package))
+# check colour mode
+if (arg_colour_mode != "colour" & arg_colour_mode != "bw" ) {
+    print(arg_colour_mode)
+    message("Please specify the colour model: colour or bw")
+    quit()
 }
 
-if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
-  if (!requireNamespace("BiocManager", quietly = TRUE)) {
-    install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
-  }
+group_length <- length(arg_condition_list)
+message(paste(group_length, " different groups provided", sep=""))
+names <- unlist(lapply(seq(1, length(arg_groups)), function(x) {return(arg_condition_list[arg_groups[x]])}))
 
-  message("\nPre-installing all dependencies for archived R packages...")
-  archive_deps <- c(
-    # Hmisc 4.6-0 Imports
-    "latticeExtra", "Formula", "base64enc", "htmltools", "htmlTable",
-    "viridis", "cluster", "foreign", "gtable", "nnet", "rpart",
-    # Hmisc 4.6-0 Depends (non-base)
-    "lattice", "survival",
+exon_counts <- system(paste("awk \'{split($11,array,\",\"); sum = 0; for( i = 1; i <= length(array); i++ ) {sum += array[i]}; print FILENAME\"\t\"$3-$2\"\t\"$10\"\t\"sum}\' *.exon_counts.bed | sed \'s/\\.exon_counts\\.bed//g\' | egrep -v \\W0\\W",sep=""), intern = TRUE)
+exon_counts <- read.delim(textConnection(exon_counts), header = F, sep = "\t")
 
-    # ggstats 0.5.0 Imports
-    "broom.helpers", "cli", "magrittr", "patchwork", "purrr",
-    "stringr", "forcats", "lifecycle", "rlang", "scales", "tidyr",
 
-    # GGally 2.2.1 Imports (beyond what ggstats already covers)
-    "progress",
-    "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
-  )
-  archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-  if (length(archive_deps) > 0) {
-    BiocManager::install(archive_deps, ask = FALSE, update = FALSE, lib = lib_path)
-  }
+mate_status <- system(paste("awk \'{print FILENAME\"\\t\"$6\"\\t\"$7\"\\t\"$8}\' *.mate_status.txt | sed \'s/\\.mate_status\\.txt//g\' | grep -v single  | awk \'{print $0\"\\t\"$3/($2+$3+$4)}\'",sep=""), intern = TRUE)
+mate_status <- read.delim(textConnection(mate_status), header = F, sep = "\t")
 
-  # Verify all archive deps installed before proceeding
-  still_missing_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
-  if (length(still_missing_deps) > 0) {
-    stop(paste("Could not install archive dependencies:",
-               paste(still_missing_deps, collapse = ", ")))
-  }
+isoforms <- system(paste("grep -H -o -n \',\' *alternative_splicing.txt | cut -d : -f 1,2 |  uniq -c |  sed \'s/\\.alternative.*//g\' | awk \'{print $2\"\\t\"$1}\' ",sep=""), intern = TRUE)
+isoforms <- read.delim(textConnection(isoforms), header = F, sep = "\t")
 
-  # --- Step 2: Install pinned archive packages (repos=NULL for tarball) ---
-  message("\nInstalling archived R packages...")
 
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
-  }, error = function(e) {
-    stop(paste("Hmisc archive install failed:", e$message))
-  })
-  if (!"Hmisc" %in% installed.packages()[, 1]) {
-    stop("Hmisc archive install failed - non-zero exit status")
-  }
-  message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
 
-  # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
-  }, error = function(e) {
-    stop(paste("ggstats archive install failed:", e$message))
-  })
-  if (!"ggstats" %in% installed.packages()[, 1]) {
-    stop("ggstats archive install failed - non-zero exit status")
-  }
-  message(paste("ggstats installed, version:", packageVersion("ggstats")))
+circ_length <- system(paste("awk \'{if($2>0){print FILENAME\"\\t\"$2}}\' *.coverage_profiles/cluster_association.all_circles.tsv | sed \'s/\\.coverage_profiles\\/cluster_association\\.all_circles\\.tsv//g\' | grep -v length",sep=""), intern = TRUE)
+circ_length <- read.delim(textConnection(circ_length), header = F, sep = "\t")
 
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.2.1.tar.gz",
-                     repos = "https://cloud.r-project.org", type = "source",
-                     dependencies = TRUE, lib = lib_path)
-  }, error = function(e) {
-    stop(paste("GGally archive install failed:", e$message))
-  })
-  if (!"GGally" %in% installed.packages()[, 1]) {
-    stop("GGally archive install failed - non-zero exit status")
-  }
-  message(paste("GGally installed, version:", packageVersion("GGally")))
 
-  # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
-  message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
-  if (!"biovizBase" %in% installed.packages()[, 1]) {
-    BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
-  }
-  if (!"ggbio" %in% installed.packages()[, 1]) {
-    BiocManager::install("ggbio", ask = FALSE, update = FALSE, lib = lib_path)
-  }
+colnames(exon_counts) <- c("Library2", "Length_total", "Exons", "Length_exons")
+colnames(isoforms) <- c("Library", "num")
+colnames(circ_length) <- c("Library", "length")
+colnames(mate_status) <- c("Library", "Single", "Double", "Unknown", "Ratio")
 
-  # --- Step 4: Main BiocManager install ---
-  message("\nInstalling core packages via BiocManager...")
-  if (length(pkgs) > 0) {
-    BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib_path)
-  }
+sequencing_lib_name <- levels(unique(isoforms$Library))
+detailed_names <- names
 
-} else {
-  source("https://bioconductor.org/biocLite.R")
-  biocLite()
-  if (length(pkgs) > 0) biocLite(pkgs)
-}
+data <- data.frame((unique(isoforms$Library)))
+colnames(data) <- c("Library")
 
-# --- Verify all core package installs succeeded ---
-message("\nVerifying core package installations...")
-core_pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
-  "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
-  "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
-  "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
-  "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
-  "Hmisc", "GGally", "ggstats"
-)
-failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
-if (length(failed_pkgs) > 0) {
-  message("Warning: The following packages were not installed, retrying:")
-  for (p in failed_pkgs) message(paste0("  -> ", p))
-  BiocManager::install(failed_pkgs, ask = FALSE, update = FALSE, lib = lib_path)
-  still_missing <- failed_pkgs[!failed_pkgs %in% installed.packages()[, 1]]
-  if (length(still_missing) > 0) {
-    stop(paste("Could not install required packages:",
-               paste(still_missing, collapse = ", ")))
-  }
-} else {
-  message("All core packages installed successfully")
+for (lib in unique(isoforms$Library)) {
+  data$count[data$Library==lib] <- nrow(circ_length[circ_length$Library==lib,])
 }
 
 
-# --- Local source installs ---
-message("\nInstalling local R packages (primex, CircTest)...")
-
-primex_path <- paste0(base_path, "/contrib/primex")
-circtest_path <- paste0(base_path, "/contrib/circtest")
-
-message(paste("primex path:", primex_path))
-message(paste("circtest path:", circtest_path))
-message(paste("primex exists:", dir.exists(primex_path)))
-message(paste("circtest exists:", dir.exists(circtest_path)))
-
-# Install primex with error propagation
-tryCatch({
-  install.packages(primex_path, repos = NULL, type = "source", lib = lib_path)
-}, error = function(e) {
-  stop(paste("primex install.packages() threw an error:", e$message))
-})
-
-# Verify primex before proceeding to CircTest
-if (!"primex" %in% installed.packages(lib.loc = lib_path)[, 1]) {
-  stop("primex installation failed - aborting before CircTest install")
+for (i in 1 : length(sequencing_lib_name)) {
+    exon_counts$group[exon_counts$Library == sequencing_lib_name[i]] <- detailed_names[i]
+    mate_status$group[mate_status$Library == sequencing_lib_name[i]] <- detailed_names[i]
+    isoforms$group[isoforms$Library == sequencing_lib_name[i]] <- detailed_names[i]
+    circ_length$group[circ_length$Library == sequencing_lib_name[i]] <- detailed_names[i]
+    data$group[data$Library == sequencing_lib_name[i]] <- detailed_names[i]
 }
-message("primex installed successfully")
 
-# Make primex available on the search path for CircTest's build
-library(primex, lib.loc = lib_path)
+############### bare fuchs data, circRNA length
+pdf("results.pdf", width= 8, height=5.5 , title="circtools reconstruction results")
 
-# Install CircTest with error propagation
-tryCatch({
-  install.packages(
-    circtest_path,
-    repos = NULL,
-    type = "source",
-    lib = lib_path,
-    INSTALL_opts = c("--no-multiarch", "--with-keep.source")
-  )
-}, error = function(e) {
-  stop(paste("CircTest install.packages() threw an error:", e$message))
-})
+# # total raw number of FUCHS circRNAs
+plot <- ggplot(data = data, aes(x = group, y = count, fill = group)) +
+    geom_boxplot(colour="black", size=0.1)
 
-# Verify CircTest - if present but broken, try loading it for a descriptive error
-if (!"CircTest" %in% installed.packages(lib.loc = lib_path)[, 1]) {
-  tryCatch(
-    library(CircTest, lib.loc = lib_path),
-    error = function(e) stop(paste("CircTest failed to load:", e$message))
-  )
-  stop("CircTest installation failed (package not found after install)")
-}
-message("CircTest installed successfully")
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "Absolute count - normal scale") +
+    labs(y = "Total number of circular RNAs") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
 
-message("\nAll R dependencies for circtools are installed.")
+# # total raw number of FUCHS circRNAs
+plot <- ggplot(data = data, aes(x = group, y = count, fill = group)) +
+  geom_boxplot(colour="black", size=0.1)
+
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    labs(title = "Circular RNA reconstruction results",
+		subtitle = "Absolute count - log10 scale") +
+    labs(y = "Total number of circular RNAs (log10)") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    scale_y_log10() +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+# Quantile length plots
+
+create_quantile_plot(circ_length)
+
+# more stuff: single/double breakpoint fragments, exon length
+plot <- ggplot(data = isoforms, aes(x = group, y = num, fill = group)) +
+    geom_boxplot() + theme_classic()
+
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "# circRNA isoforms per host gene") +
+    labs(y = "Number of isoforms") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+plot <- ggplot(data = exon_counts, aes(x = group, y = Length_total, fill = group)) +
+    geom_boxplot() + theme_classic()
+
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    scale_y_log10() +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "Total length of circRNAs") +
+    labs(y = "Total length (exons + introns)") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+plot <- ggplot(data = exon_counts, aes(x = group, y = Length_exons, fill = group)) +
+    geom_boxplot() + theme_classic()
+
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    scale_y_log10() +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "Exon-based length of circRNAs") +
+    labs(y = "Length (exons only)") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+plot <- ggplot(data = exon_counts, aes(x = group, y = Exons, fill = group)) +
+    geom_boxplot() + theme_classic()
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "Number of exons per circRNA") +
+    labs(y = "# exons per circRNA") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+plot <- ggplot(data = mate_status, aes(x = group, y = Single, fill = group)) +
+    geom_boxplot() + theme_classic()
+
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    scale_y_log10() +
+    labs(title = "Circular RNA reconstruction results",
+    subtitle = "Single breakpoint circRNAs (absolute)") +
+    labs(y = "# single breakpoints") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+plot <- ggplot(data = mate_status, aes(x = group, y = Double, fill = group)) +
+    geom_boxplot() + theme_classic()
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+    scale_y_log10() +
+		labs(title = "Circular RNA reconstruction results",
+		subtitle = "Double breakpoint circRNAs (absolute)") +
+    labs(y = "# double breakpoints") +
+    labs(y = "# exons per circRNA") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+# plot <- ggplot(data = mate_status, aes(x = group, y = Unknown, fill = group)) +
+#     geom_boxplot() + theme_classic()
+#
+#     if (arg_colour_mode == "bw" ) {
+#         plot <- plot + scale_fill_grey(start = 0, end = .9)
+#     }
+#     plot <- plot +
+#     scale_y_log10() +
+# 		labs(title = "Circular RNA reconstruction results",
+# 		subtitle = "Unknown breakpoint circRNAs (absolute)") +
+#     labs(y = "# unknown breakpoints") +
+#     labs(y = "# exons per circRNA") +
+#     labs(x = "Sample") +
+#     labs(fill = "Sample") +
+#     theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+# print(plot)
+
+plot <- ggplot(mate_status, aes(x = group, y = Ratio, fill = group)) +
+		geom_boxplot() + theme_classic()
+    if (arg_colour_mode == "bw" ) {
+        plot <- plot + scale_fill_grey(start = 0, end = .9)
+    }
+    plot <- plot + geom_signif(comparisons = geom_signif_list, step_increase = 0.1, map_signif_level = T) +
+		labs(title = "Circular RNA reconstruction results",
+		subtitle = "Ratio of double breakpoints") +
+    labs(y = "Ratio double breakpoints") +
+    labs(x = "Sample") +
+    labs(fill = "Sample") +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+print(plot)
+
+invisible(dev.off())

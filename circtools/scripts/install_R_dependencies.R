@@ -18,7 +18,10 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-
+# NOTE: Hmisc, GGally, ggstats, ggbio, biovizBase are excluded from the main
+# BiocManager pass. They are pinned archive versions installed from source.
+# biovizBase and ggbio depend on Hmisc and are installed after it.
+# Install order: Hmisc -> ggstats -> GGally (GGally imports ggstats at lazy-load time)
 
 pkgs <- c(
   "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
@@ -53,9 +56,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
-
-  # --- Step 1: Pre-install ALL dependencies for archived packages ---
-
 
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
@@ -93,7 +93,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org", type = "source",
+                     dependencies = TRUE, lib = lib_path)
   }, error = function(e) {
     stop(paste("Hmisc archive install failed:", e$message))
   })
@@ -105,7 +106,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org", type = "source",
+                     dependencies = TRUE, lib = lib_path)
   }, error = function(e) {
     stop(paste("ggstats archive install failed:", e$message))
   })
@@ -116,7 +118,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/GGally/GGally_2.2.1.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path)
+                     repos = "https://cloud.r-project.org", type = "source",
+                     dependencies = TRUE, lib = lib_path)
   }, error = function(e) {
     stop(paste("GGally archive install failed:", e$message))
   })
