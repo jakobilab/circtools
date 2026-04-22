@@ -68,6 +68,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     # Hmisc 4.6-0 Imports
     "latticeExtra", "Formula", "base64enc", "htmltools", "htmlTable",
     "viridis", "cluster", "foreign", "gtable", "nnet", "rpart",
+    # Hmisc 4.6-0 Suggests (acepack called unconditionally at load time)
+    "acepack",
     # Hmisc 4.6-0 Depends (non-base)
     "lattice", "survival",
 
@@ -123,6 +125,11 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     stop(paste("Hmisc archive install failed:", e$message))
   })
   if (!"Hmisc" %in% installed.packages()[, 1]) {
+    # Try loading it to get the actual error message surfaced
+    tryCatch(
+      library(Hmisc, lib.loc = lib_path),
+      error = function(e) message(paste("Hmisc load diagnostic:", e$message))
+    )
     stop("Hmisc archive install failed - non-zero exit status")
   }
   message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
