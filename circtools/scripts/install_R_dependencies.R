@@ -18,13 +18,8 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-# NOTE: Hmisc, GGally, ggstats, scales, ggbio, biovizBase are excluded from the main
-# BiocManager pass. They are pinned archive versions installed from source.
-# biovizBase and ggbio depend on Hmisc and are installed after it.
-# Install order: Hmisc -> ggstats -> GGally (GGally imports ggstats at lazy-load time)
-
 pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR", "Hmisc",
   "GenomicFeatures", "GenomicRanges", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
@@ -59,19 +54,12 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
   # --- Step 1: Pre-install ALL dependencies for archived packages ---
   # Verified against DESCRIPTION files of each pinned archive version:
-  #   Hmisc 4.6-0, ggstats 0.5.0, GGally 2.2.1
+  #   scales 1.3.0, ggstats 0.5.0, GGally 2.2.1
   # Some packages overlap with pkgs (e.g. ggplot2, dplyr) but must be listed here
   # too — archive tarballs are installed in Step 2, before pkgs runs in Step 4.
 
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
-    # Hmisc 4.6-0 Imports
-    "latticeExtra", "Formula", "base64enc", "htmltools", "htmlTable",
-    "viridis", "cluster", "foreign", "gtable", "nnet", "rpart",
-    # Hmisc 4.6-0 Suggests (acepack called unconditionally at load time)
-    "acepack",
-    # Hmisc 4.6-0 Depends (non-base)
-    "lattice", "survival",
 
     # ggstats 0.5.0 Imports
     "broom.helpers", "cli", "magrittr", "patchwork", "purrr",
@@ -118,23 +106,6 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
   message(paste("scales installed, version:", packageVersion("scales")))
 
-  tryCatch({
-    install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
-                     repos = NULL, type = "source", lib = lib_path,
-                     INSTALL_opts = c("--no-byte-compile", "--no-staged-install"))
-  }, error = function(e) {
-    stop(paste("Hmisc archive install failed:", e$message))
-  })
-  if (!"Hmisc" %in% installed.packages()[, 1]) {
-    # Try loading it to get the actual error message surfaced
-    tryCatch(
-      library(Hmisc, lib.loc = lib_path),
-      error = function(e) message(paste("Hmisc load diagnostic:", e$message))
-    )
-    stop("Hmisc archive install failed - non-zero exit status")
-  }
-  message(paste("Hmisc installed, version:", packageVersion("Hmisc")))
-
   # ggstats BEFORE GGally — GGally 2.2.1 imports ggstats at lazy-load time
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/ggstats/ggstats_0.5.0.tar.gz",
@@ -154,13 +125,11 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     stop(paste("GGally archive install failed:", e$message))
   })
   if (!"GGally" %in% installed.packages()[, 1]) {
-    # Try loading to get the real error message out of the lazy-load failure
     message("GGally not found after install — attempting load to expose root cause:")
     tryCatch(
       library(GGally, lib.loc = lib_path),
       error = function(e) message(paste("GGally load error:", e$message))
     )
-    # Also check what ggstats exports vs what GGally expects
     message("ggstats namespace contents:")
     tryCatch(
       message(paste(ls(getNamespace("ggstats")), collapse = ", ")),
@@ -170,8 +139,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   }
   message(paste("GGally installed, version:", packageVersion("GGally")))
 
-  # --- Step 3: Install biovizBase and ggbio now that Hmisc is pinned ---
-  message("\nInstalling biovizBase and ggbio (depend on pinned Hmisc)...")
+  # --- Step 3: Install biovizBase and ggbio ---
+  message("\nInstalling biovizBase and ggbio...")
   if (!"biovizBase" %in% installed.packages()[, 1]) {
     BiocManager::install("biovizBase", ask = FALSE, update = FALSE, lib = lib_path)
   }
@@ -194,7 +163,7 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 # --- Verify all core package installs succeeded ---
 message("\nVerifying core package installations...")
 core_pkgs <- c(
-  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR",
+  "aod", "amap", "ballgown", "devtools", "biomaRt", "data.table", "edgeR", "Hmisc",
   "GenomicFeatures", "GenomicRanges", "ggbio", "ggfortify", "ggplot2",
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",

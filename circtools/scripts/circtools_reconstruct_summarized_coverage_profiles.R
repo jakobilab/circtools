@@ -2,7 +2,6 @@
 
 library(amap)
 library(gplots)
-library(Hmisc)
 
 # script to assign relative position to coverage profiles of circles
 
