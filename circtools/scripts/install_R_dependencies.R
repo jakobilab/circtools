@@ -18,7 +18,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 base_path <- args[1]
 
-# NOTE: Hmisc, GGally, ggstats, ggbio, biovizBase are excluded from the main
+# NOTE: Hmisc, GGally, ggstats, scales, ggbio, biovizBase are excluded from the main
 # BiocManager pass. They are pinned archive versions installed from source.
 # biovizBase and ggbio depend on Hmisc and are installed after it.
 # Install order: Hmisc -> ggstats -> GGally (GGally imports ggstats at lazy-load time)
@@ -57,6 +57,8 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     install.packages("BiocManager", repos="https://cloud.r-project.org", lib = lib_path)
   }
 
+  # --- Step 1: Pre-install ALL dependencies for archived packages ---
+
 
   message("\nPre-installing all dependencies for archived R packages...")
   archive_deps <- c(
@@ -68,14 +70,12 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
 
     # ggstats 0.5.0 Imports
     "broom.helpers", "cli", "magrittr", "patchwork", "purrr",
-    "stringr", "forcats", "lifecycle", "rlang", "scales", "tidyr",
+    "stringr", "forcats", "lifecycle", "rlang", "tidyr",
 
     # GGally 2.2.1 Imports (beyond what ggstats already covers)
     "progress",
-
-    # Also in pkgs but required before Step 2 (archive installs) —
-    # safe to list here too since pkgs filters already-installed packages
     "ggplot2", "dplyr", "gridExtra", "plyr", "RColorBrewer", "data.table"
+
   )
   archive_deps <- archive_deps[!archive_deps %in% installed.packages()[, 1]]
   if (length(archive_deps) > 0) {
@@ -92,6 +92,19 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
   # --- Step 2: Install pinned archive packages ---
   # URL tarballs require repos=NULL. Dependencies are pre-installed in Step 1.
   message("\nInstalling archived R packages...")
+
+  # scales must be pinned to 1.3.0 — scales >= 1.4.0 removed is.rel()
+  # which GGally 2.2.1 calls at lazy-load time, causing "object 'is.rel' not found"
+  tryCatch({
+    install.packages("https://cran.r-project.org/src/contrib/Archive/scales/scales_1.3.0.tar.gz",
+                     repos = NULL, type = "source", lib = lib_path)
+  }, error = function(e) {
+    stop(paste("scales archive install failed:", e$message))
+  })
+  if (!"scales" %in% installed.packages()[, 1]) {
+    stop("scales archive install failed - non-zero exit status")
+  }
+  message(paste("scales installed, version:", packageVersion("scales")))
 
   tryCatch({
     install.packages("https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_4.6-0.tar.gz",
@@ -123,6 +136,18 @@ if (majorVersion >= 4 || (majorVersion == 3 && minorVersion >= 6)) {
     stop(paste("GGally archive install failed:", e$message))
   })
   if (!"GGally" %in% installed.packages()[, 1]) {
+    # Try loading to get the real error message out of the lazy-load failure
+    message("GGally not found after install — attempting load to expose root cause:")
+    tryCatch(
+      library(GGally, lib.loc = lib_path),
+      error = function(e) message(paste("GGally load error:", e$message))
+    )
+    # Also check what ggstats exports vs what GGally expects
+    message("ggstats namespace contents:")
+    tryCatch(
+      message(paste(ls(getNamespace("ggstats")), collapse = ", ")),
+      error = function(e) message(paste("Could not inspect ggstats namespace:", e$message))
+    )
     stop("GGally archive install failed - non-zero exit status")
   }
   message(paste("GGally installed, version:", packageVersion("GGally")))
@@ -156,7 +181,7 @@ core_pkgs <- c(
   "gplots", "ggrepel", "gridExtra", "openxlsx", "plyr",
   "reshape2", "kableExtra", "formattable", "dplyr", "RColorBrewer",
   "BSgenome", "IRanges", "S4Vectors", "Biostrings", "readr",
-  "Hmisc", "GGally", "ggstats"
+  "Hmisc", "GGally", "ggstats", "scales"
 )
 failed_pkgs <- core_pkgs[!core_pkgs %in% installed.packages()[, 1]]
 if (length(failed_pkgs) > 0) {
