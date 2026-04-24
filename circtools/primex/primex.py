@@ -21,6 +21,9 @@ import os
 import sys
 import string
 import random
+import gzip
+import shutil
+import tempfile
 
 import pybedtools
 from Bio.Blast import NCBIWWW
@@ -213,6 +216,7 @@ class Primex(circ_module.circ_template.CircTemplate):
         exon_cache = {}
         flanking_exon_cache = {}
         primer_to_circ_cache = {}
+        _tmp_fasta = None   # may be set in the else branch below
 
         if self.input_circRNA:
             from Bio import SeqIO
@@ -227,6 +231,55 @@ class Primex(circ_module.circ_template.CircTemplate):
 
         else:
             exons = self.read_annotation_file(self.gtf_file, entity="exon")
+
+            # ------------------------------------------------------------------
+            # Ensure the FASTA file is bgzip-compressed (required by bedtools
+            # getfasta).  If the user supplied a regular gzip file we decompress
+            # it to a plain FASTA in the temp directory for this run only.
+            # ------------------------------------------------------------------
+            def _is_bgzf(path: str) -> bool:
+                """Return True if *path* is a bgzip file (BGZF magic bytes)."""
+                try:
+                    with open(path, "rb") as fh:
+                        magic = fh.read(4)
+                    # BGZF block: 1f 8b 08 04  (gzip with FEXTRA, extra len = 6, SI1/SI2 = BC)
+                    if magic[:2] != b"\x1f\x8b":
+                        return False          # not gzip at all
+                    with open(path, "rb") as fh:
+                        fh.read(3)            # skip id1 id2 cm
+                        flg = ord(fh.read(1))
+                        if not (flg & 0x04):  # FEXTRA flag not set → plain gzip
+                            return False
+                        fh.read(6)            # mtime xfl os
+                        xlen = int.from_bytes(fh.read(2), "little")
+                        extra = fh.read(xlen)
+                    # Look for the BC subfield (bgzip marker)
+                    i = 0
+                    while i + 3 < len(extra):
+                        si1, si2 = extra[i], extra[i + 1]
+                        slen = int.from_bytes(extra[i + 2:i + 4], "little")
+                        if si1 == 66 and si2 == 67:   # b'BC'
+                            return True
+                        i += 4 + slen
+                    return False
+                except Exception:
+                    return False
+
+            fasta_file = self.fasta_file
+
+            if fasta_file.endswith(".gz") and not _is_bgzf(fasta_file):
+                print("Detected regular gzip FASTA. Decompressing to temp directory "
+                      "for bedtools compatibility (bgzip required).")
+                _tmp_fasta = os.path.join(
+                    self.temp_dir,
+                    os.path.basename(fasta_file[:-3])   # strip .gz
+                )
+                with gzip.open(fasta_file, "rb") as f_in, \
+                     open(_tmp_fasta, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                fasta_file = _tmp_fasta
+                print(f"Using decompressed FASTA: {fasta_file}")
+            # ------------------------------------------------------------------
 
             with open(self.detect_dir) as fp:
 
@@ -314,8 +367,8 @@ class Primex(circ_module.circ_template.CircTemplate):
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s = True)
-                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file, s = True)
+                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file, s = True)
+                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=fasta_file, s = True)
 
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
@@ -329,7 +382,7 @@ class Primex(circ_module.circ_template.CircTemplate):
                                                     current_line[5]])
 
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
-                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s = True)
+                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file, s = True)
                         virtual_bed_file_stop = ""
 
                     exon1 = ""
@@ -357,12 +410,12 @@ class Primex(circ_module.circ_template.CircTemplate):
             print("Could not find any circRNAs matching your criteria, exiting.")
             exit(-1)
 
-        # need to define path top R wrapper
-        primer_script = 'circtools_primex_wrapper'
+        # need to define path to Python wrapper — installed as a script entry point on $PATH
+        primer_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'circtools_primex_wrapper.py')
 
         # ------------------------------------ run script and check output -----------------------
 
-        script_result = os.popen(primer_script + " " +
+        script_result = os.popen(sys.executable + " " + primer_script + " " +
                                  exon_storage_tmp + " " +
                                  str(self.product_range[0]) + "," + str(self.product_range[1]) + " " +
                                  self.junction + " " + str(self.num_pairs)).read()
@@ -477,165 +530,175 @@ class Primex(circ_module.circ_template.CircTemplate):
             # update line
             primex_data_with_blast_results += line + "\t" + left_result + "\t" + right_result + "\n"
 
+        # ------------------------------------------------------------------
+        # Generate SVG diagrams in memory and append as an extra column in
+        # the blast-results TSV so the formatter can embed them inline.
+        # ------------------------------------------------------------------
+        # Build a lookup: isoform_id -> svg_string
+        # We iterate script_result (wrapper output) because the row label
+        # e.g. "Slc16a9_10_70093532_70093704_+_1" is still intact there
+        # (primex_data_with_blast_results has had "_" replaced with "\t").
+        svg_cache = {}
+
+        for line in script_result.splitlines():
+            entry = line.split('\t')
+
+            if entry[1] == "NA":
+                continue
+
+            # Row label is entry[0]:  Ann_Chr_Start_Stop_Strand_idx
+            row_label = entry[0]   # e.g. Slc16a9_10_70093532_70093704_+_1
+            parts = row_label.rsplit('_', 1)   # split off trailing index
+            if len(parts) != 2:
+                continue
+            circular_rna_id = parts[0]   # Slc16a9_10_70093532_70093704_+
+            idx             = parts[1]   # 1, 2, …
+            circular_rna_id_isoform = row_label   # same as the full label
+
+            if circular_rna_id not in exon_cache:
+                continue
+
+            # Extract Start/Stop from the circRNA id  Ann_Chr_Start_Stop_Strand
+            id_parts = circular_rna_id.split('_')
+            # id_parts: [Ann, Chr, Start, Stop, Strand]  (Ann may contain underscores
+            # but Start/Stop are always the 3rd and 4th from the end before Strand)
+            circ_start = int(id_parts[-3])
+            circ_stop  = int(id_parts[-2])
+            circrna_length = circ_stop - circ_start
+
+            exon1_length = len(exon_cache[circular_rna_id][1])
+            exon2_length = len(exon_cache[circular_rna_id][2])
+
+            exon2_colour = "#ffac68"
+
+            if exon2_length == 0:
+                exon1_length = int(len(exon_cache[circular_rna_id][1]) / 2) + 1
+                exon2_length = int(len(exon_cache[circular_rna_id][1]) / 2)
+                exon2_colour = "#ff6877"
+
+            # Wrapper TSV columns (script_result):
+            #  0=row_label  1=left_seq  2=right_seq
+            #  3=left_pos   4=right_pos
+            #  5=tm_left    6=tm_right  7=gc_left  8=gc_right  9=product_size
+            forward_primer_start  = int(entry[3].split(',')[0]) + circrna_length - exon2_length
+            forward_primer_length = int(entry[3].split(',')[1])
+
+            reverse_primer_start  = int(entry[4].split(',')[0]) - exon2_length
+            reverse_primer_length = int(entry[4].split(',')[1])
+
+            product_size = entry[9]
+
+            gdd = GenomeDiagram.Diagram('circRNA primer diagram')
+            gdt_features = gdd.new_track(1, greytrack=True, name="")
+            gds_features = gdt_features.new_set()
+
+            feature = SeqFeature(FeatureLocation(0, exon1_length))
+            feature.location.strand = +1
+            gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
+
+            feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length))
+            feature.location.strand = +1
+            gds_features.add_feature(feature, name="Exon 2", label=False, color=exon2_colour, label_size=22)
+
+            feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
+            feature.location.strand = -1
+            gds_features.add_feature(feature, name="Product", label=False, color="#6881ff")
+
+            feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
+            feature.location.strand = -1
+            gds_features.add_feature(feature, name="Product: " + product_size + "bp", label=False,
+                                     color="#6881ff", label_size=22, label_position="middle")
+
+            if self.junction == "f":
+                feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
+                feature.location.strand = -1
+                gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+                feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
+                gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+                feature = SeqFeature(FeatureLocation(0, forward_primer_length - (circrna_length - forward_primer_start)))
+                gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+            elif self.junction == "r":
+                feature = SeqFeature(FeatureLocation(circrna_length - reverse_primer_start, circrna_length))
+                feature.location.strand = -1
+                gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+                feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
+                feature.location.strand = -1
+                gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+                feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
+                gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+            else:
+                feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
+                feature.location.strand = -1
+                gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+                feature = SeqFeature(FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
+                gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW",
+                                         color="#75ff68", arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
+
+            feature = SeqFeature(FeatureLocation(0, 1))
+            gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
+
+            if circular_rna_id in flanking_exon_cache:
+                for exon in flanking_exon_cache[circular_rna_id]:
+                    exon_start, exon_stop = exon.split('_')
+                    exon_start = int(exon_start) - circ_start
+                    exon_stop  = int(exon_stop)  - circ_start
+                    feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
+                    feature.location.strand = +1
+                    gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
+
+            gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.6,
+                     track_size=0.3, tracklines=0, x=0.00, y=0.00,
+                     start=0, end=circrna_length - 1)
+
+            # Capture SVG to string via a temp file (GenomeDiagram has no write_to_handle)
+            with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as _svg_tmp:
+                _svg_tmp_path = _svg_tmp.name
+            gdd.write(_svg_tmp_path, "svg")
+            with open(_svg_tmp_path, "r") as _svg_fh:
+                svg_cache[circular_rna_id_isoform] = _svg_fh.read()
+            os.remove(_svg_tmp_path)
+
+        # Append the SVG string as a new column on every blast-results line.
+        # After line.replace("_","\t") the original row label is split across
+        # the first 6 columns: Ann, Chr, Start, Stop, Strand, idx
+        # Reconstruct it so we can look up the svg_cache.
+        primex_data_with_svg = ""
+        for line in primex_data_with_blast_results.splitlines():
+            entry = line.split('\t')
+            # Reconstruct: Ann_Chr_Start_Stop_Strand_idx
+            isoform_id = "_".join(entry[0:6])
+            svg_str = svg_cache.get(isoform_id, "")
+            svg_str = svg_str.replace("\t", "&#9;").replace("\n", "&#10;").replace("\r", "")
+            primex_data_with_svg += line + "\t" + svg_str + "\n"
+
         with open(blast_storage_tmp, 'w') as data_store:
-            data_store.write(primex_data_with_blast_results)
+            data_store.write(primex_data_with_svg)
 
-        # need to define path top R wrapper
-        primer_script = 'circtools_primex_formatter'
-
-        # ------------------------------------ run script and check output -----------------------
-
-        # Call the R formatter, passing the output directory as a third argument
-        primex_cmd = f'{primer_script} "{blast_storage_tmp}" "{self.experiment_title}" "{self.output_dir}"'
-        primex_data_formatted = os.popen(primex_cmd).read()
-
-
+        # Call the shared HTML formatter directly as a class — no subprocess needed
+        from circtools.scripts.circtools_html_formatter import CirctoolsHTMLFormatter
+        primex_data_formatted = CirctoolsHTMLFormatter("primex").format_file(
+            blast_storage_tmp,
+            self.experiment_title,
+            self.output_dir,
+        )
 
         with open(output_html_file, 'w') as data_store:
             data_store.write(primex_data_formatted)
 
-        print("Writing results to "+output_html_file)
-
-        # here we create the circular graphics for primer visualisation
-        for line in primex_data_with_blast_results.splitlines():
-            entry = line.split('\t')
-
-            # no primers, no graphics
-            if entry[6] == "NA":
-                continue
-
-            circular_rna_id = "_".join([entry[0],
-                                        entry[1],
-                                        entry[2],
-                                        entry[3],
-                                        entry[4]])
-
-            if circular_rna_id in exon_cache:
-
-                circular_rna_id_isoform = circular_rna_id + "_" + entry[5]
-
-                circrna_length = int(entry[3]) - int(entry[2])
-
-                exon1_length = len(exon_cache[circular_rna_id][1])
-                exon2_length = len(exon_cache[circular_rna_id][2])
-
-                exon2_colour = "#ffac68"
-
-                if exon2_length == 0:
-                    exon1_length = int(len(exon_cache[circular_rna_id][1])/2)+1
-                    exon2_length = int(len(exon_cache[circular_rna_id][1])/2)
-                    exon2_colour = "#ff6877"
-
-                forward_primer_start = int(entry[8].split(',')[0]) + circrna_length - exon2_length
-                forward_primer_length = int(entry[8].split(',')[1])
-
-                reverse_primer_start = int(entry[9].split(',')[0]) - exon2_length
-                reverse_primer_length = int(entry[9].split(',')[1])
-
-                product_size = entry[14]
-
-                gdd = GenomeDiagram.Diagram('circRNA primer diagram')
-                gdt_features = gdd.new_track(1, greytrack=True, name="", )
-                gds_features = gdt_features.new_set()
-
-                feature = SeqFeature(FeatureLocation(0, exon1_length))
-                feature.location.strand = +1
-                gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
-
-                feature = SeqFeature(FeatureLocation(circrna_length - exon2_length, circrna_length))
-                feature.location.strand = +1
-
-                gds_features.add_feature(feature, name="Exon 2", label=False, color=exon2_colour, label_size=22)
-
-                feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
-                feature.location.strand = -1
-
-                gds_features.add_feature(feature, name="Product", label=False, color="#6881ff")
-
-                feature = SeqFeature(FeatureLocation(0, reverse_primer_start))
-                feature.location.strand = -1
-
-                gds_features.add_feature(feature, name="Product: " + product_size + "bp", label=False, color="#6881ff",
-                                         label_size=22, label_position="middle")
-
-                if self.junction == "f":
-
-                    feature = SeqFeature(FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # the primer spans the BSJ, therefore we have to draw it in two pieces:
-                    # piece 1: primer start to circRNA end
-                    # piece 2: remaining primer portion beginning from 0
-
-                    # piece 1:
-                    feature = SeqFeature(FeatureLocation(forward_primer_start, circrna_length))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # piece 2:
-                    feature = SeqFeature(
-                        FeatureLocation(0, forward_primer_length - (circrna_length - forward_primer_start)))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                elif self.junction == "r":
-                    # the primer spans the BSJ, therefore we have to draw it in two pieces:
-                    # piece 1: primer start of circRNA to circRNA end
-                    # piece 2: remaining primer portion beginning from 0
-
-                    # piece 1:
-                    feature = SeqFeature(FeatureLocation(circrna_length - reverse_primer_start, circrna_length))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    # piece 2:
-                    feature = SeqFeature(
-                        FeatureLocation(0, reverse_primer_start))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    feature = SeqFeature(
-                        FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-                else:
-                    feature = SeqFeature(
-                        FeatureLocation(reverse_primer_start - reverse_primer_length, reverse_primer_start))
-                    feature.location.strand = -1
-
-                    gds_features.add_feature(feature, name="Reverse", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                    feature = SeqFeature(
-                        FeatureLocation(forward_primer_start, forward_primer_start + forward_primer_length))
-                    gds_features.add_feature(feature, name="Forward", label=False, sigil="BIGARROW", color="#75ff68",
-                                             arrowshaft_height=0.3, arrowhead_length=0.1, label_size=22)
-
-                feature = SeqFeature(FeatureLocation(0, 1))
-                gds_features.add_feature(feature, name="BSJ", label=True, color="white", label_size=22)
-
-                if circular_rna_id in flanking_exon_cache:
-                    for exon in flanking_exon_cache[circular_rna_id]:
-                        exon_start, exon_stop = exon.split('_')
-
-                        exon_start = int(exon_start) - int(entry[2])
-                        exon_stop = int(exon_stop) - int(entry[2])
-
-                        feature = SeqFeature(FeatureLocation(exon_start, exon_stop))
-                        feature.location.strand = +1
-
-                        gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
-
-                gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.6, track_size=0.3, tracklines=0, x=0.00,
-                         y=0.00, start=0, end=circrna_length-1)
-
-                gdd.write(self.output_dir + "/" + circular_rna_id_isoform + ".svg", "svg")
+        print("Writing results to " + output_html_file)
 
         print("Cleaning up")
 
@@ -643,5 +706,9 @@ class Primex(circ_module.circ_template.CircTemplate):
         os.remove(exon_storage_tmp)
         os.remove(blast_storage_tmp)
 
-        if not self.no_blast:
+        # remove temporarily decompressed FASTA if we created one
+        if _tmp_fasta and os.path.exists(_tmp_fasta):
+            os.remove(_tmp_fasta)
+
+        if not self.no_blast and os.path.exists(blast_xml_tmp):
             os.remove(blast_xml_tmp)
