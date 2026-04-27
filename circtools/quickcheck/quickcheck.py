@@ -16,6 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import circ_module.circ_template
+import os
+import sys
+import subprocess
+import circtools
+
+
 
 
 class QuickCheck(circ_module.circ_template.CircTemplate):
@@ -25,7 +31,7 @@ class QuickCheck(circ_module.circ_template.CircTemplate):
         self.cli_params = argparse_arguments
         self.program_name = program_name
         self.version = version
-        self.command = 'Rscript'
+        self.command = sys.executable
 
     def module_name(self):
         """"Return a string representing the name of the module."""
@@ -94,42 +100,42 @@ class QuickCheck(circ_module.circ_template.CircTemplate):
         # import re module
         import re
 
-        r_location = subprocess.check_output(['which', self.command], universal_newlines=True,
-                                             stderr=subprocess.STDOUT).split('\n')[0]
-
-        r_version = subprocess.check_output([self.command, '--version'], universal_newlines=True,
-                                            stderr=subprocess.STDOUT)
-        # okay, Rscript is really there, we put together the command line now:
-
-        m = re.search('(\d+\.\d+\.\d+)', r_version)
-        r_version = m.group(0)
-
-        self.log_entry("Using R version %s [%s]" % (r_version, r_location))
+        python_location = subprocess.check_output(['which', self.command], universal_newlines=True,
+                                                  stderr=subprocess.STDOUT).split('\n')[0]
+        python_version = subprocess.check_output([self.command, '--version'], universal_newlines=True,
+                                                 stderr=subprocess.STDOUT).strip()
+        self.log_entry("Using Python interpreter %s [%s]" % (python_version, python_location))
 
         # ------------------------------------ need to call the correct R script here -----------------------
 
         # need to define path top R wrapper
-        quickcheck_script = 'circtools_quickcheck_wrapper'
+        quickcheck_script = os.path.join(os.path.dirname(circtools.__file__), "scripts", "circtools_quickcheck_wrapper.py")
+
+
 
         if self.cli_params.starfolder == "":
             self.cli_params.starfolder = 0
+            
+        if not hasattr(self.cli_params, "remove_columns") or not self.cli_params.remove_columns:
+            self.cli_params.remove_columns = "0"
 
         # Variable number of args in a list
         args = [
-                self.cli_params.detect_dir,
-                self.cli_params.star_dir,
-                self.cli_params.output_directory + "/" + self.cli_params.output_name,
-                self.cli_params.condition_list,
-                self.cli_params.grouping,
-                self.cli_params.colour,
-                self.cli_params.cleanup,
-                self.cli_params.starfolder,
-                self.cli_params.remove_suffix_chars,
-                self.cli_params.remove_prefix_chars,
-                self.cli_params.remove_columns
+            self.cli_params.detect_dir,
+            self.cli_params.star_dir,
+            os.path.join(self.cli_params.output_directory, self.cli_params.output_name),
+            self.cli_params.condition_list,
+            self.cli_params.grouping,
+            self.cli_params.colour,
+            self.cli_params.cleanup,
+            str(self.cli_params.starfolder),
+            str(self.cli_params.remove_suffix_chars),
+            str(self.cli_params.remove_prefix_chars),
+            str(self.cli_params.remove_columns),
         ]
 
-        # ------------------------------------ run script and check output -----------------------
+        cmd = [self.command, quickcheck_script] + args
 
-        import os
-        os.system(quickcheck_script + " " + ' '.join(str(e) for e in args))
+        self.log_entry(f"DEBUG running: {' '.join(cmd)}")
+
+        subprocess.run(cmd, check=True)

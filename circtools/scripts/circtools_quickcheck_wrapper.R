@@ -1,347 +1,179 @@
-#!/usr/bin/env Rscript
-
-# Copyright (C) 2017 Tobias Jakobi
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# packages (silent load)
-
-suppressMessages(library(ggplot2))
-suppressMessages(library(ggrepel)) # beautifies text labels
-
-# utiliy functions
-
-getUniqueMappings <- function(STARfolder)
-{
-    # Read STAR log file
-    logFile <- paste(STARfolder, "Log.final.out", sep = "/")
-
-    # extract unique mappings
-    unique_mapped <- read.delim(logFile, as.is = T, sep = "|")
-    unique_mapped <- as.numeric(gsub("\t", "", unique_mapped[7, 2]))
-    return(unique_mapped)
-}
-
-# may not be optimal, but we do not want warning for now
-options(warn = - 1)
-
-# quiet mode
-options(echo = FALSE)
-
-# read arguments
-args <- commandArgs(trailingOnly = TRUE)
-
-arg_dcc_data <- args[1] # path is string
-arg_star_folder <- args[2] # path is string
-arg_output_directory <- args[3] # string
-arg_condition_list <- strsplit(args[4], ",")[[1]] # list of strings
-arg_grouping <- unlist(lapply(strsplit(args[5], ","), as.numeric)) # list of strings
-arg_colour_mode <- args[6]
-arg_cleanup_string <- args[7]
-arg_starfolder_suffix <- args[8]
-arg_remove_last <- as.numeric(args[9])
-arg_remove_first <- as.numeric(args[10])
-arg_remove_columns <- unlist(lapply(strsplit(args[11], ","), as.numeric))
-
-# check colour mode
-if (arg_colour_mode != "colour" & arg_colour_mode != "bw" ) {
-    print(arg_colour_mode)
-    message("Please specify the colour model: colour or bw")
-    quit()
-}
-
-group_length <- length(arg_condition_list)
-
-## load complete data set
-message("Loading CircRNACount")
-CircRNACount <- read.delim(paste(arg_dcc_data, "CircRNACount", sep="/"), check.names=FALSE, header = T)
-
-message("Loading LinearRNACount")
-LinearCount <- read.delim(paste(arg_dcc_data, "LinearCount", sep="/"), check.names=FALSE, header = T)
-
-# check columns to remove
-if (arg_remove_columns != "0" && length(arg_remove_columns) > 0) {
-
-    LinearCount <- LinearCount[, -arg_remove_columns]
-    CircRNACount <- CircRNACount[, -arg_remove_columns]
-}
-
-message("Parsing data")
-# remove DCC artifacts from columns names
-names(LinearCount)<-gsub(arg_cleanup_string,"",names(LinearCount))
-names(CircRNACount)<-gsub(arg_cleanup_string,"",names(CircRNACount))
-
-
-
-min_length = nchar(names(LinearCount[which.min(unlist(lapply(names(LinearCount[, - c(1 : 3)]), nchar)))+3]))
-
-if (min_length - arg_remove_first - arg_remove_last < 0){
-    message("Values specified via -L and -F would result in a least one too short sample name.
-    Please reduce the cuttoff values.")
-    q()
-}
-
-
-names(LinearCount)<-gsub(arg_cleanup_string,"",names(LinearCount))
-names(CircRNACount)<-gsub(arg_cleanup_string,"",names(CircRNACount))
-
-names(LinearCount) <- c(names(LinearCount[, c(1 : 3)]),
-strtrim(names(LinearCount[, - c(1 : 3)]), nchar(names(LinearCount[, - c(1 : 3)]))-arg_remove_last))
-
-names(CircRNACount) <- c(names(LinearCount[, c(1 : 3)]),
-strtrim(names(CircRNACount[, - c(1 : 3)]), nchar(names(CircRNACount[, - c(1 : 3)]))-arg_remove_last))
-
-names(LinearCount) <- c(names(LinearCount[, c(1 : 3)]),
-substring(names(LinearCount[, - c(1 : 3)]), arg_remove_first))
-
-names(CircRNACount) <- c(names(LinearCount[, c(1 : 3)]),
-substring(names(CircRNACount[, - c(1 : 3)]), arg_remove_first))
-
-# summing up counts per column (i.e. library)
-circ_counts_summed <- apply(CircRNACount[, - c(1 : 3)], 2, sum)
-linear_counts_summed <- apply(LinearCount[, - c(1 : 3)], 2, sum)
-
-num_samples <- ncol(LinearCount[, - c(1 : 3)])
-
-message(paste("Found ", num_samples, " data columns in provided data", sep=""))
-
-message(paste(group_length, " different groups provided", sep=""))
-
-if (length(arg_grouping) < num_samples) {
-  message("Assuming (1,2),(1,2),(1,2),... sample grouping")
-  dummy_list <- rep(arg_grouping, (num_samples/group_length))
-  colors <- unlist(lapply(seq(1, num_samples), function(x) {
-    return(arg_condition_list[dummy_list[x]])
-  }))
-} else {
-  message("Setting sample groups manually")
-  colors <- unlist(lapply(seq(1, num_samples), function(x) {
-    return(arg_condition_list[arg_grouping[x]])
-  }))
-    counts <- c(rep(0,num_samples))
-  generated_sample_names <- unlist(lapply(seq(1, num_samples), function(x) {
-      counts[arg_grouping[x]] <<- counts[arg_grouping[x]]+1
-    return(paste(arg_condition_list[arg_grouping[x]], counts[arg_grouping[x]], sep = " "))
-  }))
-}
-# names(circ_counts_summed) <- generated_sample_names
-# names(linear_counts_summed) <- generated_sample_names
-
-# get unique mapping reads
-## which star runs are in the DCC output?
-star_columns <- colnames(CircRNACount[, - c(1 : 3)])
-
-# get paths for those directories
-star_runs <- list.dirs(arg_star_folder, full.names = TRUE)
-star_runs <- star_runs[-1]
-
-# only use the folders ending with _STARmapping (Dieterich lab default)
-if (arg_starfolder_suffix != 0){
-    star_runs <- star_runs[endsWith(star_runs, arg_starfolder_suffix)]
-}
-# only use the folders of full mappings (not the per-mate ones)
-star_runs <- star_runs[!grepl("*mate*", star_runs)]
-
-# check columns to remove
-if (arg_remove_columns != "0" && length(arg_remove_columns) > 0) {
-    tmp <- unlist(lapply(arg_remove_columns, function(x){x-3}))
-    star_runs <- star_runs[-tmp]
-}
-
-# new empty list
-uniquely_mapped_reads <- numeric();
-
-for (run in star_runs)
-{
-    uniquely_mapped_reads <- c(uniquely_mapped_reads, getUniqueMappings(run));
-}
-
-# set names for unique reads
-names(uniquely_mapped_reads) <- names(circ_counts_summed)
-
-message("plotting data")
-
-# we use PDF and standard A4 page size
-pdf(paste(arg_output_directory, ".pdf", sep = "") , height= 8.2, width=11.69 , title="circtools library analysis")
-
-    ######################### page one
-
-    # create data frame for ggplot2
-    raw_counts <- data.frame(circ_counts_summed, linear_counts_summed, colors)
-    colnames(raw_counts) <- c("circ","lin","group")
-
-    # rownames(raw_counts) <- generated_sample_names
-    # rownames(raw_counts) <- generated_sample_names
-
-    if (arg_colour_mode == "bw" ) {
-        page_one <- ggplot( raw_counts, aes(x=circ, y=lin, shape = as.factor(group) , label=rownames(raw_counts))) +
-                        geom_point(size = 2) + scale_color_grey(start = 0, end = 0) + labs(shape = "Group")
-    } else {
-        page_one <- ggplot( raw_counts, aes(x=circ, y=lin, color=as.factor(group), label=rownames(raw_counts))) +
-                        geom_point() + labs(color = "Group")
-    }
-
-                        page_one <- page_one +
-                        geom_label_repel(   data=raw_counts,
-                                            aes(x=circ, y=lin,
-                                            #color=factor(group),
-                                            label=rownames(raw_counts)),
-                                            box.padding = unit(0.55, "lines"),
-                                            point.padding = unit(0.5, "lines")
-                                        ) +
-                        labs(   title = "Circular vs. linear read counts throughout selected libraries",
-                                subtitle = "plotting non-normalized raw read counts from STAR") +
-                        labs(x = "Circular RNA read count (log scale)") +
-                        labs(y = "Linear RNA read count (log scale)") +
-                        labs(caption = paste(   "based on data from ",
-                                                length(star_runs),
-                                                " mapped libraries\ncreated: ",
-                                                date(),
-                                                "",
-                                                sep="")) +
-                        theme(  plot.title = element_text(lineheight=0.8,
-                                face=quote(bold)),
-                                # legend.justification = c(1, 1),
-                                # legend.position = c(0.95, 0.95)
-                                legend.justification = "top"
-                        ) +
-                        scale_x_log10(
-                            breaks = scales::trans_breaks("log10", function(x) 10^x),
-                            labels = scales::trans_format("log10", scales::math_format(10^.x))
-                        ) +
-                        scale_y_log10(
-                            breaks = scales::trans_breaks("log10", function(x) 10^x),
-                            labels = scales::trans_format("log10", scales::math_format(10^.x))
-                        ) +
-                        annotation_logticks(sides = "trbl")
-
-    if (arg_colour_mode == "bw" ) {
-                        page_one <- page_one +  labs(colour = "Group") + labs(shape = "Group")
-    } else {
-                        page_one <- page_one + labs(colours = "Group")
-    }
-
-    print(page_one)
-
-    ######################### page two
-
-    # set number of circles
-    number_of_circles <- apply(CircRNACount[, - c(1 : 3)], 2, function(x){length(which(x > 1))})
-
-    # reset names
-    names(uniquely_mapped_reads) <- names(number_of_circles)
-
-    # create data frame for ggplot2
-    circle_counts <- data.frame(uniquely_mapped_reads, number_of_circles, colors)
-    colnames(circle_counts) <- c("unique","circles","group")
-
-    if (arg_colour_mode == "bw" ) {
-        page_two <- ggplot( circle_counts, aes(x=unique, y=circles, shape = as.factor(group) , label=rownames(raw_counts))) +
-                        geom_point(size = 2) + scale_color_grey(start = 0, end = 0) + labs(shape = "Group")
-    } else {
-        page_two <- ggplot( circle_counts, aes(x=unique, y=circles, color=as.factor(group), label=rownames(raw_counts))) +
-                        geom_point() + labs(colours = "Group")
-    }
-
-                        page_two <- page_two +
-                        geom_label_repel(   data=circle_counts,
-                                            aes(x=unique, y=circles,
-                                            #color=factor(group),
-                                            label=rownames(raw_counts)),
-                                            box.padding = unit(0.55, "lines"),
-                                            point.padding = unit(0.5, "lines")
-                                        ) +
-                        labs(   title = "Number of mapped reads vs. number of detected circles per library",
-                                subtitle = "plotting uniquely mapped reads from STAR and circRNA predictions from DCC") +
-                        labs(x = "Number of mapped reads (log scale)") +
-                        labs(y = "Number of detected circles (log scale)") +
-                        labs(caption = paste(   "based on data from ",
-                                                length(star_runs),
-                                                " mapped libraries\ncreated: ",
-                                                date(),
-                                                "",
-                                                sep="")) +
-                        theme(  plot.title = element_text(lineheight=0.8,
-                                face=quote(bold)),
-                                # legend.justification = c(1, 1),
-                                # legend.position = c(0.95, 0.95)
-                                legend.justification = "top"
-                        ) +
-                        scale_x_log10(
-                            breaks = scales::trans_breaks("log10", function(x) 10^x),
-                            labels = scales::trans_format("log10", scales::math_format(10^.x))
-                        ) +
-                        scale_y_log10(
-                            breaks = scales::trans_breaks("log10", function(x) 10^x),
-                            labels = scales::trans_format("log10", scales::math_format(10^.x))
-                        ) +
-                        annotation_logticks(sides = "trbl")
-
-    if (arg_colour_mode == "bw" ) {
-                        page_two <- page_two + labs(colour = "Group") + labs(shape = "Group")
-    } else {
-                        page_two <- page_two + labs(colour = "Group")
-    }
-
-    print(page_two)
-
-    ######################### page three
-
-    ref = order(number_of_circles / (uniquely_mapped_reads / 1000000))
-
-    # create data frame for ggplot2
-    circle_ratio <- data.frame(rownames(raw_counts), as.integer((number_of_circles / (uniquely_mapped_reads / 1000000))), colors)
-    colnames(circle_ratio) <- c("name","num","group")
-    circle_ratio <- circle_ratio[with(circle_ratio, order(num)), ]
-
-    page_three <- ggplot(data=circle_ratio, aes(x=reorder(name, num), y=num, fill=as.factor(group))) +
-                        geom_bar(stat="identity", colour="black")
-
-                        if (arg_colour_mode == "bw" ) {
-                            page_three <- page_three + scale_fill_grey(start = 0.4, end = 1)
-                        }
-
-                        page_three <- page_three +
-                        labs(   title = "Detected circular RNAs per million unique mapped reads",
-                                subtitle = "plotting circRNA predictions from DCC and uniquely mapped reads from STAR") +
-                        labs(y = "Number of detected circular RNAs") +
-                        labs(x = "Sequencing library") +
-                        labs(fill = "Group") +
-                        labs(caption = paste(   "based on data from ",
-                                                length(star_runs),
-                                                " mapped libraries\ncreated: ",
-                                                date(),
-                                                "",
-                                                sep="")) +
-                        theme(  plot.title = element_text(lineheight=0.8,
-                                face=quote(bold)),
-                                legend.justification = c(1, 1),
-                                legend.position = c(0.25, 0.98),
-                                axis.text.x = element_text(angle = 45, hjust = 1, size=14)
-
-                        ) +
-                        geom_label_repel(   data=circle_ratio,
-                                            aes(x=name, y=num,
-                                            label=num),
-                                            box.padding = unit(0.0, "lines"),
-                                            point.padding = unit(0.0, "lines")
-                                        )
-    print(page_three)
-
-invisible(capture.output(dev.off()))
-
-# get rif of Rplots.pdf file
-invisible(capture.output(file.remove(list.files(pattern = "Rplots.pdf"))))
-
-message("Done")
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Python equivalent of circtools_quickcheck_wrapper.R
+Recreates the three-page QC report using matplotlib + seaborn.
+"""
+
+import os
+import sys
+import argparse
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from datetime import datetime
+
+sns.set(style="whitegrid", context="talk")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="circtools quickcheck (Python equivalent)")
+    parser.add_argument("dcc_dir", help="Path to DCC output directory")
+    parser.add_argument("star_dir", help="Path to STAR mapping directory")
+    parser.add_argument("output_prefix", help="Output PDF prefix")
+    parser.add_argument("conditions", help="Comma-separated list of condition names")
+    parser.add_argument("grouping", help="Comma-separated list of numeric group indices")
+    parser.add_argument("colour_mode", choices=["colour", "bw"], help="Colour or black/white mode")
+    parser.add_argument("cleanup_string", help="Regex cleanup pattern for sample names")
+    parser.add_argument("starfolder_suffix", help="STAR folder suffix or 0")
+    parser.add_argument("remove_suffix_chars", type=int)
+    parser.add_argument("remove_prefix_chars", type=int)
+    parser.add_argument("remove_columns", help="Comma-separated list of columns to remove (or 0)")
+    return parser.parse_args()
+
+
+def read_unique_mappings(star_folder):
+    """Read STAR Log.final.out and extract uniquely mapped reads."""
+    log_file = os.path.join(star_folder, "Log.final.out")
+    if not os.path.exists(log_file):
+        return np.nan
+
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+
+    # Extract line 7 (R script assumes row 7, column 2)
+    try:
+        unique_line = lines[6]
+        val = unique_line.split("|")[1].strip().replace("\t", "")
+        return float(val)
+    except Exception:
+        return np.nan
+
+
+def main():
+    args = parse_args()
+    cond_list = args.conditions.split(",")
+    grouping = [int(x) for x in args.grouping.split(",")]
+
+    # Read DCC data
+    circ = pd.read_csv(os.path.join(args.dcc_dir, "CircRNACount"), sep="\t", header=0)
+    linear = pd.read_csv(os.path.join(args.dcc_dir, "LinearCount"), sep="\t", header=0)
+
+    # Drop columns if specified
+    if args.remove_columns != "0":
+        remove_cols = [int(x) for x in args.remove_columns.split(",")]
+        circ.drop(circ.columns[remove_cols], axis=1, inplace=True)
+        linear.drop(linear.columns[remove_cols], axis=1, inplace=True)
+
+    # Clean sample names
+    circ.columns = [c.replace(args.cleanup_string, "") for c in circ.columns]
+    linear.columns = [c.replace(args.cleanup_string, "") for c in linear.columns]
+
+    # Trim/remove characters from sample names
+    def clean_names(cols):
+        new_cols = []
+        for c in cols:
+            new_c = c[args.remove_prefix_chars:]
+            if args.remove_suffix_chars > 0:
+                new_c = new_c[: -args.remove_suffix_chars]
+            new_cols.append(new_c)
+        return new_cols
+
+    circ.columns = list(circ.columns[:3]) + clean_names(list(circ.columns[3:]))
+    linear.columns = list(linear.columns[:3]) + clean_names(list(linear.columns[3:]))
+
+    samples = circ.columns[3:]
+    num_samples = len(samples)
+    print(f"Found {num_samples} data columns")
+
+    # Sum counts per library
+    circ_sum = circ.iloc[:, 3:].sum()
+    lin_sum = linear.iloc[:, 3:].sum()
+
+    # STAR runs
+    star_dirs = [os.path.join(args.star_dir, d) for d in os.listdir(args.star_dir)
+                 if os.path.isdir(os.path.join(args.star_dir, d)) and "mate" not in d]
+    if args.starfolder_suffix != "0":
+        star_dirs = [d for d in star_dirs if d.endswith(args.starfolder_suffix)]
+
+    # Read unique mappings
+    unique_reads = [read_unique_mappings(d) for d in star_dirs[:num_samples]]
+    if len(unique_reads) < num_samples:
+        unique_reads += [np.nan] * (num_samples - len(unique_reads))
+
+    # Compute number of circles (x > 1)
+    num_circles = (circ.iloc[:, 3:] > 1).sum()
+
+    # Grouping
+    if len(grouping) < num_samples:
+        grouping = (grouping * (num_samples // len(grouping)))[:num_samples]
+    groups = [cond_list[g - 1] for g in grouping]
+
+    # Build data frames for plotting
+    df_raw = pd.DataFrame({
+        "circ": circ_sum.values,
+        "linear": lin_sum.values,
+        "group": groups
+    }, index=samples)
+
+    df_circles = pd.DataFrame({
+        "unique": unique_reads,
+        "circles": num_circles.values,
+        "group": groups
+    }, index=samples)
+
+    df_ratio = pd.DataFrame({
+        "name": samples,
+        "num": num_circles.values / (np.array(unique_reads) / 1e6),
+        "group": groups
+    }).sort_values("num")
+
+    # Plot setup
+    palette = "colorblind" if args.colour_mode == "colour" else "gray"
+    pdf_path = f"{args.output_prefix}.pdf"
+    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    with PdfPages(pdf_path) as pdf:
+
+        # Page 1 — Circular vs Linear
+        plt.figure(figsize=(11.69, 8.27))
+        sns.scatterplot(data=df_raw, x="circ", y="linear", hue="group", style="group",
+                        palette=palette, s=80, edgecolor="black")
+        plt.xscale("log"); plt.yscale("log")
+        plt.xlabel("Circular RNA read count (log scale)")
+        plt.ylabel("Linear RNA read count (log scale)")
+        plt.title("Circular vs. linear read counts throughout selected libraries")
+        plt.suptitle(f"based on data from {len(star_dirs)} mapped libraries\ncreated: {date_str}")
+        plt.tight_layout()
+        pdf.savefig(); plt.close()
+
+        # Page 2 — Unique mapped reads vs circles
+        plt.figure(figsize=(11.69, 8.27))
+        sns.scatterplot(data=df_circles, x="unique", y="circles", hue="group", style="group",
+                        palette=palette, s=80, edgecolor="black")
+        plt.xscale("log"); plt.yscale("log")
+        plt.xlabel("Number of mapped reads (log scale)")
+        plt.ylabel("Number of detected circles (log scale)")
+        plt.title("Number of mapped reads vs. number of detected circles per library")
+        plt.suptitle(f"based on data from {len(star_dirs)} mapped libraries\ncreated: {date_str}")
+        plt.tight_layout()
+        pdf.savefig(); plt.close()
+
+        # Page 3 — Circles per million reads
+        plt.figure(figsize=(11.69, 8.27))
+        sns.barplot(data=df_ratio, x="name", y="num", hue="group", palette=palette, edgecolor="black")
+        plt.xticks(rotation=45, ha="right")
+        plt.xlabel("Sequencing library")
+        plt.ylabel("Number of detected circular RNAs")
+        plt.title("Detected circular RNAs per million unique mapped reads")
+        plt.suptitle(f"based on data from {len(star_dirs)} mapped libraries\ncreated: {date_str}")
+        plt.tight_layout()
+        pdf.savefig(); plt.close()
+
+    print(f"✅ QuickCheck report created: {pdf_path}")
+
+
+if __name__ == "__main__":
+    main()
