@@ -139,7 +139,6 @@ def run_and_save_clustering(df, label, folder):
         cluster_centers, _ = kmeans(X_w, centers, iter=50)
         labels, _ = vq(X_w, cluster_centers)
 
-    # cluster PDFs
     pdf_path = os.path.join(folder, f'coverage.clusters.{label}.pdf')
     with PdfPages(pdf_path) as pdf:
         for i in range(centers):
@@ -150,7 +149,6 @@ def run_and_save_clustering(df, label, folder):
                 pdf.savefig(fig, bbox_inches='tight')
                 plt.close(fig)
 
-    # cluster association TSV
     assoc = pd.DataFrame({
         'circle_id': df['circle_id'].values,
         'length':    df['length'].values,
@@ -158,7 +156,6 @@ def run_and_save_clustering(df, label, folder):
     })
     assoc.to_csv(os.path.join(folder, f'cluster_association.{label}.tsv'), sep='\t', index=False)
 
-    # cluster means TSV
     centers_df = pd.DataFrame(cluster_centers, columns=cols)
     centers_df.index = centers_df.index + 1
     centers_df.to_csv(os.path.join(folder, f'cluster_means.{label}.tsv'), sep='\t')
@@ -166,9 +163,6 @@ def run_and_save_clustering(df, label, folder):
     return assoc, centers_df
 
 
-# ---------------------------------------------------------------------------
-# main
-# ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
@@ -225,7 +219,6 @@ def main():
 
 
 def run(folder):
-    """Callable entry point for use from reconstruct.py without subprocess."""
     import sys
     _saved = sys.argv
     sys.argv = ['circtools_reconstruct_summarized_coverage_profiles', folder]

@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 
-# Replacement for circtools_reconstruct_visualization.R
-#
-# Reads FUCHS / circtools reconstruct output files from the current working
-# directory (*.exon_counts.bed, *.mate_status.txt, *alternative_splicing.txt,
-# *.coverage_profiles/cluster_association.all_circles.tsv) and produces a
-# multi-page results.pdf with the same plots as the original R script.
-#
-# Usage:
-#   python circtools_reconstruct_visualization.py \
-#       <reconstruct_data_path> \
-#       <group_indices>          \   # comma-separated 1-based ints, e.g. "1,1,2,2"
-#       <condition_list>         \   # comma-separated labels,      e.g. "Control,Treated"
-#       <colour_mode>                # "colour" or "bw"
-#
-# Significance brackets are drawn with statannotations (if installed) or
-# omitted gracefully when the package is absent.
+
 
 import argparse
 import glob
@@ -76,12 +61,7 @@ def load_exon_counts():
 
 
 def load_mate_status():
-    """
-    awk '{print FILENAME"\t"$6"\t"$7"\t"$8}' *.mate_status.txt |
-    sed 's/\.mate_status\.txt//g' | grep -v single |
-    awk '{print $0"\t"$3/($2+$3+$4)}'
-    Columns: Library, Single, Double, Unknown, Ratio
-    """
+
     rows = []
     for path in glob.glob('*.mate_status.txt'):
         lib = path.replace('.mate_status.txt', '')
@@ -104,11 +84,7 @@ def load_mate_status():
 
 
 def load_isoforms():
-    """
-    grep -H -o -n ',' *alternative_splicing.txt | cut -d: -f1,2 | uniq -c |
-    sed 's/\.alternative.*//g' | awk '{print $2"\t"$1}'
-    Columns: Library, num
-    """
+
     rows = []
     for path in glob.glob('*alternative_splicing.txt'):
         lib = path.split('.alternative')[0]
@@ -125,11 +101,6 @@ def load_isoforms():
 
 
 def load_circ_length():
-    """
-    awk '{if($2>0){print FILENAME"\t"$2}}' *.coverage_profiles/cluster_association.all_circles.tsv |
-    sed 's/\.coverage_profiles\/cluster_association\.all_circles\.tsv//g' | grep -v length
-    Columns: Library, length
-    """
     rows = []
     for path in glob.glob('*.coverage_profiles/cluster_association.all_circles.tsv'):
         lib = path.replace('.coverage_profiles/cluster_association.all_circles.tsv', '')
@@ -146,9 +117,6 @@ def load_circ_length():
     return pd.DataFrame(rows)
 
 
-# ---------------------------------------------------------------------------
-# plotting helpers
-# ---------------------------------------------------------------------------
 
 PALETTE_COLOUR = plt.rcParams['axes.prop_cycle'].by_key()['color']
 PALETTE_BW     = [str(v) for v in np.linspace(0.1, 0.9, 10)]
@@ -160,7 +128,6 @@ def get_palette(mode, n):
 
 
 def assign_groups(df, lib_col, lib_names, condition_names):
-    """Add a 'group' column by mapping library names to condition labels."""
     mapping = {lib: condition_names[i] for i, lib in enumerate(lib_names)}
     df = df.copy()
     df['group'] = df[lib_col].map(mapping)
@@ -169,7 +136,6 @@ def assign_groups(df, lib_col, lib_names, condition_names):
 
 def boxplot_page(pdf, df, y_col, group_col, title, subtitle, ylabel,
                  colour_mode, comparisons, log_y=False):
-    """Draw one boxplot page and save to the PdfPages object."""
     groups = df[group_col].dropna().unique()
     palette = get_palette(colour_mode, len(groups))
     colour_map = {g: palette[i] for i, g in enumerate(sorted(groups))}
@@ -208,7 +174,6 @@ def boxplot_page(pdf, df, y_col, group_col, title, subtitle, ylabel,
 
 
 def quantile_page(pdf, circ_length, group_col, colour_mode, max_val):
-    """One density + quantile fill plot per group."""
     groups = sorted(circ_length[group_col].dropna().unique())
     palette = get_palette(colour_mode, 4)   # 4 quantile bands
     quantile_probs = [0.90, 0.95, 0.99]
@@ -297,7 +262,6 @@ def main():
     isoforms     = add_group(isoforms)   if not isoforms.empty else isoforms
     circ_length  = add_group(circ_length) if not circ_length.empty else circ_length
 
-    # circRNA count per library
     if not circ_length.empty:
         count_df = circ_length.groupby('Library').size().reset_index(name='count')
         count_df = add_group(count_df)
@@ -308,11 +272,9 @@ def main():
 
     max_len = int(circ_length['length'].max()) if not circ_length.empty else 10000
 
-    # ---- write PDF ----------------------------------------------------------
     out_pdf = 'results.pdf'
     with PdfPages(out_pdf) as pdf:
 
-        # 1. Absolute circRNA count (normal scale)
         if not count_df.empty:
             boxplot_page(pdf, count_df, 'count', 'group',
                          'Circular RNA reconstruction results',
@@ -320,7 +282,6 @@ def main():
                          'Total number of circular RNAs',
                          colour_mode, comparisons, log_y=False)
 
-        # 2. Absolute circRNA count (log10 scale)
         if not count_df.empty:
             boxplot_page(pdf, count_df, 'count', 'group',
                          'Circular RNA reconstruction results',
@@ -340,7 +301,6 @@ def main():
                          'Number of isoforms',
                          colour_mode, comparisons, log_y=False)
 
-        # 5. Total length (exons + introns), log scale
         if not exon_counts.empty:
             boxplot_page(pdf, exon_counts, 'Length_total', 'group',
                          'Circular RNA reconstruction results',
@@ -348,7 +308,6 @@ def main():
                          'Total length (exons + introns)',
                          colour_mode, comparisons, log_y=True)
 
-        # 6. Exon-based length, log scale
         if not exon_counts.empty:
             boxplot_page(pdf, exon_counts, 'Length_exons', 'group',
                          'Circular RNA reconstruction results',
@@ -356,7 +315,6 @@ def main():
                          'Length (exons only)',
                          colour_mode, comparisons, log_y=True)
 
-        # 7. Number of exons per circRNA
         if not exon_counts.empty:
             boxplot_page(pdf, exon_counts, 'Exons', 'group',
                          'Circular RNA reconstruction results',
@@ -364,7 +322,6 @@ def main():
                          '# exons per circRNA',
                          colour_mode, comparisons, log_y=False)
 
-        # 8. Single breakpoints (absolute), log scale
         if not mate_status.empty:
             boxplot_page(pdf, mate_status, 'Single', 'group',
                          'Circular RNA reconstruction results',
@@ -372,7 +329,6 @@ def main():
                          '# single breakpoints',
                          colour_mode, comparisons, log_y=True)
 
-        # 9. Double breakpoints (absolute), log scale
         if not mate_status.empty:
             boxplot_page(pdf, mate_status, 'Double', 'group',
                          'Circular RNA reconstruction results',
@@ -380,7 +336,6 @@ def main():
                          '# double breakpoints',
                          colour_mode, comparisons, log_y=True)
 
-        # 10. Ratio of double breakpoints
         if not mate_status.empty:
             boxplot_page(pdf, mate_status, 'Ratio', 'group',
                          'Circular RNA reconstruction results',

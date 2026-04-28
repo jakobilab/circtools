@@ -11,27 +11,18 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from scipy.ndimage import gaussian_filter1d
+
 
 
 def smoothing(x):
-    """
-    Smooth a coverage array by taking local means in a window of size ~1% of
-    the total length, centred on each position (mirrors the R implementation).
-    """
     x = np.asarray(x, dtype=float)
     n = len(x)
-    w = max(1, round(n * 0.01))
-    smoothed = np.empty(n)
-    for i in range(n):
-        lo = max(0, i - w)
-        hi = min(n, i + w + 1)
-        smoothed[i] = np.nanmean(x[lo:hi])
-    return smoothed
-
+    sigma = max(1, round(n * 0.01))
+    return gaussian_filter1d(x, sigma=sigma)
 
 def plot_coverage(coverage_file, output_folder):
-    # Derive identifiers from the filename
-    basename = os.path.basename(coverage_file)           # e.g. chr1:100|200.NM_001.txt
+    basename = os.path.basename(coverage_file)          
     parts = basename.split('.')
     circle_id = parts[0]
     transcript_name = parts[1] if len(parts) > 2 else ''
@@ -40,7 +31,7 @@ def plot_coverage(coverage_file, output_folder):
 
     smoothed = smoothing(df['coverage'].values)
 
-    # Colour each bar by exon number (exon column + 1 maps to matplotlib colour cycle)
+   
     exon_vals = df['exon'].values
     unique_exons = np.unique(exon_vals)
     cmap = plt.get_cmap('tab10')
