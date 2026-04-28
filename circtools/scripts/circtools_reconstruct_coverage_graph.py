@@ -18,7 +18,7 @@ from scipy.ndimage import gaussian_filter1d
 def smoothing(x):
     x = np.asarray(x, dtype=float)
     n = len(x)
-    sigma = max(1, round(n * 0.01))
+    sigma = max(1, round(n * 0.15))
     return gaussian_filter1d(x, sigma=sigma)
 
 def plot_coverage(coverage_file, output_folder):
