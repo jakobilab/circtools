@@ -18,14 +18,35 @@
 ### imports
 message("Loading required packages")
 
-suppressMessages(library(ballgown))
-suppressMessages(library(edgeR))
-suppressMessages(library(ggbio))
-suppressMessages(library(ggfortify))
-suppressMessages(library(openxlsx))
-suppressMessages(library(GenomicRanges))
-suppressMessages(library(GenomicFeatures))
-suppressMessages(library(biomaRt))
+packages <- c(
+  "edgeR",
+  "ggbio",
+  "ggfortify",
+  "openxlsx",
+  "GenomicRanges",
+  "GenomicFeatures",
+  "biomaRt"
+)
+
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    message(paste("Installing missing package:", pkg))
+    
+    if (pkg %in% c("GenomicRanges", "GenomicFeatures", "biomaRt")) {
+      if (!requireNamespace("BiocManager", quietly = TRUE)) {
+        install.packages("BiocManager", repos = "https://cloud.r-project.org")
+      }
+      BiocManager::install(pkg, ask = FALSE, update = FALSE)
+    } else {
+      install.packages(pkg, repos = "https://cloud.r-project.org")
+    }
+  }
+}
+
+# load them normally (no suppressMessages)
+for (pkg in packages) {
+  library(pkg, character.only = TRUE)
+}
 
 message("Done loading packages")
 
