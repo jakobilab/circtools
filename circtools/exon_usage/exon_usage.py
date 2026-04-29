@@ -23,7 +23,7 @@ import re
 
 base_path = circtools.__path__[0]
 
-r_script = os.path.join(base_path, "contrib", "exon", "circtools_exon_wrapper.R")
+r_script = os.path.join(base_path, "scripts", "circtools_exon_wrapper.R")
 
 
 class ExonUsage(circ_module.circ_template.CircTemplate):

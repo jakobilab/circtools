@@ -68,7 +68,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # assign input to script variables
 
-arg_dcc_data <- args[1] # path is string
+arg_detect_data <- args[1] # path is string
 arg_replicates <- unlist(lapply(strsplit(args[2],","), as.numeric)) # list of integers
 arg_condition_list <- strsplit(args[3],",")[[1]] # list of strings
 arg_condition_list <- unlist(arg_condition_list)
@@ -95,10 +95,10 @@ arg_ens_db <- switch(
 
 ## load complete data set
 message("Loading CircRNACount")
-CircRNACount <- read.delim(paste(arg_dcc_data, "CircRNACount", sep="/"), header = T)
+CircRNACount <- read.delim(paste(arg_detect_data, "CircRNACount", sep="/"), header = T)
 
 message("Loading CircCoordinates")
-CircCoordinates <- read.delim(paste(arg_dcc_data, "CircCoordinates", sep="/"), header = T)
+CircCoordinates <- read.delim(paste(arg_detect_data, "CircCoordinates", sep="/"), header = T)
 
 # read sub directories containing the ballgown runs and return list
 ballgownRuns <- as.list(list.files(arg_ballgown_directory, full.names = TRUE))
@@ -112,7 +112,7 @@ group <- unlist(lapply(arg_groups, function(x) {return(arg_condition_list[x])}))
 # sample<>replicate mapping
 id <- unlist(lapply(seq(1, length(arg_replicates)), function(x) {return((paste(arg_condition_list[x], arg_replicates[x], sep="_R")))}))
 
-bg.dccDF <- data.frame( id=id, group=group)
+bg.detectDF <- data.frame( id=id, group=group)
 
 bg_dirs_to_work <- unlist(lapply(arg_condition_columns, function(x) {return(ballgownRuns[x-3])}))
 
@@ -293,7 +293,7 @@ write.table(  splicedExonDFfixed[,c(1:3,5)],
 #Read back-splice enrichment
 
 # head(splicedExonDFfixed[,5])
-#colnames(dccDF)<-c("chr","start","end","strand")
+#colnames(detectDF)<-c("chr","start","end","strand")
 splicedExonDFfixed <- subset(
                             splicedExonDFfixed,
                             splicedExonDFfixed[,5]<=-5 & splicedExonDFfixed[,4]>0
@@ -327,39 +327,39 @@ topSplicedGenesMartData <- merge(
 )
 
 # correct again for to 0-based positions
-dccDF<-CircCoordinates
-dccDF[,2]<-dccDF[,2]-1
-dccDF[,3]<-dccDF[,3] #was too short had to extend again
+detectDF<-CircCoordinates
+detectDF[,2]<-detectDF[,2]-1
+detectDF[,3]<-detectDF[,3] #was too short had to extend again
 
 # write BED file
-colnames(dccDF)<-c("chr","start","end","GeneName","JType","strand")
+colnames(detectDF)<-c("chr","start","end","GeneName","JType","strand")
 
-message("Writing DCC prediction BED file")
+message("Writing detect prediction BED file")
 
 #Print bed file, read counts
-write(paste("track name=\"DCC_predictions\" description=\"Predictions ",
+write(paste("track name=\"detect_predictions\" description=\"Predictions ",
           "over all data sets\" itemRgb=\"on\"", sep=""),
-           file=paste(baseDir,"dcc_predictions_track.bed",sep=""));
+           file=paste(baseDir,"detect_predictions_track.bed",sep=""));
 
 # create new data frame for improved visualisation
-# only take useful columns from DCC DF
+# only take useful columns from detect DF
 
-new_df <- data.frame(dccDF[,c(1,2,3,4)])
+new_df <- data.frame(detectDF[,c(1,2,3,4)])
 new_df$score <- 0
-new_df$strand <- dccDF[,6]
-new_df$tstart <- dccDF[,2]+as.integer(((dccDF[,3]-dccDF[,2])*0.10))
-new_df$tstop <- dccDF[,3]-as.integer(((dccDF[,3]-dccDF[,2])*0.10))
+new_df$strand <- detectDF[,6]
+new_df$tstart <- detectDF[,2]+as.integer(((detectDF[,3]-detectDF[,2])*0.10))
+new_df$tstop <- detectDF[,3]-as.integer(((detectDF[,3]-detectDF[,2])*0.10))
 new_df$rgb <- paste(0,sep=",")
 new_df$blocks <- 2
-new_df$bsize <- paste(as.integer(((dccDF[,3]-dccDF[,2])*0.05)),as.integer(((dccDF[,3]-dccDF[,2])*0.05)),",", sep=",")
-new_df$bstart <- paste(as.integer(dccDF[,2]+as.integer(((dccDF[,3]-dccDF[,2])*0.10))),(dccDF[,3]-as.integer(((dccDF[,3]-dccDF[,2])*0.10))-as.integer(((dccDF[,3]-dccDF[,2])*0.05))) ,sep=",")
+new_df$bsize <- paste(as.integer(((detectDF[,3]-detectDF[,2])*0.05)),as.integer(((detectDF[,3]-detectDF[,2])*0.05)),",", sep=",")
+new_df$bstart <- paste(as.integer(detectDF[,2]+as.integer(((detectDF[,3]-detectDF[,2])*0.10))),(detectDF[,3]-as.integer(((detectDF[,3]-detectDF[,2])*0.10))-as.integer(((detectDF[,3]-detectDF[,2])*0.05))) ,sep=",")
 
 # new_df = as.matrix(new_df)
 
 
 
 write.table(new_df,
-            file=paste(baseDir,"dcc_predictions_track.bed",sep=""),
+            file=paste(baseDir,"detect_predictions_track.bed",sep=""),
             quote=F,
             sep="\t",
             append=T,
@@ -367,19 +367,19 @@ write.table(new_df,
             col.names=F
           )
 
-#genomicRanges <- makeGRangesFromDataFrame(dccDF);
+#genomicRanges <- makeGRangesFromDataFrame(detectDF);
 #do we need to test if enrichment happens inside of BSJ ?!?
 
 message("Reading and integrating CircTest results")
 
-# pull together circle predictions from DCC
+# pull together circle predictions from detect
 CircPred <- data.frame(
                       Gene=unique(CircCoordinates[,"Gene"]),
-                      DCC_predicted=rep(1,length(unique(CircCoordinates[,"Gene"])))
+                      detect_predicted=rep(1,length(unique(CircCoordinates[,"Gene"])))
                     )
 
-# enrich top spliced Genes with DCC Circle prediction
-topSplicedGenesMartDCC=merge(
+# enrich top spliced Genes with detect Circle prediction
+topSplicedGenesMartdetect=merge(
                             topSplicedGenesMartData,
                             CircPred,
                             by.x=5,
@@ -398,34 +398,34 @@ colnames(circTestSummary) <- cols.ct
 
 #write bed file
 # assign circTest summary results to DF
-dccDF<-circTestSummary[,c(1,2,3,6)]
+detectDF<-circTestSummary[,c(1,2,3,6)]
 
 # reorder columns
-colnames(dccDF)<-c("chr","start","end","strand")
+colnames(detectDF)<-c("chr","start","end","strand")
 
-# create a GRanges object from DCC data frame
-genomicRanges <- makeGRangesFromDataFrame(dccDF)
+# create a GRanges object from detect data frame
+genomicRanges <- makeGRangesFromDataFrame(detectDF)
 
 # compute overlap with exon enrichment for multi and single exon genes
 multiExonOverlap <- as.matrix(findOverlaps(genomicRanges,multiExonRanges))
 singleExonOverlap <- as.matrix(findOverlaps(genomicRanges,singleExonRanges))
 
-# overwrite DCC data frame with more columns
-dccDF<-circTestSummary[,1:7]
-dccDF[,2]<-dccDF[,2]-1
+# overwrite detect data frame with more columns
+detectDF<-circTestSummary[,1:7]
+detectDF[,2]<-detectDF[,2]-1
 # reorder columns
-colnames(dccDF)<-c("chr","start","end","GeneName","JType","strand")
+colnames(detectDF)<-c("chr","start","end","GeneName","JType","strand")
 
 message("Writing back splice junction enriched BED file")
 
 # Print BED file, read counts
-write(paste("track name=\"DCC_BSJ_enriched\"",
+write(paste("track name=\"detect_BSJ_enriched\"",
           "description=\"Back-Splice junction enriched over all data ",
           "sets 1% FDR\" color=\"green\"", sep=""),
-           file=paste(baseDir,"dcc_bsj_enriched_track.bed",sep=""));
+           file=paste(baseDir,"detect_bsj_enriched_track.bed",sep=""));
 
-write.table(  dccDF,
-            file=paste(baseDir,"dcc_bsj_enriched_track.bed",sep=""),
+write.table(  detectDF,
+            file=paste(baseDir,"detect_bsj_enriched_track.bed",sep=""),
             quote=F,
             sep="\t",
             append=T,
@@ -467,15 +467,15 @@ CircbackSpliceEnrich <- data.frame(
                                   RNaseR_enriched=rep(1,length(unique(circTestSummary[,"Gene"])))
                                 )
 
-# sort the top spliced genes from DCC with mart annotation by FDR
-topSplicedGenesMartDCC <- topSplicedGenesMartDCC[order(topSplicedGenesMartDCC[,"FDR"]),]
+# sort the top spliced genes from detect with mart annotation by FDR
+topSplicedGenesMartdetect <- topSplicedGenesMartdetect[order(topSplicedGenesMartdetect[,"FDR"]),]
 
 #print out single exon subset in circTest summary
 # circTestSummary[unique(singleExonOverlap[,1]),]
 
 
-# combine DCC top spliced genes with the BS enriched data frame
-mainTable <- merge( topSplicedGenesMartDCC,
+# combine detect top spliced genes with the BS enriched data frame
+mainTable <- merge( topSplicedGenesMartdetect,
                   CircbackSpliceEnrich,
                   by.x=1,
                   by.y=1,
@@ -518,7 +518,7 @@ writeDataTable( wb,
               )
 
 new_sheet <- splicedExonDF[order(splicedExonDF[,"Pval"]),]
-new_sheet <- merge(new_sheet,topSplicedGenesMartDCC,by.x=2,by.y=2)
+new_sheet <- merge(new_sheet,topSplicedGenesMartdetect,by.x=2,by.y=2)
 new_sheet <- new_sheet[order(new_sheet[,"Pval"]),]
 
 addWorksheet(wb, sheetName = "Exon events")

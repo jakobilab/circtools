@@ -320,7 +320,7 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                     outfolder, sample)):
                 if os.path.isdir(
                         '%s/%s.coverage_profiles/' % (outfolder, sample)):
-                    from circtools.scripts import circtools_reconstruct_summarized_coverage_profiles as srcp
+                    import circtools_reconstruct_summarized_coverage_profiles as srcp
                     srcp.run('%s/%s.coverage_profiles' % (outfolder, sample))
                 else:
                     output_file = open('%s/%s.logfile.%s' % (
@@ -352,7 +352,7 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                 if not '%s.coverage_pictures' % (sample) in folders:
                     os.mkdir('%s/%s.coverage_pictures' % (outfolder, sample))
 
-                from circtools.scripts import circtools_reconstruct_coverage_graph as cg
+                import circtools_reconstruct_coverage_graph as cg
 
                 def run_r_parallel(f):
                     if f.endswith('.txt'):
