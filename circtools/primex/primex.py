@@ -410,8 +410,7 @@ class Primex(circ_module.circ_template.CircTemplate):
             print("Could not find any circRNAs matching your criteria, exiting.")
             exit(-1)
 
-        # need to define path to Python wrapper — installed as a script entry point on $PATH
-        primer_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'circtools_primex_wrapper.py')
+        import circtools_primex_wrapper as primer_script
 
         # ------------------------------------ run script and check output -----------------------
 
@@ -688,7 +687,7 @@ class Primex(circ_module.circ_template.CircTemplate):
             data_store.write(primex_data_with_svg)
 
         # Call the shared HTML formatter directly as a class — no subprocess needed
-        from circtools.scripts.circtools_html_formatter import CirctoolsHTMLFormatter
+        from circtools.circ_module.circtools_html_formatter import CirctoolsHTMLFormatter
         primex_data_formatted = CirctoolsHTMLFormatter("primex").format_file(
             blast_storage_tmp,
             self.experiment_title,

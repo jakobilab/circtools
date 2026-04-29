@@ -27,7 +27,7 @@ _TXT_NEUTRAL   = "#713f12"
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# Shared CSS / JS head (same modern design as primex formatter)
+# Shared CSS / JS head — fully offline, no Bootstrap or jQuery
 # ─────────────────────────────────────────────────────────────────────────
 _HTML_HEAD = """\
 <!DOCTYPE html>
@@ -39,9 +39,6 @@ _HTML_HEAD = """\
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 <script>
 /* SVG_DATA injected by formatter */
@@ -49,33 +46,131 @@ _HTML_HEAD = """\
 </script>
 
 <script>
-$(document).ready(function() {{
+document.addEventListener("DOMContentLoaded", function() {{
 
-    $(".has-svg").each(function() {{
-        var key = $(this).data("svg-key").toString();
+    // ── Tooltip (popover) for BLAST badges ───────────────────────────────
+    var tooltip = document.createElement("div");
+    tooltip.id = "ct-tooltip";
+    document.body.appendChild(tooltip);
+
+    function showTooltip(el, titleText, bodyHtml) {{
+        tooltip.innerHTML =
+            "<div class=\\"ct-tooltip-title\\">" + titleText + "</div>" +
+            "<div class=\\"ct-tooltip-body\\">"  + bodyHtml  + "</div>";
+        tooltip.classList.add("visible");
+        positionTooltip(el);
+    }}
+
+    function hideTooltip() {{
+        tooltip.classList.remove("visible");
+    }}
+
+    function positionTooltip(el) {{
+        var r   = el.getBoundingClientRect();
+        var tx  = r.left + window.scrollX + r.width / 2;
+        var ty  = r.top  + window.scrollY - 8;
+        tooltip.style.left = tx + "px";
+        tooltip.style.top  = ty + "px";
+        // nudge if it would overflow right
+        var tr = tooltip.getBoundingClientRect();
+        if (tr.right > window.innerWidth - 12) {{
+            tooltip.style.left = (window.innerWidth - tr.width - 12 + window.scrollX) + "px";
+        }}
+        if (tr.left < 12) {{
+            tooltip.style.left = (12 + window.scrollX) + "px";
+        }}
+    }}
+
+    // BLAST count badges — data-toggle="ct-popover"
+    document.querySelectorAll("[data-ct-popover]").forEach(function(el) {{
+        el.addEventListener("mouseenter", function() {{
+            var body = el.getAttribute("data-content") || "";
+            showTooltip(el, "BLAST hits", body);
+        }});
+        el.addEventListener("mouseleave", hideTooltip);
+    }});
+
+    // ── SVG hover popover for .has-svg elements ──────────────────────────
+    var svgPopover = document.createElement("div");
+    svgPopover.id = "ct-svg-popover";
+    document.body.appendChild(svgPopover);
+
+    function showSvgPopover(el) {{
+        var key = el.getAttribute("data-svg-key");
         var svg = (typeof SVG_DATA !== "undefined" && SVG_DATA[key])
                   ? SVG_DATA[key] : "<em>No diagram</em>";
-        $(this).popover({{
-            html: true, trigger: "hover", placement: "auto",
-            container: "body",
-            title: "{popover_title}",
-            content: svg
+        svgPopover.innerHTML =
+            "<div class=\\"ct-tooltip-title\\">{popover_title}</div>" +
+            "<div class=\\"ct-tooltip-body\\">" + svg + "</div>";
+        svgPopover.classList.add("visible");
+        positionSvgPopover(el);
+    }}
+
+    function hideSvgPopover() {{
+        svgPopover.classList.remove("visible");
+    }}
+
+    function positionSvgPopover(el) {{
+        var r  = el.getBoundingClientRect();
+        var tx = r.left + window.scrollX + r.width / 2;
+        var ty = r.top  + window.scrollY - 8;
+        svgPopover.style.left = tx + "px";
+        svgPopover.style.top  = ty + "px";
+        var pr = svgPopover.getBoundingClientRect();
+        if (pr.right > window.innerWidth - 12) {{
+            svgPopover.style.left = (window.innerWidth - pr.width - 12 + window.scrollX) + "px";
+        }}
+        if (pr.left < 12) {{
+            svgPopover.style.left = (12 + window.scrollX) + "px";
+        }}
+    }}
+
+    document.querySelectorAll(".has-svg").forEach(function(el) {{
+        el.addEventListener("mouseenter", function() {{ showSvgPopover(el); }});
+        el.addEventListener("mouseleave", hideSvgPopover);
+    }});
+
+    // ── SVG modal (siRNA magnify button) ─────────────────────────────────
+    var modal      = document.getElementById("svgModal");
+    var modalTitle = document.getElementById("svgModalLabel");
+    var modalBody  = document.getElementById("svgModalBody");
+
+    function openModal(key, title) {{
+        var svg = (typeof SVG_DATA !== "undefined" && SVG_DATA[key])
+                  ? SVG_DATA[key] : "<em>No diagram available</em>";
+        modalTitle.textContent = title || "circRNA diagram";
+        modalBody.innerHTML    = svg;
+        modal.classList.add("open");
+        document.body.style.overflow = "hidden";
+    }}
+
+    function closeModal() {{
+        modal.classList.remove("open");
+        document.body.style.overflow = "";
+    }}
+
+    document.querySelectorAll(".svg-modal-btn").forEach(function(btn) {{
+        btn.addEventListener("click", function() {{
+            openModal(
+                btn.getAttribute("data-svg-key"),
+                btn.getAttribute("data-svg-title")
+            );
         }});
     }});
 
-    $('[data-toggle="popover"]').popover({{
-        html: true, trigger: "hover", placement: "auto", container: "body"
+    // close on backdrop click or close button
+    modal.addEventListener("click", function(e) {{
+        if (e.target === modal || e.target.classList.contains("modal-backdrop")) {{
+            closeModal();
+        }}
+    }});
+    document.querySelectorAll(".modal-close").forEach(function(btn) {{
+        btn.addEventListener("click", closeModal);
     }});
 
-    // siRNA SVG modal
-    $(document).on("click", ".svg-modal-btn", function() {{
-        var key = $(this).data("svg-key").toString();
-        var svg = (typeof SVG_DATA !== "undefined" && SVG_DATA[key])
-                  ? SVG_DATA[key] : "<em>No diagram available</em>";
-        var title = $(this).data("svg-title") || "circRNA diagram";
-        $("#svgModalLabel").text(title);
-        $("#svgModalBody").html(svg);
-        $("#svgModal").modal("show");
+    // close on Escape
+    document.addEventListener("keydown", function(e) {{
+        if (e.key === "Escape") closeModal();
     }});
 }});
 </script>
@@ -117,6 +212,7 @@ $(document).ready(function() {{
     padding: 48px 40px 80px;
   }}
 
+  /* ── Page header ───────────────────────────────────────────────────── */
   .page-header {{ margin-bottom: 40px; }}
   .page-header .badge-label {{
     display: inline-block;
@@ -132,6 +228,7 @@ $(document).ready(function() {{
   .page-header h1 span {{ color: var(--accent); }}
   .page-header p {{ color: var(--text-muted); margin-top: 8px; font-size: 16px; line-height: 1.6; }}
 
+  /* ── Table card ────────────────────────────────────────────────────── */
   .table-card {{
     background: var(--surface);
     border-radius: var(--radius);
@@ -141,7 +238,11 @@ $(document).ready(function() {{
   }}
   .table-scroll {{ overflow-x: auto; }}
 
-  table {{ width: 100%; border-collapse: collapse; font-size: 15px; }}
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }}
   th, td {{
     padding: 14px 20px;
     border-bottom: 1px solid var(--border);
@@ -170,7 +271,7 @@ $(document).ready(function() {{
   tbody tr:hover {{ background: var(--row-hover); }}
   tbody tr:last-child td {{ border-bottom: none; }}
 
-  /* colour bar */
+  /* ── Colour bar ────────────────────────────────────────────────────── */
   .cbar {{
     display: inline-block; width: 100%;
     padding: 6px 12px; border-radius: 6px;
@@ -178,7 +279,7 @@ $(document).ready(function() {{
     font-weight: 500;
   }}
 
-  /* sequence badges */
+  /* ── Sequence badges ───────────────────────────────────────────────── */
   .seq-badge {{
     display: inline-block;
     padding: 6px 14px; border-radius: 8px;
@@ -190,7 +291,7 @@ $(document).ready(function() {{
   .seq-badge.ok  {{ background: var(--ok-soft);  color: var(--ok);  border: 1px solid #a7f3d0; }}
   .seq-badge.hit {{ background: var(--hit-soft); color: var(--hit); border: 1px solid #fca5a5; }}
 
-  /* count badge */
+  /* ── Count badge ───────────────────────────────────────────────────── */
   .count-badge {{
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 36px; height: 30px; padding: 0 12px;
@@ -201,7 +302,7 @@ $(document).ready(function() {{
   .count-badge.ok  {{ background: var(--ok-soft);  color: var(--ok); }}
   .count-badge.hit {{ background: var(--hit-soft); color: var(--hit); }}
 
-  /* threshold badges (siRNA scores) */
+  /* ── Threshold badges (siRNA scores) ───────────────────────────────── */
   .thresh-badge {{
     display: inline-block; padding: 6px 14px; border-radius: 8px;
     font-size: 15px; font-weight: 600;
@@ -211,7 +312,7 @@ $(document).ready(function() {{
   .thresh-badge.bad  {{ background: var(--hit-soft);  color: var(--hit); }}
   .thresh-badge.warn {{ background: var(--warn-soft); color: var(--warn); }}
 
-  /* ligation junction badge */
+  /* ── Ligation junction badge ───────────────────────────────────────── */
   .junc-badge {{
     display: inline-block; padding: 6px 14px; border-radius: 8px;
     font-size: 14px; font-weight: 600;
@@ -219,7 +320,7 @@ $(document).ready(function() {{
   .junc-badge.preferred {{ background: {col_preferred}; color: {txt_preferred}; }}
   .junc-badge.neutral   {{ background: {col_neutral};   color: {txt_neutral}; }}
 
-  /* strand badge */
+  /* ── Strand badge ──────────────────────────────────────────────────── */
   .strand {{
     display: inline-block; padding: 4px 12px; border-radius: 6px;
     font-size: 14px; font-weight: 600;
@@ -227,31 +328,7 @@ $(document).ready(function() {{
     letter-spacing: .03em;
   }}
 
-  /* popovers */
-  .popover {{
-    max-width: 600px; border-radius: 14px;
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0,0,0,.14);
-    font-family: var(--font);
-  }}
-  .popover-title {{
-    background: var(--header-top); color: #fff;
-    font-size: 14px; font-weight: 600;
-    letter-spacing: .05em; text-transform: uppercase;
-    border-radius: 13px 13px 0 0;
-    padding: 14px 20px; border-bottom: none;
-  }}
-  .popover-content {{
-    padding: 16px; background: var(--surface);
-    border-radius: 0 0 13px 13px;
-    font-size: 14px; line-height: 1.75;
-  }}
-  .popover-content svg {{
-    width: 500px !important; height: 500px !important;
-    display: block; border-radius: 6px;
-  }}
-
-  /* magnify button (siRNA) */
+  /* ── Magnify button (siRNA) ────────────────────────────────────────── */
   .svg-modal-btn {{
     display: inline-flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; margin-left: 8px;
@@ -266,33 +343,116 @@ $(document).ready(function() {{
     border-color: var(--accent); transform: scale(1.15);
   }}
 
-  /* SVG modal */
-  #svgModal .modal-dialog {{ width: 720px; max-width: 95vw; }}
-  #svgModal .modal-header {{
-    background: var(--header-top); color: #fff;
-    border-radius: 6px 6px 0 0; padding: 18px 24px;
+  /* ── Vanilla tooltip (replaces Bootstrap popover) ──────────────────── */
+  #ct-tooltip,
+  #ct-svg-popover {{
+    position: absolute;
+    z-index: 9999;
+    max-width: 600px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.14);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.75;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100%);
+    transition: opacity .15s ease;
   }}
-  #svgModal .modal-title {{
+  #ct-tooltip.visible,
+  #ct-svg-popover.visible {{
+    opacity: 1;
+  }}
+  .ct-tooltip-title {{
+    background: var(--header-top); color: #fff;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: .05em; text-transform: uppercase;
+    border-radius: 13px 13px 0 0;
+    padding: 12px 18px;
+  }}
+  .ct-tooltip-body {{
+    padding: 14px 18px;
+    background: var(--surface);
+    border-radius: 0 0 13px 13px;
+    max-height: 320px;
+    overflow-y: auto;
+  }}
+  #ct-svg-popover .ct-tooltip-body svg {{
+    width: 500px !important; height: 500px !important;
+    display: block; border-radius: 6px;
+  }}
+
+  /* ── Vanilla modal (replaces Bootstrap modal) ──────────────────────── */
+  #svgModal {{
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0,0,0,.55);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }}
+  #svgModal.open {{
+    display: flex;
+  }}
+  .modal-dialog {{
+    background: var(--surface);
+    border-radius: 12px;
+    width: 720px;
+    max-width: 95vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modal-in .2s ease;
+  }}
+  @keyframes modal-in {{
+    from {{ opacity: 0; transform: scale(.95) translateY(16px); }}
+    to   {{ opacity: 1; transform: scale(1)  translateY(0); }}
+  }}
+  .modal-header {{
+    background: var(--header-top);
+    color: #fff;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }}
+  .modal-title {{
     font-family: var(--font); font-size: 15px;
     font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
   }}
-  #svgModal .modal-header .close {{
-    color: #fff; opacity: .7; font-size: 24px; margin-top: -2px;
+  .modal-close {{
+    background: none; border: none; color: #fff;
+    font-size: 24px; line-height: 1; cursor: pointer;
+    opacity: .7; padding: 0 4px;
+    transition: opacity .15s;
   }}
-  #svgModal .modal-header .close:hover {{ opacity: 1; }}
-  #svgModal .modal-body {{
-    padding: 24px; display: flex;
-    align-items: center; justify-content: center;
+  .modal-close:hover {{ opacity: 1; }}
+  .modal-body {{
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--bg);
+    overflow: auto;
   }}
-  #svgModal .modal-body svg {{
+  .modal-body svg {{
     width: 640px !important; height: 640px !important;
     display: block; border-radius: 10px;
     background: var(--surface);
     box-shadow: 0 2px 12px rgba(0,0,0,.08);
   }}
-  #svgModal .modal-footer {{
-    border-top: 1px solid var(--border); padding: 14px 24px;
+  .modal-footer {{
+    border-top: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
   }}
 </style>
 </head>
@@ -309,20 +469,15 @@ $(document).ready(function() {{
 _HTML_FOOT = """\
 </div></div>
 
-<!-- SVG diagram modal (used by siRNA view buttons) -->
-<div class="modal fade" id="svgModal" tabindex="-1" role="dialog" aria-labelledby="svgModalLabel">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title" id="svgModalLabel">circRNA diagram</h4>
-      </div>
-      <div class="modal-body" id="svgModalBody"></div>
-      <div class="modal-footer">
-      </div>
+<!-- SVG diagram modal (vanilla, no Bootstrap) -->
+<div id="svgModal" role="dialog" aria-modal="true" aria-labelledby="svgModalLabel">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="svgModalLabel">circRNA diagram</span>
+      <button class="modal-close" aria-label="Close">&times;</button>
     </div>
+    <div class="modal-body" id="svgModalBody"></div>
+    <div class="modal-footer"></div>
   </div>
 </div>
 
@@ -371,7 +526,7 @@ def _count_badge(count: int, blast_fmt: str, high: int = 0) -> str:
     safe = blast_fmt.replace('"', "&quot;")
     return (
         f'<span class="count-badge {cls}" '
-        f'data-toggle="popover" data-title="BLAST hits" '
+        f'data-ct-popover="1" '
         f'data-content="{safe}">{count}</span>'
     )
 
@@ -432,7 +587,6 @@ def _build_svg_lookup(df: pd.DataFrame, svg_col: str = "SVG") -> tuple[dict, pd.
 
 
 def _thead(*groups) -> str:
-
     group_pairs, col_names = groups
     group_cells = "".join(f'<th colspan="{n}">{g}</th>' for g, n in group_pairs)
     col_cells   = "".join(f"<th>{c}</th>" for c in col_names)
@@ -446,7 +600,7 @@ def _thead(*groups) -> str:
 
 def _table(thead_html: str, rows: list[str]) -> str:
     return (
-        '<table class="table table-bordered table-hover">'
+        "<table>"
         + thead_html
         + "<tbody>\n" + "\n".join(rows) + "\n</tbody>"
         + "</table>"
@@ -466,34 +620,32 @@ def _render_page(mode: str, exp_name: str, table_html: str,
     prefix, popover_title, subtitle = cfg.get(mode, ("Results", "Diagram", ""))
     svg_js = f"var SVG_DATA = {json.dumps(svg_lookup)};"
     head = _HTML_HEAD.format(
-        experiment_name  = html_module.escape(exp_name),
-        svg_data_js      = svg_js,
-        popover_title    = popover_title,
-        page_title_prefix= prefix,
-        page_subtitle    = subtitle,
-        col_preferred    = _COL_PREFERRED,
-        txt_preferred    = _TXT_PREFERRED,
-        col_neutral      = _COL_NEUTRAL,
-        txt_neutral      = _TXT_NEUTRAL,
+        experiment_name   = html_module.escape(exp_name),
+        svg_data_js       = svg_js,
+        popover_title     = popover_title,
+        page_title_prefix = prefix,
+        page_subtitle     = subtitle,
+        col_preferred     = _COL_PREFERRED,
+        txt_preferred     = _TXT_PREFERRED,
+        col_neutral       = _COL_NEUTRAL,
+        txt_neutral       = _TXT_NEUTRAL,
     )
     return head + table_html + _HTML_FOOT
 
-#  formatter class
 
+# ─────────────────────────────────────────────────────────────────────────
+#  Formatter class
+# ─────────────────────────────────────────────────────────────────────────
 
 class CirctoolsHTMLFormatter:
-
 
     def __init__(self, mode: str):
         if mode not in ("primex", "padlock", "sirna"):
             raise ValueError(f"Unknown mode '{mode}'. Use primex, padlock or sirna.")
         self.mode = mode
 
-
-
     def format_file(self, data_file: str, exp_name: str,
                     output_dir: str = "", extra_flag: str = "") -> str:
-
         if self.mode == "primex":
             return self._format_primex(data_file, exp_name, output_dir)
         elif self.mode == "padlock":
@@ -501,7 +653,6 @@ class CirctoolsHTMLFormatter:
         elif self.mode == "sirna":
             blast_was_run = extra_flag.strip().lower() in ("true", "1", "yes")
             return self._format_sirna(data_file, exp_name, output_dir, blast_was_run)
-
 
     def _format_primex(self, data_file: str, exp_name: str,
                        output_dir: str) -> str:
@@ -572,7 +723,6 @@ class CirctoolsHTMLFormatter:
         return _render_page("primex", exp_name,
                             _table(thead_html, rows), svg_lookup)
 
-
     def _format_padlock(self, data_file: str, exp_name: str,
                         output_dir: str, no_svg_flag: str) -> str:
         df = pd.read_csv(data_file, header=None, sep="\t",
@@ -580,11 +730,8 @@ class CirctoolsHTMLFormatter:
         while df.shape[1] < 16:
             df[df.shape[1]] = ""
         df.columns = list(range(df.shape[1]))
-
-        # Restore whitespace escaped for TSV transport
         df[15] = df[15].str.replace("&#10;", "\n", regex=False)\
                         .str.replace("&#9;",  "\t", regex=False)
-
         df = df.rename(columns={
             0:"Annotation",1:"Chr",2:"Start",3:"Stop",4:"Strand",
             5:"RBD5",6:"RBD3",
@@ -613,7 +760,6 @@ class CirctoolsHTMLFormatter:
                       "BLAST_left","BLAST_right"],
                      exp_name, output_dir)
 
-        # colour ranges fixed per R script
         tm_rbd_min, tm_rbd_max = 50, 70
         tm_full_min, tm_full_max = 68, 82
         gc_min, gc_max = 35, 60
@@ -651,7 +797,6 @@ class CirctoolsHTMLFormatter:
         return _render_page("padlock", exp_name,
                             _table(thead_html, rows), svg_lookup)
 
-
     def _format_sirna(self, data_file: str, exp_name: str,
                       output_dir: str, blast_was_run: bool) -> str:
         df = pd.read_csv(data_file, skiprows=1, header=None,
@@ -660,10 +805,8 @@ class CirctoolsHTMLFormatter:
         while df.shape[1] < 14:
             df[df.shape[1]] = ""
         df.columns = list(range(df.shape[1]))
-
         df[13] = df[13].str.replace("&#10;", "\n", regex=False)\
                         .str.replace("&#9;",  "\t", regex=False)
-
         df = df.rename(columns={
             1:"Annotation",2:"Chr",3:"Start",4:"Stop",5:"Strand",
             6:"siRNA",7:"newsiRNA",
@@ -746,7 +889,6 @@ class CirctoolsHTMLFormatter:
         return _render_page("sirna", exp_name,
                             _table(thead_html, rows), svg_lookup)
 
-
     def _export(self, df: pd.DataFrame, cols: list[str],
                 exp_name: str, output_dir: str):
         if not output_dir:
@@ -757,8 +899,6 @@ class CirctoolsHTMLFormatter:
         df[cols].to_excel(os.path.join(output_dir, f"{safe}_results.xlsx"),
                           sheet_name="Results", index=False)
         sys.stderr.write(f"Wrote CSV/XLSX to {output_dir}\n")
-
-
 
 
 def main():
