@@ -410,14 +410,50 @@ class Primex(circ_module.circ_template.CircTemplate):
             print("Could not find any circRNAs matching your criteria, exiting.")
             exit(-1)
 
-        import circtools_primex_wrapper as primer_script
+        from primex import circtools_primex_wrapper as primer_script
 
         # ------------------------------------ run script and check output -----------------------
+        output_rows = []
 
-        script_result = os.popen(sys.executable + " " + primer_script + " " +
-                                 exon_storage_tmp + " " +
-                                 str(self.product_range[0]) + "," + str(self.product_range[1]) + " " +
-                                 self.junction + " " + str(self.num_pairs)).read()
+        with open(exon_storage_tmp, "r") as fh:
+            for raw_line in fh:
+                raw_line = raw_line.rstrip("\n")
+                if not raw_line:
+                    continue
+                columns  = raw_line.split("\t")
+                seq_id   = columns[0]
+                exon2    = columns[1]
+                exon1    = columns[2] if len(columns) > 2 else ""
+                if not exon1:
+                    mid   = len(exon2) // 2
+                    exon1 = exon2[mid:]
+                    exon2 = exon2[:mid]
+
+                pairs = primer_script.design_primers(
+                    seq_id, exon1, exon2,
+                    self.product_range[0], self.product_range[1],
+                    self.junction, self.num_pairs,
+                )
+
+                if pairs:
+                    for idx, pair in enumerate(pairs, start=1):
+                        label = f"{seq_id}_{idx}"
+                        output_rows.append("\t".join([
+                            label,
+                            str(pair["PRIMER_LEFT_SEQUENCE"]),
+                            str(pair["PRIMER_RIGHT_SEQUENCE"]),
+                            str(pair["PRIMER_LEFT"]),
+                            str(pair["PRIMER_RIGHT"]),
+                            str(pair["PRIMER_LEFT_TM"]),
+                            str(pair["PRIMER_RIGHT_TM"]),
+                            str(pair["PRIMER_LEFT_GC_PERCENT"]),
+                            str(pair["PRIMER_RIGHT_GC_PERCENT"]),
+                            str(pair["PRIMER_PAIR_PRODUCT_SIZE"]),
+                        ]))
+                else:
+                    output_rows.append(primer_script._na_row(seq_id, 1))
+
+        script_result = "\n".join(output_rows)
 
         # this is the first time we look through the input file
         # we collect the primer sequences and unify everything in one blast query

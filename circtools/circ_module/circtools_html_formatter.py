@@ -111,11 +111,33 @@ document.addEventListener("DOMContentLoaded", function() {{
     }}
 
     function positionSvgPopover(el) {{
-        var r  = el.getBoundingClientRect();
-        var tx = r.left + window.scrollX + r.width / 2;
-        var ty = r.top  + window.scrollY - 8;
-        svgPopover.style.left = tx + "px";
+        var r   = el.getBoundingClientRect();
+        var tx  = r.left + window.scrollX + r.width / 2;
+
+        // Measure popover height before committing position
+        svgPopover.style.top  = "-9999px";
+        svgPopover.style.left = "-9999px";
+        svgPopover.style.transform = "translateX(-50%)";
+        var ph = svgPopover.getBoundingClientRect().height;
+
+        var spaceAbove = r.top;
+        var spaceBelow = window.innerHeight - r.bottom;
+
+        var ty;
+        if (spaceAbove >= ph + 12 || spaceAbove >= spaceBelow) {{
+            // Place above
+            ty = r.top + window.scrollY - 8;
+            svgPopover.style.transform = "translateX(-50%) translateY(-100%)";
+        }} else {{
+            // Place below
+            ty = r.bottom + window.scrollY + 8;
+            svgPopover.style.transform = "translateX(-50%)";
+        }}
+
         svgPopover.style.top  = ty + "px";
+        svgPopover.style.left = tx + "px";
+
+        // Clamp horizontally
         var pr = svgPopover.getBoundingClientRect();
         if (pr.right > window.innerWidth - 12) {{
             svgPopover.style.left = (window.innerWidth - pr.width - 12 + window.scrollX) + "px";
@@ -372,15 +394,17 @@ document.addEventListener("DOMContentLoaded", function() {{
     border-radius: 13px 13px 0 0;
     padding: 12px 18px;
   }}
-  .ct-tooltip-body {{
+    .ct-tooltip-body {{
     padding: 14px 18px;
     background: var(--surface);
     border-radius: 0 0 13px 13px;
-    max-height: 320px;
-    overflow-y: auto;
+    max-height: 85vh;
+    overflow-y: visible;
   }}
-  #ct-svg-popover .ct-tooltip-body svg {{
-    width: 500px !important; height: 500px !important;
+#ct-svg-popover .ct-tooltip-body svg {{
+    width: auto !important; height: auto !important;
+    max-width: min(380px, 90vw);
+    max-height: 45vh;
     display: block; border-radius: 6px;
   }}
 
