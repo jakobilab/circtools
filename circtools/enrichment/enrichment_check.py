@@ -321,7 +321,7 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
 
     def _run_visualization(self, result_file, time_format):
         """Generate enrichment visualization PDF from the result CSV.
-        Imports enrich_visualization python script
+        Imports enrich_visualization from the same directory and runs all four plots.
         """
         try:
             import sys
@@ -999,7 +999,10 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
                 for location_key_linear in self.observed_counts[1][gene]:
 
                         # for each location key of the circRNA
-                        location_key_circular = self.decode_location_key(location_key_linear)["circ_data"]
+                        decoded_linear = self.decode_location_key(location_key_linear)
+                        if "circ_data" not in decoded_linear:
+                            continue
+                        location_key_circular = decoded_linear["circ_data"]
 
                         if self.decode_location_key(location_key_circular)["chr"] == \
                                 self.decode_location_key(location_key_linear)["chr"] and \
