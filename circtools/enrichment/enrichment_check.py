@@ -997,12 +997,10 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
 
                 # get the location key of the linear host RNA
                 for location_key_linear in self.observed_counts[1][gene]:
+                    try:
 
                         # for each location key of the circRNA
-                        decoded_linear = self.decode_location_key(location_key_linear)
-                        if "circ_data" not in decoded_linear:
-                            continue
-                        location_key_circular = decoded_linear["circ_data"]
+                        location_key_circular = self.decode_location_key(location_key_linear)["circ_data"]
 
                         if self.decode_location_key(location_key_circular)["chr"] == \
                                 self.decode_location_key(location_key_linear)["chr"] and \
@@ -1114,6 +1112,10 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
                                     distance
                                 )
                             )
+      
+                    except (KeyError, IndexError) as e:
+                        self.log_entry("Skipping entry due to key error: %s" % str(e))
+                        continue
         # return the data string
         return result_string
 
