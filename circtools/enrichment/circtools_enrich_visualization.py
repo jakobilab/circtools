@@ -224,36 +224,40 @@ def plot_top_circs_by_rbp_hits(pdf, df1, df2, label1, label2, max_circs, max_rbp
 # ---------------------------------------------------------------------------
 
 def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbps, pval, bw):
-    """Polar bar charts showing RBP composition per circRNA isoform."""
+    """Pie charts showing RBP composition per circRNA isoform, matching R coord_polar style."""
 
-    # helper ------------------------------------------------------------------
     def top_circrnas(df, n):
         counts = df.groupby("Annotation").size().sort_values(ascending=False)
         return list(counts.head(n).index)
 
-    def polar_chart(ax, mini_df, title, subtitle, pval, bw):
+    def pie_chart(ax, mini_df, title, subtitle, pval, bw):
+        """Draw a pie chart matching R geom_bar + coord_polar style."""
         mini_df = mini_df.sort_values("observed_input_peaks_circ_rna", ascending=False).head(max_rbps)
         if mini_df.empty:
             ax.set_visible(False)
             return
-        rbp_names = [f"{r}: {int(p)}" for r, p in
-                     zip(mini_df["RBP"], mini_df["observed_input_peaks_circ_rna"])]
+
         values = mini_df["observed_input_peaks_circ_rna"].values.astype(float)
-        n = len(values)
-        angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
-        values_plot = np.append(values, values[0])
-        angles_plot = angles + [angles[0]]
+        labels = [f"{r}: {int(p)}" for r, p in
+                  zip(mini_df["RBP"], mini_df["observed_input_peaks_circ_rna"])]
+        colours = get_colormap(len(values), bw)
 
-        colours = get_colormap(n, bw)
-        width = 2 * np.pi / n
+        # Draw pie — matches R coord_polar(geom_bar, width=1)
+        wedges, texts = ax.pie(
+            values,
+            labels=labels,
+            colors=colours,
+            startangle=90,
+            counterclock=False,
+            wedgeprops=dict(edgecolor="white", linewidth=0.5),
+            textprops=dict(fontsize=6),
+        )
 
-        bars = ax.bar(angles, values, width=width, bottom=0,
-                      color=colours, edgecolor="white", linewidth=0.5, alpha=0.85)
-        ax.set_xticks(angles)
-        ax.set_xticklabels(rbp_names, fontsize=6)
-        ax.set_yticklabels([])
         ax.set_title(f"{title}\n{subtitle}", fontsize=7, fontweight="bold", pad=10)
-        ax.tick_params(pad=3)
+        ax.set_xlabel(
+            f"Top circRNAs enriched for RBP peaks compared to their host gene ( p < {pval} )",
+            fontsize=6
+        )
 
     # -------------------------------------------------------------------------
     sample_list = [(df1, label1)]
@@ -272,8 +276,7 @@ def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbp
             ncols = min(n_iso, 2)
             nrows = int(np.ceil(n_iso / ncols))
             fig, axes = plt.subplots(nrows, ncols,
-                                     figsize=(11.69, max(4, nrows * 4)),
-                                     subplot_kw=dict(projection="polar"))
+                                     figsize=(11.69, max(4, nrows * 4.5)))
             axes = np.array(axes).flatten()
 
             for idx, (_, row) in enumerate(isoform_df.iterrows()):
@@ -284,18 +287,21 @@ def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbp
                     (df["observed_input_peaks_circ_rna"] > 0)
                 ]
                 chr_val = iso_data["chr"].iloc[0] if not iso_data.empty else "?"
-                title = f"{label}:\nRBP landscape for {circ}"
-                subtitle = (f"Isoform {idx+1}: Chr {chr_val}, "
-                            f"{int(row['start']):,} -> {int(row['stop']):,}")
-                polar_chart(axes[idx], iso_data.copy(), title, subtitle, pval, bw)
+                title = f"{label}:\nComposition of RBP landscape for circRNA {circ}"
+                subtitle = (f"Isoform {idx+1}: Chromsome {chr_val}, "
+                            f"{int(row['start']):,}->{int(row['stop']):,}")
+
+                # Convert to polar axis for pie
+                ax_pos = axes[idx].get_position()
+                axes[idx].remove()
+                ax_pie = fig.add_axes(ax_pos, aspect="equal")
+                pie_chart(ax_pie, iso_data.copy(), title, subtitle, pval, bw)
 
             # hide unused axes
             for j in range(n_iso, len(axes)):
                 axes[j].set_visible(False)
 
-            fig.suptitle(f"Top circRNAs enriched for RBP peaks compared to their host gene (p < {pval})",
-                         fontsize=9, y=0.02)
-            fig.tight_layout(rect=[0, 0.03, 1, 1])
+            fig.tight_layout()
             pdf.savefig(fig)
             plt.close(fig)
 
@@ -463,9 +469,8 @@ def main():
             max_circrnas, max_rbps, pval, bw,
         )
 
-        # --- Plot 3: polar RBP composition per isoform ---
-        if df1["RBP"].nunique() > 1:
-            plot_polar_rbp_per_isoform(
+        # --- Plot 3: pie chart RBP composition per isoform ---
+        plot_polar_rbp_per_isoform(
                 pdf, df1, df2, label_sample_1, label_sample_2,
                 max_circrnas, max_rbps, pval, bw,
             )
