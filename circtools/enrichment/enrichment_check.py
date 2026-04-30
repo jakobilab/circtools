@@ -311,10 +311,70 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
         with open(result_file, 'w') as text_file:
             text_file.write(result_table)
 
+        # generate visualization PDF automatically
+        self._run_visualization(result_file, time_format)
+
         if not self.cli_params.keep_temp:
             self.clean_up_temp_files()
 
         # ------------------------------------- Function definitions start here ---------------------------------------
+
+    def _run_visualization(self, result_file, time_format):
+        """Generate enrichment visualization PDF from the result CSV.
+        Imports enrich_visualization python script
+        """
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from enrich_visualization import (
+                read_data,
+                filter_data,
+                plot_circrnas_per_rbp,
+                plot_top_circs_by_rbp_hits,
+                plot_polar_rbp_per_isoform,
+                plot_accumulated_peaks_per_circ,
+            )
+            from matplotlib.backends.backend_pdf import PdfPages
+
+            viz_output = os.path.join(
+                self.cli_params.output_directory,
+                self.cli_params.output_filename + "_" +
+                str(self.cli_params.num_iterations) + "_" +
+                time_format + "_visualization.pdf"
+            )
+
+            label = self.cli_params.output_filename
+            df = read_data(result_file, rbp_name=label)
+            df = filter_data(df, self.cli_params.pval, use_only_circ=False)
+
+            if df.empty:
+                self.log_entry("Visualization skipped: no results passed the p-value filter (p < %s)" % self.cli_params.pval)
+                return
+
+            with PdfPages(viz_output) as pdf:
+                plot_circrnas_per_rbp(
+                    pdf, df, None, label, "", 25, self.cli_params.pval, bw=False
+                )
+                plot_top_circs_by_rbp_hits(
+                    pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                )
+                if df["RBP"].nunique() > 1:
+                    plot_polar_rbp_per_isoform(
+                        pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                    )
+                plot_accumulated_peaks_per_circ(
+                    pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                )
+
+            self.log_entry("Visualization written to %s" % viz_output)
+
+        except ImportError as e:
+            self.log_entry(
+                "Visualization skipped: enrich_visualization.py not found in the same directory (%s)" % e
+            )
+        except Exception as e:
+            self.log_entry("Visualization failed: %s" % e)
 
     def read_circ_rna_file(self, circ_rna_input, annotation_bed):
         """Reads a CircCoordinates file produced by DCC
