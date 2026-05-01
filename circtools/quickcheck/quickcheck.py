@@ -117,7 +117,7 @@ class QuickCheck(circ_module.circ_template.CircTemplate):
 
         # Build a fake argparse namespace to pass directly to the wrapper
         import argparse
-        import circtools.scripts.circtools_quickcheck_wrapper as wrapper
+        import circtools_quickcheck_wrapper as wrapper
 
         wrapper_args = argparse.Namespace(
             dcc_dir=self.cli_params.detect_dir,
