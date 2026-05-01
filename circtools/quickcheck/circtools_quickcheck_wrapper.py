@@ -37,15 +37,19 @@ def parse_args():
 
 
 def read_star_unique_mappings(star_folder):
-    log_file = os.path.join(star_folder, "Log.final.out")
+    sample_id = os.path.basename(star_folder)
+    # Try prefixed log first: {sample}_Log.final.out
+    log_file = os.path.join(star_folder, f"{sample_id}_Log.final.out")
     if not os.path.exists(log_file):
+        # Fall back to plain Log.final.out
+        log_file = os.path.join(star_folder, "Log.final.out")
+    if not os.path.exists(log_file):
+        print(f"⚠️  No Log.final.out found in {star_folder}")
         return np.nan
     with open(log_file) as f:
-        lines = f.readlines()
-        for line in lines:
+        for line in f:
             if "Uniquely mapped reads %" in line:
-                # extract percentage
-                return float(line.split()[-1].replace("%", ""))
+                return float(line.split("|")[-1].strip().replace("%", ""))
     return np.nan
 
 
@@ -117,13 +121,15 @@ def main(args=None):
         star_subdirs = [d for d in star_subdirs if d.endswith(args.starfolder_suffix)]
 
     unique_mappings = []
-    for subdir in star_subdirs[:num_samples]:
-        unique_mappings.append(read_star_unique_mappings(subdir))
-    if len(unique_mappings) < num_samples:
-        unique_mappings.extend([np.nan] * (num_samples - len(unique_mappings)))
+    for sample in samples:
+        bare = sample.replace("_Chimeric.out.junction", "").replace(".Chimeric.out.junction", "")
+        sample_star_dir = os.path.join(args.star_dir, bare)
+        if os.path.isdir(sample_star_dir):
+            unique_mappings.append(read_star_unique_mappings(sample_star_dir))
+        else:
+            print(f"⚠️  No STAR folder found for sample: {bare}")
+            unique_mappings.append(np.nan)
 
-    # derive groups and colours
-    # derive groups and colours
     if len(grouping) < num_samples:
         repeats = (num_samples // len(grouping)) + 1
         grouping = (grouping * repeats)[:num_samples]
