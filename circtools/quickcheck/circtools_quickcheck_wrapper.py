@@ -49,8 +49,9 @@ def read_star_unique_mappings(star_folder):
     return np.nan
 
 
-def main():
-    args = parse_args()
+def main(args=None):
+    if args is None:
+        args = parse_args()  
 
     # prepare arguments
     cond_list = args.conditions.split(",")
