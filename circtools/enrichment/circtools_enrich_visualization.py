@@ -1,27 +1,4 @@
 #!/usr/bin/env python3
-"""
-circtools enrichment visualization - Python rewrite of enrich_visualization.R
-
-Copyright (C) 2017 Tobias Jakobi
-(Python port)
-
-Usage:
-    python enrich_visualization.py <data_file_1> <pval> <max_circRNAs> <max_rbps> \
-        <output_file> <label_sample_1> <colour_mode> <use_only_circ_data> \
-        [label_sample_2] [data_file_2]
-
-Arguments:
-    data_file_1         Path to the first enrichment result TSV file
-    pval                P-value threshold (float)
-    max_circRNAs        Maximum number of circRNAs to display (int)
-    max_rbps            Maximum number of RBPs to display (int)
-    output_file         Output PDF file path
-    label_sample_1      Label for sample 1
-    colour_mode         "colour" or "bw"
-    use_only_circ_data  "True" or "False"
-    label_sample_2      (optional) Label for sample 2
-    data_file_2         (optional) Path to the second enrichment result TSV file
-"""
 
 import sys
 import warnings
@@ -38,9 +15,6 @@ from matplotlib.cm import get_cmap
 
 warnings.filterwarnings("ignore")
 
-# ---------------------------------------------------------------------------
-# Column names matching the R script
-# ---------------------------------------------------------------------------
 COLNAMES = [
     "RBP", "Annotation", "chr", "start", "stop", "strand",
     "p_val_circular", "raw_count_circ_rna", "observed_input_peaks_circ_rna",
@@ -53,9 +27,6 @@ COLNAMES = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def commapos(x, pos=None):
     """Formatter: absolute value with comma thousands separator."""
@@ -105,10 +76,6 @@ def wrap_label(label, width=18):
     return "\n".join(textwrap.wrap(str(label), width))
 
 
-# ---------------------------------------------------------------------------
-# Plot 1 – Number of circular RNAs per RBP
-# ---------------------------------------------------------------------------
-
 def plot_circrnas_per_rbp(pdf, df1, df2, label1, label2, max_rbps, pval, bw):
     """Bar chart: # unique circRNAs per RBP (isoforms collapsed)."""
 
@@ -156,10 +123,6 @@ def plot_circrnas_per_rbp(pdf, df1, df2, label1, label2, max_rbps, pval, bw):
     pdf.savefig(fig)
     plt.close(fig)
 
-
-# ---------------------------------------------------------------------------
-# Plot 2 – Top circRNAs by number of distinct RBP hits
-# ---------------------------------------------------------------------------
 
 def plot_top_circs_by_rbp_hits(pdf, df1, df2, label1, label2, max_circs, max_rbps, pval, bw):
     """Bar chart: # distinct RBPs per circRNA."""
@@ -219,9 +182,6 @@ def plot_top_circs_by_rbp_hits(pdf, df1, df2, label1, label2, max_circs, max_rbp
     plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Plot 3 – Polar / rose charts per circRNA isoform
-# ---------------------------------------------------------------------------
 
 def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbps, pval, bw):
     """Pie charts showing RBP composition per circRNA isoform, matching R coord_polar style."""
@@ -291,13 +251,11 @@ def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbp
                 subtitle = (f"Isoform {idx+1}: Chromsome {chr_val}, "
                             f"{int(row['start']):,}->{int(row['stop']):,}")
 
-                # Convert to polar axis for pie
                 ax_pos = axes[idx].get_position()
                 axes[idx].remove()
                 ax_pie = fig.add_axes(ax_pos, aspect="equal")
                 pie_chart(ax_pie, iso_data.copy(), title, subtitle, pval, bw)
 
-            # hide unused axes
             for j in range(n_iso, len(axes)):
                 axes[j].set_visible(False)
 
@@ -306,9 +264,6 @@ def plot_polar_rbp_per_isoform(pdf, df1, df2, label1, label2, max_circs, max_rbp
             plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Plot 4 – Accumulated eCLIP peaks per circRNA (stacked bar, coloured by RBP)
-# ---------------------------------------------------------------------------
 
 def plot_accumulated_peaks_per_circ(pdf, df1, df2, label1, label2, max_circs, max_rbps, pval, bw):
     """Stacked bar chart: accumulated eCLIP peaks per circRNA, split by RBP."""
@@ -407,9 +362,6 @@ def plot_accumulated_peaks_per_circ(pdf, df1, df2, label1, label2, max_circs, ma
     plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 def main():
     if len(sys.argv) < 9:
@@ -427,7 +379,6 @@ def main():
     label_sample_2     = sys.argv[9]  if len(sys.argv) > 9  else "Sample 2"
     data_file_2        = sys.argv[10] if len(sys.argv) > 10 else None
 
-    # --- validate args ---
     if use_only_circ_data not in ("True", "False"):
         print("Please specify the data mode as 'True' or 'False'")
         sys.exit(1)
@@ -438,7 +389,6 @@ def main():
     use_only_circ = use_only_circ_data == "True"
     bw = colour_mode == "bw"
 
-    # --- read & filter ---
     print(f"Reading input file 1: {data_file_1}")
     df1 = filter_data(read_data(data_file_1), pval, use_only_circ)
 
