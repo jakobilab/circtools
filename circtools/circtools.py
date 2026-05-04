@@ -906,9 +906,12 @@ class CircTools(object):
         argv = sys.argv[2:]  # skip "circtools detect"
 
      # Positional Input check (samplesheet or junctions)
-        if len(argv) == 0 or argv[0].startswith('-'):
-          print("ERROR: Missing required Input argument (e.g., @samplesheet or Chimeric.out.junction file).")
-          sys.exit(1)
+
+        # disabled by TJ 5/4/2026
+        # this breaks the standard help via --help or also --version
+     #    if len(argv) == 0 or argv[0].startswith('-'):
+     #      print("ERROR: Missing required Input argument (e.g., @samplesheet or Chimeric.out.junction file).")
+     #      sys.exit(1)
 
         first_arg = argv[0]
         if os.path.isfile(first_arg) and not first_arg.startswith("@"):
