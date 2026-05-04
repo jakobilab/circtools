@@ -909,24 +909,21 @@ class CircTools(object):
 
         # disabled by TJ 5/4/2026
         # this breaks the standard help via --help or also --version
-     #    if len(argv) == 0 or argv[0].startswith('-'):
-     #      print("ERROR: Missing required Input argument (e.g., @samplesheet or Chimeric.out.junction file).")
-     #      sys.exit(1)
+        if len(argv) == 0 or (argv[0].startswith('-') and not argv[0].startswith('--')):
+            print("ERROR: Missing required Input argument (e.g., @samplesheet or Chimeric.out.junction file).")
+            print("Try circtools detect --help for more information.")
+            sys.exit(1)
+        else:
+            first_arg = argv[0]
+            if os.path.isfile(first_arg) and not first_arg.startswith("@"):
+              print(
+                   f"ERROR: Detected file '{first_arg}' provided as Input.\n"
+                   f"If this is a samplesheet, it must be prefixed with '@'.\n"
+                   f"Example: circtools detect @{first_arg}"
+              )
+              print("Try circtools detect --help for more information.")
+              sys.exit(1)
 
-        first_arg = argv[0]
-        if os.path.isfile(first_arg) and not first_arg.startswith("@"):
-          print(
-               f"ERROR: Detected file '{first_arg}' provided as Input.\n"
-               f"If this is a samplesheet, it must be prefixed with '@'.\n"
-               f"Example: circtools detect @{first_arg}"
-          )
-          sys.exit(1)
-
-          if first_arg.startswith("@"):
-               fpath = first_arg[1:]
-          if not os.path.isfile(fpath):
-               print(f"ERROR: Samplesheet file '{fpath}' not found.")
-               sys.exit(1)
 
      # Flags
         flags_to_check = {
