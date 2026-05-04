@@ -2,14 +2,14 @@
 
 import os
 import circ_module.circ_template
-from scripts.circtools_circtest_wrapper import run_circ_test_wrapper  # your translated Python wrapper
+from circtools.circtest.circtools_circtest_wrapper import run_circ_test_wrapper 
 import logging
 os.makedirs("logs", exist_ok=True)
 
 
 logging.basicConfig(
-    filename="logs/circtest.log",        # log file path
-    level=logging.INFO,                  # or DEBUG for more verbosity
+    filename="logs/circtest.log",       
+    level=logging.INFO,                 
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
