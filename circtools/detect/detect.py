@@ -193,6 +193,39 @@ class Detect(circ_module.circ_template.CircTemplate):
 
         if options.detect:
             logging.info("Starting to detect circRNAs")
+
+            # --- Automated Library Strandedness Inference ---
+            inferred_type = "stranded_reverse" # Default fallback
+            annotation_tree = None
+            if options.annotate:
+                logging.info("Building GTF tree for automated inference...")
+                annotation_tree = circann.selectGeneGtf(options.annotate)
+
+                # We skip inference if manual override -ss is used to stay consistent with original behavior
+                if options.secondstrand:
+                    logging.info("Manual override (-ss) detected. Bypassing inference.")
+                    inferred_type = "stranded_reverse"
+                    options.strand = True
+                    circann.strand = True
+                else:
+                    inference_bam = None
+                    if options.bam:
+                        inference_bam = remove_empty_lines(options.bam)[0]
+                    else:
+                        guessed_bams = convertjunctionfile2bamfile(options.Input)
+                        if guessed_bams:
+                            inference_bam = guessed_bams[0]
+
+                    if inference_bam:
+                        inferred_type = circann.infer_library_strandedness(inference_bam, annotation_tree)
+                        if inferred_type == "unstranded":
+                            options.strand = False
+                            circann.strand = False
+                        else:
+                            options.strand = True
+                            circann.strand = True
+            # ------------------------------------------------
+
             if options.strand:
                 logging.info("Stranded data mode")
             else:
@@ -223,42 +256,15 @@ class Detect(circ_module.circ_template.CircTemplate):
             else:
                 Input = options.Input
 
-            if options.strand:
-
-                if options.pairedendindependent:
-                    circfiles = pool.map(
-                        functools.partial(wrapfindcirc, tmp_dir=options.tmp_dir,
-                                          endTol=options.endTol,
-                                          maxL=options.max,
-                                          minL=options.min, strand=True,
-                                          pairdendindependent=True, same=same),
-                        Input)
-                else:
-                    circfiles = pool.map(
-                        functools.partial(wrapfindcirc, tmp_dir=options.tmp_dir,
-                                          endTol=options.endTol,
-                                          maxL=options.max,
-                                          minL=options.min, strand=True,
-                                          pairdendindependent=False, same=same),
-                        Input)
-
-            else:
-                if options.pairedendindependent:
-                    circfiles = pool.map(
-                        functools.partial(wrapfindcirc, tmp_dir=options.tmp_dir,
-                                          endTol=options.endTol,
-                                          maxL=options.max,
-                                          minL=options.min, strand=False,
-                                          pairdendindependent=True, same=same),
-                        Input)
-                else:
-                    circfiles = pool.map(
-                        functools.partial(wrapfindcirc, tmp_dir=options.tmp_dir,
-                                          endTol=options.endTol,
-                                          maxL=options.max,
-                                          minL=options.min, strand=False,
-                                          pairdendindependent=False, same=same),
-                        Input)
+            # Detect circRNAs using the inferred library type
+            circfiles = pool.map(
+                functools.partial(wrapfindcirc, tmp_dir=options.tmp_dir,
+                                  endTol=options.endTol,
+                                  maxL=options.max,
+                                  minL=options.min, strand=options.strand,
+                                  pairdendindependent=options.pairedendindependent,
+                                  same=same, library_type=inferred_type),
+                Input)
 
             # Combine the individual count files
             # Create a list of ".circRNA" file names
@@ -282,7 +288,8 @@ class Detect(circ_module.circ_template.CircTemplate):
                 swaped = open(options.tmp_dir + "tmp_coordinatesswaped", "w")
                 for lin in toswap:
                     lin_split = lin.split("\t")
-                    lin_split[5] = strand_swap[lin_split[5]]
+                    if lin_split[5] in strand_swap:
+                        lin_split[5] = strand_swap[lin_split[5]]
                     swaped.write("\t".join(lin_split))
                 swaped.close()
                 os.remove(options.tmp_dir + "tmp_coordinates")
@@ -293,8 +300,6 @@ class Detect(circ_module.circ_template.CircTemplate):
                 cm.writeouput(options.tmp_dir + "tmp_circCount", res)
                 if options.annotate:
                     logging.info("Write in annotation")
-                    logging.info("Select gene features in Annotation file")
-                    annotation_tree = circann.selectGeneGtf(options.annotate)
                     circann.annotate(options.tmp_dir + "tmp_coordinates",
                                      annotation_tree,
                                      options.tmp_dir + "tmp_coordinates_annotated")
@@ -305,8 +310,6 @@ class Detect(circ_module.circ_template.CircTemplate):
                 cm.writeouput(output_circ_counts, res, samplelist, header=True)
                 if options.annotate:
                     logging.info("Write in annotation")
-                    logging.info("Select gene features in Annotation file")
-                    annotation_tree = circann.selectGeneGtf(options.annotate)
                     circann.annotate(options.tmp_dir + "tmp_coordinates",
                                      annotation_tree,
                                      options.tmp_dir + "tmp_coordinates_annotated")
@@ -580,7 +583,7 @@ class Detect(circ_module.circ_template.CircTemplate):
                 logging.info("Merging the predictions from Circtools and CIRIquant")
                 cq = Ccc.metatool()
                 cq.merging(options.list_ciriquant[0], output_circ_counts,
-                           output_coordinates, output_linear_counts, 
+                           output_coordinates, output_linear_counts,
                            options.cleanup, options.out_dir)
 
 
@@ -885,9 +888,9 @@ def wraphostgenecount(bamfile, tmp_dir, circ_coor, ref,
 
 
 def wrapfindcirc(files, tmp_dir, endTol, maxL, minL, strand=True,
-                 pairdendindependent=True, same=False):
+                 pairdendindependent=True, same=False, library_type="stranded_reverse"):
     # create local instance
-    f = Fc.Findcirc(endTol=endTol, maxL=maxL, minL=minL)
+    f = Fc.Findcirc(endTol=endTol, maxL=maxL, minL=minL, library_type=library_type)
 
     # Start de novo circular RNA detection model
     sort = Fc.Sort()
@@ -910,7 +913,7 @@ def wrapfindcirc(files, tmp_dir, endTol, maxL, minL, strand=True,
         # Find small circles
         print("\t=> locating small circRNAs [%s]" % files)
         f.smallcirc(tmp_dir + "tmp_duplicates." + indx,
-                    tmp_dir + "tmp_smallcircs." + indx)
+                    tmp_dir + "tmp_smallcircs." + indx, strand=strand)
 
         if strand:
             # Find normal circles
@@ -949,4 +952,3 @@ def wrapfindcirc(files, tmp_dir, endTol, maxL, minL, strand=True,
     print("finished circRNA detection from file %s" % files)
 
     return circfilename
-
