@@ -15,8 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-14, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04]
-        R: ['4.5.1', '4.4.0']
-        python-version: ['3.14']
+        python-version: ['3.14', '3.15']
 
     name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
 
@@ -31,7 +30,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'      # 🧠 enable pip caching for all environments
+          cache: 'pip'     
 
       - name: Diagnose circtools install path
         run: |
@@ -417,15 +416,18 @@ jobs:
           cd circtools_example/primer_output
           if [ "$RUNNER_OS" = "Linux" ]; then
             MASTER_DIR="../primer_output_master"
-            diff Slc16a9_primer_results.csv "$MASTER_DIR/Slc16a9_primer_results.csv"
+            diff Slc16a9_primer_results.csv \
+                  "$MASTER_DIR/Slc16a9_primer_results.csv"
             sha1sum -c "$MASTER_DIR/sha1sums.txt"
-          elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-13" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
             MASTER_DIR="../primer_output_master_mac_amd"
-            diff Slc16a9_primer_results.csv "$MASTER_DIR/Slc16a9_primer_results.csv"
+            diff Slc16a9_primer_results.csv \
+                  "$MASTER_DIR/Slc16a9_primer_results.csv"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
           elif [ "$RUNNER_OS" = "macOS" ]; then
             MASTER_DIR="../primer_output_master_mac"
-            diff Slc16a9_primer_results.csv "$MASTER_DIR/Slc16a9_primer_results.csv"
+            diff Slc16a9_primer_results.csv \
+                  "$MASTER_DIR/Slc16a9_primer_results.csv"
             shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
           else
             echo "Unsupported OS: $RUNNER_OS" >&2

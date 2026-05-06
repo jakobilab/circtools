@@ -17,9 +17,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ macos-14, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
-        R: ['4.4.0', '4.5.1']
-        python-version: ["3.8","3.13"]
-    name: R ${{ matrix.R }} | Python ${{ matrix.python-version }} | ${{ matrix.os }}
+        python-version: ["3.8",  "3.13", "3.14", "3.15"]
+    name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
     - name: Create files
       uses: actions/checkout@v6
@@ -69,50 +68,6 @@ jobs:
             libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
             libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
         python3 -m pip install ./
-
-
-    - name: Set up R
-      id: setup-r
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-        use-public-rspm: false
-      continue-on-error: true
-
-    - name: Retry Set up R if failed
-      if: steps.setup-r.outcome == 'failure'
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.R }}
-        use-public-rspm: false
-
-    - name: Install R dependencies (with retry, prefer binaries)
-      uses: nick-fields/retry@v4
-      with:
-        timeout_minutes: 40  
-        max_attempts: 3
-        retry_on: error
-        command: |
-          # Configure CRAN binaries on Linux runners
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            UBUNTU_VERSION=$(lsb_release -cs)  # e.g. jammy, noble
-            echo "options(repos = c(RSPM = sprintf('https://packagemanager.posit.co/cran/__linux__/%s/latest', '$UBUNTU_VERSION')))" >> ~/.Rprofile
-          fi
-
-          # Run your dependency installer
-
-          circtools_install_R_dependencies
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-
-
-   
-    - name: Checking library loading
-      run: Rscript -e 'library(primex)'
-    - name: Check if circtools starts
-      run: |
-         circtools --version
-         which circtools
 
 
     - name: Fix zcat on macOS
@@ -183,18 +138,18 @@ jobs:
         cd circtools_example/primer_output
         if [ "$RUNNER_OS" = "Linux" ]; then
           MASTER_DIR="../primer_output_master"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          diff Slc16a9_primer_results.csv \
+                "$MASTER_DIR/Slc16a9_primer_results.csv"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
         elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../primer_output_master_mac_amd"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          diff Slc16a9_primer_results.csv \
+                "$MASTER_DIR/Slc16a9_primer_results.csv"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
+        elif [ "$RUNNER_OS" = "macOS" ]; then
           MASTER_DIR="../primer_output_master_mac"
-          diff Slc16a9_primer_primers.csv \
-                "$MASTER_DIR/Slc16a9_primer_primers.csv"
+          diff Slc16a9_primer_results.csv \
+                "$MASTER_DIR/Slc16a9_primer_results.csv"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
         else
           echo "Unsupported OS: $RUNNER_OS" >&2
