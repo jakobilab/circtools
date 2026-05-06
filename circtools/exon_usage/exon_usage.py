@@ -16,6 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import circ_module.circ_template
+import subprocess
+import os
+import circtools
+import re
+
+base_path = circtools.__path__[0]
+
+r_script = os.path.join(base_path, "scripts", "circtools_exon_wrapper.R")
 
 
 class ExonUsage(circ_module.circ_template.CircTemplate):
@@ -99,15 +107,7 @@ class ExonUsage(circ_module.circ_template.CircTemplate):
                 self.log_entry("Error: group %s is no valid group index." % str(column))
                 exit(-1)
 
-        # check numeric arguments
 
-        # self.check_int_arguments([self.cli_params.max_plots])
-
-        # needed for Rscript decoupling
-        import subprocess
-
-        # import re module
-        import re
 
         r_location = subprocess.check_output(['which', self.command], universal_newlines=True,
                                              stderr=subprocess.STDOUT).split('\n')[0]
@@ -123,8 +123,6 @@ class ExonUsage(circ_module.circ_template.CircTemplate):
 
         # ------------------------------------ need to call the correct R script here -----------------------
 
-        # need to define path top R wrapper
-        exon_script = 'circtools_exon_wrapper'
 
         # Variable number of args in a list
         args = [
@@ -142,6 +140,7 @@ class ExonUsage(circ_module.circ_template.CircTemplate):
         ]
 
         # ------------------------------------ run script and check output -----------------------
+        
+        cmd = ["Rscript", r_script] + [str(e) for e in args]
 
-        import os
-        os.system(exon_script + " " + ' '.join(str(e) for e in args))
+        subprocess.call(cmd)

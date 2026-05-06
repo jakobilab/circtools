@@ -225,11 +225,7 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
             self.tmp_dict,
             self.process_intersection(self.results[0][1], linear_start=True)
         )
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.observed_counts[0])
-        print("------------")
-        pp.pprint(self.observed_counts[1])
+
 
         # how many iterations do we want to do before cleaning up?
         iterations_per_phase = int(self.cli_params.num_iterations / self.cli_params.num_processes)
@@ -311,10 +307,69 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
         with open(result_file, 'w') as text_file:
             text_file.write(result_table)
 
+        # generate visualization PDF automatically
+        self._run_visualization(result_file, time_format)
+
         if not self.cli_params.keep_temp:
             self.clean_up_temp_files()
 
         # ------------------------------------- Function definitions start here ---------------------------------------
+
+    def _run_visualization(self, result_file, time_format):
+        """Generate enrichment visualization PDF from the result CSV.
+        Imports enrich_visualization from the same directory and runs all four plots.
+        """
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from enrich_visualization import (
+                read_data,
+                filter_data,
+                plot_circrnas_per_rbp,
+                plot_top_circs_by_rbp_hits,
+                plot_polar_rbp_per_isoform,
+                plot_accumulated_peaks_per_circ,
+            )
+            from matplotlib.backends.backend_pdf import PdfPages
+
+            viz_output = os.path.join(
+                self.cli_params.output_directory,
+                self.cli_params.output_filename + "_" +
+                str(self.cli_params.num_iterations) + "_" +
+                time_format + "_visualization.pdf"
+            )
+
+            label = self.cli_params.output_filename
+            df = read_data(result_file, rbp_name=None)
+            df = filter_data(df, self.cli_params.pval, use_only_circ=False)
+
+            if df.empty:
+                self.log_entry("Visualization skipped: no results passed the p-value filter (p < %s)" % self.cli_params.pval)
+                return
+
+            with PdfPages(viz_output) as pdf:
+                plot_circrnas_per_rbp(
+                    pdf, df, None, label, "", 25, self.cli_params.pval, bw=False
+                )
+                plot_top_circs_by_rbp_hits(
+                    pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                )
+                plot_polar_rbp_per_isoform(
+                        pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                    )
+                plot_accumulated_peaks_per_circ(
+                    pdf, df, None, label, "", 25, 25, self.cli_params.pval, bw=False
+                )
+
+            self.log_entry("Visualization written to %s" % viz_output)
+
+        except ImportError as e:
+            self.log_entry(
+                "Visualization skipped: enrich_visualization.py not found in the same directory (%s)" % e
+            )
+        except Exception as e:
+            self.log_entry("Visualization failed: %s" % e)
 
     def read_circ_rna_file(self, circ_rna_input, annotation_bed):
         """Reads a CircCoordinates file produced by DCC
@@ -589,9 +644,9 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
         self.log_entry("Processing shuffling thread %d" % (iteration+1))
 
         if include == "all":
-            shuffled_bed = bed_file.shuffle(g=genome_file)
+            shuffled_bed = bed_file.shuffle(g=genome_file, allowBeyondChromEnd=True)
         else:
-            shuffled_bed = bed_file.shuffle(g=genome_file, incl=include)
+            shuffled_bed = bed_file.shuffle(g=genome_file, incl=include, allowBeyondChromEnd=True)
 
         return shuffled_bed
 
@@ -868,68 +923,9 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
         # import method for binomial test (tip of @Alexey)
         from statsmodels.stats.proportion import proportion_confint
 
-        if not self.cli_params.whitelist:
-
-            # construct header of the CSV output file
-            result_string = "circRNA_host_gene\t" \
-                            "chr\t" \
-                            "start\t" \
-                            "stop\t" \
-                            "strand\t" \
-                            "p-val_circular\t" \
-                            "raw_count_circ_rna\t" \
-                            "observed_input_peaks_circ_rna\t" \
-                            "length_circ_rna\t" \
-                            "length_normalized_count_circ_rna\t" \
-                            "number_of_features_intersecting_circ\t" \
-                            "circ_rna_confidence_interval_0.05\t" \
-                            "p-val_linear\t" \
-                            "raw_count_host_gene\t" \
-                            "observed_input_peaks_host_gene\t" \
-                            "length_host_gene_without_circ_rna\t" \
-                            "length_normalized_count_host_gene\t" \
-                            "number_of_features_intersecting_linear\t" \
-                            "host_gene_confidence_interval_0.05\t" \
-                            "distance_normalized_counts\n"
-        else:
-            # construct header of the CSV output file
-            result_string = "circRNA_host_gene\t" \
-                            "chr\t" \
-                            "start\t" \
-                            "stop\t" \
-                            "strand\t" \
-                            "p-val_enriched_circular\t" \
-                            "raw_count_enriched_circ_rna\t" \
-                            "observed_input_peaks_enriched_circ_rna\t" \
-                            "length_enriched_circ_rna\t" \
-                            "length_normalized_count_enriched_circ_rna\t" \
-                            "number_of_features_intersecting_enriched_circ\t" \
-                            "circ_rna_confidence_interval_0.05\t" \
-                            "p-val_non_enriched_circRNA\t" \
-                            "raw_count_not_enriched_circ_rna\t" \
-                            "observed_input_peaks_not_enriched\t" \
-                            "NOT_USED\t" \
-                            "length_normalized_count_not_enriched\t" \
-                            "number_of_features_intersecting__not_enriched\t" \
-                            "not_enriched_confidence_interval_0.05\t" \
-                            "distance_normalized_counts\n"
-
-        # print(self.observed_counts[0])
-        # for all genes we have seen
-
-        with open("f11.txt", 'w') as text_file:
-            text_file.write(str(self.observed_counts[0]))
-
-        with open("f22.txt", 'w') as text_file:
-            text_file.write(str(self.observed_counts[1]))
-
-
-        import pprint
-        pp1 = pprint.PrettyPrinter(stream=open("f1.txt",'w'),indent=4)
-        pp2 = pprint.PrettyPrinter(stream=open("f2.txt",'w'),indent=4)
-
-        pp1.pprint(self.observed_counts[0])
-        pp2.pprint(self.observed_counts[1])
+        # RBP label prepended to each row (no header) to match read_data(rbp_name=None) format
+        rbp_label = self.cli_params.output_filename
+        result_string = ""
 
         for gene in self.observed_counts[1]:
             # make sure we found a circular RNA
@@ -937,9 +933,14 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
 
                 # get the location key of the linear host RNA
                 for location_key_linear in self.observed_counts[1][gene]:
+                    try:
 
                         # for each location key of the circRNA
-                        location_key_circular = self.decode_location_key(location_key_linear)["circ_data"]
+                        decoded_linear = self.decode_location_key(location_key_linear)
+                        if "circ_data" not in decoded_linear:
+                            self.log_entry("Skipping linear key without circ_data: %s" % location_key_linear)
+                            continue
+                        location_key_circular = decoded_linear["circ_data"]
 
                         if self.decode_location_key(location_key_circular)["chr"] == \
                                 self.decode_location_key(location_key_linear)["chr"] and \
@@ -1027,8 +1028,9 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
 
                             # construct the result line
                             result_string += (
-                                "%s\t%s\t%d\t%d\t%s\t%f\t%d\t%d\t%d\t%f\t%d\t%s\t%f\t%d\t%d\t%d\t%f\t%d\t%s\t%f\n" %
+                                "%s\t%s\t%s\t%d\t%d\t%s\t%f\t%d\t%d\t%d\t%f\t%d\t%s\t%f\t%d\t%d\t%d\t%f\t%d\t%s\t%f\n" %
                                 (
+                                    rbp_label,
                                     gene,
                                     str(location_data_circ["chr"]),
                                     location_data_circ["start"],
@@ -1051,6 +1053,10 @@ class EnrichmentModule(circ_module.circ_template.CircTemplate):
                                     distance
                                 )
                             )
+      
+                    except (KeyError, IndexError) as e:
+                        self.log_entry("Skipping entry due to key error: %s" % str(e))
+                        continue
         # return the data string
         return result_string
 
