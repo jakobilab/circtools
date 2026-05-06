@@ -26,9 +26,6 @@ except ImportError:
     HAS_STATANNOTATIONS = False
 
 
-# ---------------------------------------------------------------------------
-# data loading (mirrors the awk / sed / grep shell calls in the R script)
-# ---------------------------------------------------------------------------
 
 def load_exon_counts():
     """
@@ -157,8 +154,7 @@ def boxplot_page(pdf, df, y_col, group_col, title, subtitle, ylabel,
             annotator.configure(test='Mann-Whitney', text_format='star', loc='inside')
             annotator.apply_and_annotate()
         except Exception:
-            pass  # graceful degradation
-
+            pass  
     ax.set_title(f'{title}\n{subtitle}', fontsize=11)
     ax.set_ylabel(ylabel)
     ax.set_xlabel('')
@@ -209,9 +205,6 @@ def quantile_page(pdf, circ_length, group_col, colour_mode, max_val):
         plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# main
-# ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
@@ -232,9 +225,7 @@ def main():
     condition_list  = args.condition_list.split(',')
     colour_mode     = args.colour_mode
 
-    # Build library → condition name mapping
-    # The R script uses: names[group_indices[x]] for each library in order
-    # We infer library order from isoforms (as the R script does)
+
     exon_counts = load_exon_counts()
     mate_status  = load_mate_status()
     isoforms     = load_isoforms()
@@ -245,7 +236,6 @@ def main():
         if df.empty:
             print(f'WARNING: no data loaded for {name}')
 
-    # Sequencing library names (alphabetical to match R levels())
     all_libs = sorted(isoforms['Library'].unique()) if not isoforms.empty else []
     if len(all_libs) != len(group_indices):
         print(f'WARNING: {len(all_libs)} libraries found but {len(group_indices)} '
@@ -289,11 +279,9 @@ def main():
                          'Total number of circular RNAs (log10)',
                          colour_mode, comparisons, log_y=True)
 
-        # 3. Quantile length plots (one page per group)
         if not circ_length.empty:
             quantile_page(pdf, circ_length, 'group', colour_mode, max_len)
 
-        # 4. Isoforms per host gene
         if not isoforms.empty:
             boxplot_page(pdf, isoforms, 'num', 'group',
                          'Circular RNA reconstruction results',
