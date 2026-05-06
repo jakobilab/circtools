@@ -59,8 +59,8 @@ def circtools_primex_wrapper():
 
 
 def circtools_quickcheck_wrapper():
-    return _run("Rscript " +
-                base_path + "/scripts/circtools_quickcheck_wrapper.R " +
+    return _run("python3 " +
+                base_path + "/scripts/circtools_quickcheck_wrapper.py " +
                 " ".join(sys.argv[1:]))
 
 
