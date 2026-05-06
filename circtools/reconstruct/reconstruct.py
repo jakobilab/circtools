@@ -320,9 +320,8 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                     outfolder, sample)):
                 if os.path.isdir(
                         '%s/%s.coverage_profiles/' % (outfolder, sample)):
-                    os.system(
-                        'circtools_reconstruct_summarized_coverage_profiles %s/%s.coverage_profiles' % (
-                        outfolder, sample))
+                    import circtools_reconstruct_summarized_coverage_profiles as srcp
+                    srcp.run('%s/%s.coverage_profiles' % (outfolder, sample))
                 else:
                     output_file = open('%s/%s.logfile.%s' % (
                     outfolder, sample, dt.replace(' ', '_')), 'a')
@@ -353,11 +352,13 @@ class Reconstruct(circ_module.circ_template.CircTemplate):
                 if not '%s.coverage_pictures' % (sample) in folders:
                     os.mkdir('%s/%s.coverage_pictures' % (outfolder, sample))
 
+                import circtools_reconstruct_coverage_graph as cg
+
                 def run_r_parallel(f):
                     if f.endswith('.txt'):
-                        os.system(
-                            'circtools_reconstruct_coverage_graph %s/%s.coverage_profiles/%s %s/%s.coverage_pictures/' %
-                            (outfolder, sample, f, outfolder, sample))
+                        cg.plot_coverage(
+                            '%s/%s.coverage_profiles/%s' % (outfolder, sample, f),
+                            '%s/%s.coverage_pictures/' % (outfolder, sample))
 
 
                 pool = Pool(num_cpus)

@@ -12,6 +12,13 @@ from Bio.Graphics import GenomeDiagram
 import pandas as pd
 from pandas import DataFrame
 
+# Python formatter path (resolved relative to this file)
+FORMATTER_SCRIPT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "scripts",
+    "circtools_html_formatter.py"
+)
+
 class Sirna(circ_module.circ_template.CircTemplate): 
 
     def __init__(self, argparse_arguments, program_name, version):
@@ -185,6 +192,46 @@ class Sirna(circ_module.circ_template.CircTemplate):
         else:
             exons = self.read_annotation_file(self.gtf_file, entity="exon")
 
+            # ------------------------------------------------------------------
+            # Ensure FASTA is bgzip-compressed (required by bedtools getfasta).
+            # If the user supplied a regular gzip file, decompress transparently.
+            # ------------------------------------------------------------------
+            def _is_bgzf(path):
+                try:
+                    with open(path, "rb") as fh:
+                        magic = fh.read(4)
+                    if magic[:2] != b"\x1f\x8b":
+                        return False
+                    with open(path, "rb") as fh:
+                        fh.read(3)
+                        flg = ord(fh.read(1))
+                        if not (flg & 0x04):
+                            return False
+                        fh.read(6)
+                        xlen = int.from_bytes(fh.read(2), "little")
+                        extra = fh.read(xlen)
+                    i = 0
+                    while i + 3 < len(extra):
+                        if extra[i] == 66 and extra[i+1] == 67:
+                            return True
+                        i += 4 + int.from_bytes(extra[i+2:i+4], "little")
+                    return False
+                except Exception:
+                    return False
+
+            import gzip, shutil
+            fasta_file = self.fasta_file
+            _tmp_fasta = None
+
+            if fasta_file.endswith(".gz") and not _is_bgzf(fasta_file):
+                print("Detected regular gzip FASTA. Decompressing for bedtools compatibility.")
+                _tmp_fasta = os.path.join(self.temp_dir, os.path.basename(fasta_file[:-3]))
+                with gzip.open(fasta_file, "rb") as f_in, open(_tmp_fasta, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                fasta_file = _tmp_fasta
+                print(f"Using decompressed FASTA: {fasta_file}")
+            # ------------------------------------------------------------------
+
             detect_file = self.detect_file
             with open(detect_file) as fp:
 
@@ -259,8 +306,8 @@ class Sirna(circ_module.circ_template.CircTemplate):
                     virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                     virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
-                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file)
+                    virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file)
+                    virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=fasta_file)
 
                     if stop == 0 or start == 0:
                         print("Could not identify the exact exon-border of the circRNA.")
@@ -274,7 +321,7 @@ class Sirna(circ_module.circ_template.CircTemplate):
                                                     current_line[5]])
 
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
-                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file)
+                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file)
                         virtual_bed_file_stop = ""
 
                     exon1 = ""
@@ -302,6 +349,10 @@ class Sirna(circ_module.circ_template.CircTemplate):
         if not self.exon_cache:
             print("Could not find any circRNAs matching your criteria, exiting.")
             exit(-1)
+
+        # Clean up temporarily decompressed FASTA if we created one
+        if '_tmp_fasta' in dir() and _tmp_fasta and os.path.exists(_tmp_fasta):
+            os.remove(_tmp_fasta)
 
     def reverseComplement(self, circ):
         sequence = self.exon_cache[circ][3]
@@ -841,17 +892,50 @@ class Sirna(circ_module.circ_template.CircTemplate):
         dfList.append(scoresDf)
 
         
-    def writeOutput(self, totalDf):
-            
+    def writeOutput(self, totalDf, svg_lookup=None):
+        if svg_lookup is None:
+            svg_lookup = {}
+
+        # Add SVG column: key is circ+siRNA, matching drawsiRNA's _svg_key
+        # The siRNA sequence is in the 'siRNA' column; circ id reconstructed
+        # from Annot_Chr_Start_Stop_Strand columns
+        def _svg_key_for_row(row):
+            circ = "_".join([str(row.get("Annot", "")),
+                             str(row.get("Chr", "")),
+                             str(row.get("Start", "")),
+                             str(row.get("Stop", "")),
+                             str(row.get("Strand", ""))])
+            sirna = str(row.get("siRNA", ""))
+            return circ + sirna
+
+        svg_series = totalDf.apply(_svg_key_for_row, axis=1).map(
+            lambda k: svg_lookup.get(k, "")
+                      .replace("\t", "&#9;")
+                      .replace("\n", "&#10;")
+                      .replace("\r", "")
+        )
+        totalDf = totalDf.copy()
+        totalDf["SVG"] = svg_series
+
         testCsv = totalDf.to_csv()
         with open(self.sirnacsv, "w") as siRNA_file:
             siRNA_file.write(testCsv)
-        blast_r = "True"
-        if self.no_blast:
-            blast_r = "False"
-        subprocess.check_output(["circtools_sirna_formatter.R", self.sirnacsv, blast_r, self.output_dir, self.experiment_title])
+
+        blast_r = "False" if self.no_blast else "True"
+        html_file = os.path.join(self.output_dir, self.experiment_title + ".html")
+
+        cmd = (f"{sys.executable} {FORMATTER_SCRIPT_PATH} sirna "
+               f'"{self.sirnacsv}" "{self.experiment_title}" '
+               f'"{self.output_dir}" "{blast_r}"')
+        html_content = os.popen(cmd).read()
+
+        with open(html_file, "w") as fh:
+            fh.write(html_content)
+        print("Writing siRNA results to " + html_file)
     
     def drawsiRNA(self, circ):
+        """Generate SVG diagrams for each siRNA and return {key: svg_string}."""
+        svg_cache = {}
         if circ in self.exon_cache:
             circ_info = circ.split('_')
             circrna_length = int(circ_info[3]) - int(circ_info[2])
@@ -872,30 +956,28 @@ class Sirna(circ_module.circ_template.CircTemplate):
                 siRNA_length = len(siRNA)
                 siRNA_end = siRNA_start + siRNA_length
                
-                
-                
                 gdd = GenomeDiagram.Diagram('circRNA siRNA diagram')
                 gdt_features = gdd.new_track(1, greytrack=True, name="", )
                 gds_features = gdt_features.new_set()
                 
-                feature = SeqFeature(FeatureLocation(exon2_length, exon1_length+exon2_length), strand=-1)
+                feature = SeqFeature(FeatureLocation(exon2_length, exon1_length+exon2_length, strand=-1))
                 gds_features.add_feature(feature, name="Exon 1", label=False, color="#ff6877", label_size=22)
                 
-                feature = SeqFeature(FeatureLocation(0, exon2_length), strand=-1)
+                feature = SeqFeature(FeatureLocation(0, exon2_length, strand=-1))
                 gds_features.add_feature(feature, name="Exon 2", label=False, color=exon2_colour, label_size=22)
 
                 #siRNA
-                feature = SeqFeature(FeatureLocation(siRNA_start, siRNA_end), strand=+1)
+                feature = SeqFeature(FeatureLocation(siRNA_start, siRNA_end, strand=+1))
                 gds_features.add_feature(feature, name="siRNA_2", label=False, color="#32CD32", label_size=22)
                 
                 #more labels
-                feature = SeqFeature(FeatureLocation(round(exon2_length/2), round(exon2_length/2)+1), strand =+1)
+                feature = SeqFeature(FeatureLocation(round(exon2_length/2), round(exon2_length/2)+1, strand=+1))
                 gds_features.add_feature(feature, name="exon 2", color="#F5F5F5",label=True, label_size=20)
                 feature = SeqFeature(FeatureLocation(round(exon1_length/2)+exon2_length, round(exon1_length/2)
-                                                     +exon2_length +1), strand =+1)
+                                                     +exon2_length +1, strand=+1))
                 gds_features.add_feature(feature, name="exon 1", color="#F5F5F5",label=True, label_size=20)
                 
-                feature = SeqFeature(FeatureLocation(siRNA_start, siRNA_start+1), strand =+1)
+                feature = SeqFeature(FeatureLocation(siRNA_start, siRNA_start+1, strand=+1))
                 gds_features.add_feature(feature, name="siRNA", color="#32CD32",label=True, label_size=22)
                 
                 feature = SeqFeature(FeatureLocation(exon2_length, exon2_length+1))
@@ -903,7 +985,16 @@ class Sirna(circ_module.circ_template.CircTemplate):
                 
                 gdd.draw(format='linear', pagesize=(600, 600), track_size=0.3, tracklines=0, x=0.00, 
                          y=0.00, start=0, end=exon1_length+exon2_length)
-                gdd.write(self.output_dir+circ+siRNA+".svg","svg")
+
+                # Capture SVG to string via temp file — do not write to output_dir
+                _svg_key = circ + siRNA
+                _svg_tmp = os.path.join(self.temp_dir, _svg_key.replace("/", "_") + ".svg")
+                gdd.write(_svg_tmp, "svg")
+                with open(_svg_tmp, "r") as fh:
+                    svg_cache[_svg_key] = fh.read()
+                os.remove(_svg_tmp)
+
+        return svg_cache
             
             
     def run_module(self):
@@ -947,14 +1038,15 @@ class Sirna(circ_module.circ_template.CircTemplate):
             print(str(self.delNum_blast) + " siRNAs were eliminated in the blast step")
         empty = False
         dfList = []
+        svg_lookup = {}
         for circ in self.siRNA_to_circ_cache:
             scoresDf = self.siRNA_to_circ_cache[circ][1]
             if scoresDf.empty:
                 empty = True
                 print("Could not find any siRNAs targeting " + circ)
-            else:   
+            else:
                 self.createOutput(circ, dfList)
-                self.drawsiRNA(circ)
+                svg_lookup.update(self.drawsiRNA(circ))
         
         if empty:
             print("Try running in a different mode or relaxing the input parameters")
@@ -962,9 +1054,8 @@ class Sirna(circ_module.circ_template.CircTemplate):
         if dfList:
             print("Writing siRNAs and their scores to an html file")
             totalDf = pd.concat(dfList)
-            self.writeOutput(totalDf)
+            self.writeOutput(totalDf, svg_lookup)
             
             print("A score above 50 represents an effective siRNA")
 
 #method for outputing good features (silencing score, etc.) of an input siRNA
- 

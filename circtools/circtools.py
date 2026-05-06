@@ -58,7 +58,6 @@ class CircTools(object):
                sirna:        circular RNA siRNA design tool
                reconstruct:  circular RNA reconstruction
                enrich:       circular RNA RBP enrichment scan
-               exon:         circular RNA alternative exon analysis
                conservation: circular RNA conservation analysis
             """)
         parser.add_argument("command", help="Command to run")
@@ -72,6 +71,16 @@ class CircTools(object):
         # parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
         args = parser.parse_args(sys.argv[1:2])
+
+        # Handle deprecated 'exon' command before dispatch
+        if args.command == "exon":
+            print(
+                "WARNING: The 'exon' command has been deprecated and removed from circtools.\n"
+                "You can still run exon analysis via the standalone wrapper:\n\n"
+                "    circtools_exon_wrapper\n"
+            )
+            sys.exit(0)
+
         if not hasattr(self, args.command):
             print("The supplied command is unknown")
             parser.print_help()
@@ -1249,138 +1258,6 @@ class CircTools(object):
         import quickcheck.quickcheck
         quickcheck_instance = quickcheck.quickcheck.QuickCheck(args, program_name, version)
         quickcheck_instance.run_module()
-
-    @staticmethod
-    def exon():
-        parser = argparse.ArgumentParser(
-            description="circular RNA exon usage analysis")
-        # NOT prefixing the argument with -- means it"s not optional
-
-        ######################################################
-
-        group = parser.add_argument_group("Required")
-        group.add_argument("-d",
-                           "--detect",
-                           dest="detect_dir",
-                           help="Path to the circtools detect data directory",
-                           required=True
-                           )
-
-        group.add_argument("-l",
-                           "--condition-list",
-                           dest="condition_list",
-                           help="Comma-separated list of conditions which should be compared"
-                                "E.g. \"RNaseR +\",\"RNaseR -\"",
-                           required=True
-                           )
-
-        group.add_argument("-c",
-                           "--condition-columns",
-                           dest="condition_columns",
-                           help="Comma-separated list of 1-based column numbers in the circtools detect output"
-                                " which should be compared; e.g. 10,11,12,13,14,15",
-                           required=True
-                           )
-
-        group.add_argument("-g",
-                           "--grouping",
-                           dest="grouping",
-                           help="Comma-separated list describing the relation of the columns specified via -c to the"
-                                " sample names specified via -l; e.g. -g 1,2 and -r 3 would assign sample1 to each "
-                                "even column and sample 2 to each odd column",
-                           required=True
-                           )
-
-        group.add_argument("-r",
-                           "--replicates",
-                           dest="replicates",
-                           help="Comma-separated list describing the relation of the samples specified via -g to the"
-                                " sample names specified via -l; e.g. -g 1,2 and -r 3 would assign sample1 to each "
-                                "even column and sample 2 to each odd column",
-                           required=True
-                           )
-
-        group.add_argument("-b",
-                           "--ballgown-data",
-                           dest="ballgown_data",
-                           help="Path to the ballgown data directory",
-                           required=True
-                           )
-
-        group.add_argument("-G",
-                           "--gtf-file",
-                           dest="gtf_file",
-                           help="Path to the GTF file containing the employed genome annotation",
-                           required=True
-                           )
-
-        group.add_argument("-C",
-                           "--circtest-output",
-                           dest="circtest_file",
-                           help="Path to the CircTest CSV file containing the CircTest results",
-                           required=True
-                           )
-
-        ######################################################
-
-        group = parser.add_argument_group("Additional options")
-
-        group.add_argument("-H",
-                           "--has-header",
-                           dest="has_header",
-                           help="Do the CircTest result files have a header? [Default: No]",
-                           type=bool,
-                           default=False
-                           )
-
-        ######################################################
-
-        group = parser.add_argument_group("Output options")
-
-        group.add_argument("-o",
-                           "--output-directory",
-                           dest="output_directory",
-                           default="./",
-                           help="The output directory for files created by " + program_name + " [Default: .]",
-                           )
-
-        group.add_argument("-n",
-                           "--output-prefix",
-                           dest="output_prefix",
-                           default="exon_analysis_",
-                           help="The output name (prefix) for files created by " + program_name +
-                                " [Default: exon_analysis]"
-                           )
-        
-        group.add_argument("-s",
-                         "--species",
-                         dest="species",
-                         required=True,
-                         choices=("hs", "mm", "rn", "ss"),
-                         help="Species code: hs = Homo sapiens, mm = Mus musculus, rn = Rattus norvegicus, ss = Sus scrofa"
-                         )
-
-
-        # group.add_argument("-p",
-        #                    "--max-plots",
-        #                    dest="max_plots",
-        #                    help="How many of candidates should be plotted as bar chart? [Default: 10]",
-        #                    type=int,
-        #                    default=10
-        #                    )
-
-        ######################################################
-
-        args = parser.parse_args(sys.argv[2:])
-
-        # start the primer module
-
-        # make sure we can load the sub module
-        sys.path.append(os.path.join(os.path.dirname(__file__)))
-
-        import exon_usage.exon_usage
-        exon_instance = exon_usage.exon_usage.ExonUsage(args, program_name, version)
-        exon_instance.run_module()
 
     @staticmethod
     def reconstruct():

@@ -39,10 +39,11 @@ import primer3                  # for padlock probe designing
 #cmd = subprocess.Popen('module load blast/2.3.0+', shell = True)
 #exec(cmd)
 
-#R file path
-R_SCRIPT_PATH = os.path.join(
-    circtools.scripts.__path__[0],
-    "circtools_padlockprobe_formatter.R"
+# Python formatter path
+FORMATTER_SCRIPT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "scripts",
+    "circtools_html_formatter.py"
 )
 
 class Padlock(circ_module.circ_template.CircTemplate):
@@ -396,16 +397,16 @@ class Padlock(circ_module.circ_template.CircTemplate):
             return data_with_blast_results
         
         # function to create graphical representation of circular/linear RNAs
-        def graphical_visualisation(blast_results, exon_cache_dict, flanking_exon_dict, output_dir, rna_type):
+        # Returns a dict { isoform_id -> svg_string } instead of writing files
+        def graphical_visualisation(blast_results, exon_cache_dict, flanking_exon_dict, rna_type):
+            svg_cache = {}
             for line in blast_results.splitlines():
                 entry = line.split('\t')
-                #print(entry)
-                if entry[6] == "NA":            # no primers, no graphics
+                if entry[6] == "NA":
                     continue
                 circular_rna_id = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4]])
-                circular_rna_id_isoform = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4], entry[6]])       # entry[6] is the scanning sequence, saved to calculate forward/reverse primer start
+                circular_rna_id_isoform = "_".join([entry[0], entry[1], entry[2], entry[3], entry[4], entry[6]])
                 index = int(entry[5])
-                #print(entry, circular_rna_id, circular_rna_id_isoform)
                 if (rna_type == "circle"):
                     circrna_length = int(entry[3]) - int(entry[2])
 
@@ -473,7 +474,11 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             gds_features.add_feature(feature, name="Exon", label=False, color="grey", label_size=22)
                         
                     gdd.draw(format='circular', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, start=0, end=circrna_length-1)
-                    gdd.write(output_dir + "/" + circular_rna_id_isoform + ".svg", "SVG")
+                    _svg_tmp_path = os.path.join(self.temp_dir, circular_rna_id_isoform + ".svg")
+                    gdd.write(_svg_tmp_path, "SVG")
+                    with open(_svg_tmp_path, "r") as _svg_fh:
+                        svg_cache[circular_rna_id_isoform] = _svg_fh.read()
+                    os.remove(_svg_tmp_path)
 
                 if (rna_type == "linear"):
                     exon1_length = len(exon_cache_dict[circular_rna_id][1])
@@ -502,11 +507,15 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         
                     feature = SeqFeature(FeatureLocation(exon1_length, exon1_length))
                     gds_features.add_feature(feature, name="FSJ", label=True, color="white", label_size=22)
-                    gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00, 
-                                 start=0, end=circrna_length-1, fragments = 1)
-                    gdd.write(output_dir + "/" + circular_rna_id_isoform + ".svg", "SVG")
+                    gdd.draw(format='linear', pagesize=(600, 600), circle_core=0.25, track_size=0.2, tracklines=0, x=0.00, y=0.00,
+                                 start=0, end=circrna_length-1, fragments=1)
+                    _svg_tmp_path = os.path.join(self.temp_dir, circular_rna_id_isoform + ".svg")
+                    gdd.write(_svg_tmp_path, "SVG")
+                    with open(_svg_tmp_path, "r") as _svg_fh:
+                        svg_cache[circular_rna_id_isoform] = _svg_fh.read()
+                    os.remove(_svg_tmp_path)
 
-            return None
+            return svg_cache
         
         if self.id_list and os.access(self.id_list[0], os.R_OK):
             print("Detected supplied circRNA ID file.")
@@ -568,6 +577,48 @@ class Padlock(circ_module.circ_template.CircTemplate):
         # erase old contents
         open(exon_storage_tmp, 'w').close()
         open(exon_storage_linear_tmp, 'w').close()
+
+        # ------------------------------------------------------------------
+        # Ensure FASTA is bgzip-compressed (required by bedtools getfasta).
+        # If the user supplied a regular gzip file, decompress to a plain
+        # FASTA in the temp directory for this run only.
+        # ------------------------------------------------------------------
+        def _is_bgzf(path):
+            try:
+                with open(path, "rb") as fh:
+                    magic = fh.read(4)
+                if magic[:2] != b"\x1f\x8b":
+                    return False
+                with open(path, "rb") as fh:
+                    fh.read(3)
+                    flg = ord(fh.read(1))
+                    if not (flg & 0x04):
+                        return False
+                    fh.read(6)
+                    xlen = int.from_bytes(fh.read(2), "little")
+                    extra = fh.read(xlen)
+                i = 0
+                while i + 3 < len(extra):
+                    if extra[i] == 66 and extra[i+1] == 67:
+                        return True
+                    i += 4 + int.from_bytes(extra[i+2:i+4], "little")
+                return False
+            except Exception:
+                return False
+
+        fasta_file = self.fasta_file
+        _tmp_fasta = None
+
+        if fasta_file.endswith(".gz") and not _is_bgzf(fasta_file):
+            print("Detected regular gzip FASTA. Decompressing to temp directory "
+                  "for bedtools compatibility (bgzip required).")
+            import gzip, shutil
+            _tmp_fasta = os.path.join(self.temp_dir, os.path.basename(fasta_file[:-3]))
+            with gzip.open(fasta_file, "rb") as f_in, open(_tmp_fasta, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            fasta_file = _tmp_fasta
+            print(f"Using decompressed FASTA: {fasta_file}")
+        # ------------------------------------------------------------------
 
         # define cache dicts
         exon_cache = {}
@@ -631,7 +682,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 for each_element in all_exons_unique:
                     each_element[1] = str(int(each_element[1]) - 1)         # fix for sequence generation - 1 bp extra was getting added
                     virtual_bed_file = pybedtools.BedTool("\t".join(each_element), from_string=True)
-                    virtual_bed_file = virtual_bed_file.sequence(fi=self.fasta_file, s=True)
+                    virtual_bed_file = virtual_bed_file.sequence(fi=fasta_file, s=True)
                     seq = open(virtual_bed_file.seqfn).read().split("\n", 1)[1].rstrip()
                     list_exons_seq.append(seq)
                     each_line = "\t".join([each_element[i] for i in [0,1,2,5]])     # this entry is for final HTML report chr, start, end, gene
@@ -694,19 +745,31 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 primex_data_with_blast_results_linear_storage = primex_data_with_blast_results_linear_storage + "\t".join(each_element) + "\n"
 
             #print(fasta_xenium_linear_dict.keys())
-            with open(blast_storage_tmp_linear, 'w') as data_store:
-                data_store.write(primex_data_with_blast_results_linear_storage)
-
             with open(bed_probes_linear, 'w') as f:
                 for line in probe_bed_linear:
                     f.write("\t".join(map(str, line)))
                     f.write("\n")
 
-            # visualisation
-            if (self.no_svg):
+            # Generate SVG diagrams and embed as extra column in TSV
+            if self.no_svg:
                 print("No graphical representations SVG will be generated")
+                svg_cache_linear = {}
             else:
-                graphical_visualisation(primex_data_with_blast_results_linear, all_exon_cache, {}, self.output_dir, "linear")
+                svg_cache_linear = graphical_visualisation(
+                    primex_data_with_blast_results_linear, all_exon_cache, {}, "linear"
+                )
+
+            # Append SVG column to each row
+            primex_data_linear_with_svg = ""
+            for line in primex_data_with_blast_results_linear_storage.splitlines():
+                entry = line.split('\t')
+                isoform_id = "_".join(entry[0:6])
+                svg_str = svg_cache_linear.get(isoform_id, "")
+                svg_str = svg_str.replace("\t", "&#9;").replace("\n", "&#10;").replace("\r", "")
+                primex_data_linear_with_svg += line + "\t" + svg_str + "\n"
+
+            with open(blast_storage_tmp_linear, 'w') as data_store:
+                data_store.write(primex_data_linear_with_svg)
 
         if (self.rna_type == 0 or self.rna_type == 2):
             ## part for circular RNAs
@@ -813,8 +876,8 @@ class Padlock(circ_module.circ_template.CircTemplate):
                         virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line_start, from_string=True)
                         virtual_bed_file_stop = pybedtools.BedTool(fasta_bed_line_stop, from_string=True)
 
-                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
-                        virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=self.fasta_file, s=True)
+                        virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file, s=True)
+                        virtual_bed_file_stop = virtual_bed_file_stop.sequence(fi=fasta_file, s=True)
 
                         if stop == 0 or start == 0:
                             print("Could not identify the exact exon-border of the circRNA.")
@@ -828,7 +891,7 @@ class Padlock(circ_module.circ_template.CircTemplate):
                             
                             exon_dict_circle_bed12[name].append(current_line)
                             virtual_bed_file_start = pybedtools.BedTool(fasta_bed_line, from_string=True)
-                            virtual_bed_file_start = virtual_bed_file_start.sequence(fi=self.fasta_file, s=True)
+                            virtual_bed_file_start = virtual_bed_file_start.sequence(fi=fasta_file, s=True)
                             virtual_bed_file_stop = ""
                         exon1 = ""
                         exon2 = ""
@@ -946,19 +1009,32 @@ class Padlock(circ_module.circ_template.CircTemplate):
                     each_element = each_element.split("\t")
                     each_element.pop(5)
                     primex_data_with_blast_results_storage = primex_data_with_blast_results_storage + "\t".join(each_element) + "\n"
-                
+
+                # Generate SVG diagrams and embed as extra column in TSV
+                if self.no_svg:
+                    print("No graphical representations SVG will be generated")
+                    svg_cache = {}
+                else:
+                    svg_cache = graphical_visualisation(
+                        primex_data_with_blast_results, exon_cache, flanking_exon_cache, "circle"
+                    )
+
+                # Append SVG column (tab+newline safe encoded) to each row
+                primex_data_with_svg = ""
+                for line in primex_data_with_blast_results_storage.splitlines():
+                    entry = line.split('\t')
+                    # isoform key = Ann_Chr_Start_Stop_Strand_scanwindow (cols 0-4 + col 5)
+                    isoform_id = "_".join(entry[0:6])
+                    svg_str = svg_cache.get(isoform_id, "")
+                    svg_str = svg_str.replace("\t", "&#9;").replace("\n", "&#10;").replace("\r", "")
+                    primex_data_with_svg += line + "\t" + svg_str + "\n"
+
                 with open(blast_storage_tmp, 'w') as data_store:
-                    data_store.write(primex_data_with_blast_results_storage)
+                    data_store.write(primex_data_with_svg)
                 with open(bed_probes_circles, 'w') as f:
                     for line in probe_bed:
                         f.write("\t".join(map(str, line)))
                         f.write("\n")
-        
-                #print(flanking_exon_cache)
-                if (self.no_svg):
-                    print("No graphical representations SVG will be generated")
-                else:
-                    graphical_visualisation(primex_data_with_blast_results, exon_cache, flanking_exon_cache, self.output_dir, "circle")
         
         if (self.rna_type == 1 or self.rna_type == 2):
             with open(output_fasta_file_linear, 'w') as data_store:
@@ -968,66 +1044,68 @@ class Padlock(circ_module.circ_template.CircTemplate):
                 data_store.write(fasta_xenium)
         
         
-        # need to define path top R wrapper
-        primer_script = 'circtools_primex_formatter'
-        primer_script = R_SCRIPT_PATH
+        # ---- run Python formatter for circular / linear probe outputs ----
+        no_svg_flag = "TRUE" if self.no_svg else "FALSE"
 
-        # ------------------------------------ run formatter script and write output to various files -----------------------
-        # for formatter command
-        no_svg_flag = ""
-        if not self.no_svg:
-            no_svg_flag = "FALSE"
-        else:
-            no_svg_flag = "TRUE"
-
-        # formatter script calling for circular RNA probes
-        if (self.rna_type == 0 or self.rna_type == 2):    
+        if (self.rna_type == 0 or self.rna_type == 2):
             print("Formatting circular RNA probe outputs")
-            primex_data_formatted = os.popen(primer_script + " " +
-                                             blast_storage_tmp + " "
-                                             + "\"" + self.experiment_title + "\"" + " "
-                                             + "\"" + no_svg_flag + "\"" #+ " "
-                                             #+ "\"" + self.svg_dir + "\"" 
-                                             ).read()
-
+            cmd = (f'{sys.executable} {FORMATTER_SCRIPT_PATH} padlock '
+                   f'"{blast_storage_tmp}" "{self.experiment_title}" '
+                   f'"{self.output_dir}" "{no_svg_flag}"')
+            primex_data_formatted = os.popen(cmd).read()
             with open(output_html_file, 'w') as data_store:
                 data_store.write(primex_data_formatted)
-            print("Writing circular results to "+output_html_file)
+            print("Writing circular results to " + output_html_file)
 
-            # writing output file to CSV -> the format recommended by Xenium technical note
-            print("Writing probe results to "+output_csv_file)
-            fout = open(output_csv_file, 'wb')
-            fout.write("CircRNAID,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
-            for eachline in primex_data_with_blast_results_storage.split("\n"):
-                if (eachline == ""):    continue
-                eachline = eachline.split("\t")
-                tempstr = "_".join(eachline[:5])
-                fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
-            fout.close()
+            print("Writing probe results to " + output_csv_file)
+            with open(output_csv_file, 'wb') as fout:
+                fout.write("CircRNAID,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
+                for eachline in primex_data_with_blast_results_storage.split("\n"):
+                    if not eachline:
+                        continue
+                    eachline = eachline.split("\t")
+                    tempstr = "_".join(eachline[:5])
+                    fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
 
         if (self.rna_type == 1 or self.rna_type == 2):
             print("Formatting linear RNA probe outputs")
-            primex_data_formatted_linear = os.popen(primer_script + " " +
-                                             blast_storage_tmp_linear + " "
-                                             + "\"" + self.experiment_title + "\"" + " "
-                                             + "\"" + no_svg_flag + "\"" #+ " "
-                                             #+ "\"" + self.svg_dir + "\"" 
-                                             ).read()
-
+            cmd = (f'{sys.executable} {FORMATTER_SCRIPT_PATH} padlock '
+                   f'"{blast_storage_tmp_linear}" "{self.experiment_title}" '
+                   f'"{self.output_dir}" "{no_svg_flag}"')
+            primex_data_formatted_linear = os.popen(cmd).read()
             with open(output_html_file_linear, 'w') as data_store:
                 data_store.write(primex_data_formatted_linear)
-            print("Writing linear results to "+output_html_file_linear)
+            print("Writing linear results to " + output_html_file_linear)
 
-            # writing output file to CSV for linear RNA probes
-            print("Writing linear probe results to "+output_csv_file_linear)
-            fout = open(output_csv_file_linear, 'wb')
-            fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
-            for eachline in primex_data_with_blast_results_linear_storage.split("\n"):
-                if (eachline == ""):    continue
-                eachline = eachline.split("\t")
-                tempstr = "_".join(eachline[:5])
-                fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
-            fout.close()
+            print("Writing linear probe results to " + output_csv_file_linear)
+            with open(output_csv_file_linear, 'wb') as fout:
+                fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
+                for eachline in primex_data_with_blast_results_linear_storage.split("\n"):
+                    if not eachline:
+                        continue
+                    eachline = eachline.split("\t")
+                    tempstr = "_".join(eachline[:5])
+                    fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
+
+        if (self.rna_type == 1 or self.rna_type == 2):
+            print("Formatting linear RNA probe outputs")
+            cmd = (f'{sys.executable} {FORMATTER_SCRIPT_PATH} padlock '
+                   f'"{blast_storage_tmp_linear}" "{self.experiment_title}" '
+                   f'"{self.output_dir}" "{no_svg_flag}"')
+            primex_data_formatted_linear = os.popen(cmd).read()
+            with open(output_html_file_linear, 'w') as data_store:
+                data_store.write(primex_data_formatted_linear)
+            print("Writing linear results to " + output_html_file_linear)
+
+            print("Writing linear probe results to " + output_csv_file_linear)
+            with open(output_csv_file_linear, 'wb') as fout:
+                fout.write("Gene,RBD5,RBD3,Tm_RBD5,Tm_RBD3,Tm_Full,GC_RBD5,GC_RBD3,Ligation_Junction\n".encode())
+                for eachline in primex_data_with_blast_results_linear_storage.split("\n"):
+                    if not eachline:
+                        continue
+                    eachline = eachline.split("\t")
+                    tempstr = "_".join(eachline[:5])
+                    fout.write((tempstr + "," + ",".join(eachline[5:13]) + "\n").encode())
         print("Cleaning up")
         """      
         ## cleanup / delete tmp files
@@ -1035,3 +1113,6 @@ class Padlock(circ_module.circ_template.CircTemplate):
         os.remove(blast_storage_tmp)
         os.remove(blast_xml_tmp)
         """
+        # remove temporarily decompressed FASTA if we created one
+        if _tmp_fasta and os.path.exists(_tmp_fasta):
+            os.remove(_tmp_fasta)
