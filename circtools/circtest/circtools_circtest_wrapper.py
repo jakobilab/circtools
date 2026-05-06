@@ -265,3 +265,27 @@ def run_circ_test_wrapper(args):
 
     wb.save(args.output_name + ".xlsx")
     print("Done.")
+    
+    
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="CircTest wrapper")
+    parser.add_argument("-d", "--dcc-data", required=True, dest="dcc_data")
+    parser.add_argument("-c", "--condition-list", required=True, dest="condition_list")
+    parser.add_argument("-l", "--condition-columns", required=True, dest="condition_columns")
+    parser.add_argument("-g", "--groups", required=True, dest="groups")
+    parser.add_argument("-o", "--output-name", required=True, dest="output_name")
+    parser.add_argument("-r", "--replicates", type=int, default=2, dest="replicates")
+    parser.add_argument("-f", "--max-fdr", type=float, default=0.05, dest="max_fdr")
+    parser.add_argument("-m", "--max-plots", type=int, default=10, dest="max_plots")
+    parser.add_argument("--filter-sample", type=int, default=1, dest="filter_sample")
+    parser.add_argument("--filter-count", type=int, default=5, dest="filter_count")
+    parser.add_argument("--output-label", default="", dest="output_label")
+    parser.add_argument("--percent-filter", type=float, default=0.1, dest="percent_filter")
+    parser.add_argument("--only-negative", action="store_true", dest="only_negative")
+    parser.add_argument("--add-header", action="store_true", dest="add_header")
+    parser.add_argument("--y-range", type=float, default=1.0, dest="y_range")
+    parser.add_argument("--colour-mode", default="colour", dest="colour_mode")
+
+    args = parser.parse_args()
+    run_circ_test_wrapper(args)
