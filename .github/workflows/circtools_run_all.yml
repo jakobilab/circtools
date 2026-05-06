@@ -58,13 +58,15 @@ jobs:
       - name: Install dependencies on macOS ARM
         if: startsWith(matrix.os, 'macos-15') || matrix.os == 'macos-26'
         run: |
-          brew install xz pkg-config gfortran || true
+          brew install xz pkg-config gcc || true
+          ln -sf $(brew --prefix gcc)/bin/gfortran-* /usr/local/bin/gfortran || true
           python3 -m pip install ./
 
       - name: Install dependencies on macOS 14
         if: matrix.os == 'macos-14'
         run: |
-          brew install xz pkg-config gfortran || true
+          brew install xz pkg-config gcc || true
+          ln -sf $(brew --prefix gcc)/bin/gfortran-* /usr/local/bin/gfortran || true
           python3 -m pip install ./
 
       - name: Install Linux dependencies
@@ -73,7 +75,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
               make g++ gfortran zlib1g-dev \
-              ...
+              libblas-dev libatlas-base-dev liblapack-dev \
+              libcurl4-openssl-dev libssl-dev libxml2-dev \
+              libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+              libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
           python3 -m pip install ./
 
 
