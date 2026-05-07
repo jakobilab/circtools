@@ -83,13 +83,19 @@ jobs:
       - name: Verify installed version matches git tag
         run: |
           TAG="${{ github.ref_name }}"
-          # Strip leading 'v' if present so v1.2.3 matches 1.2.3
           EXPECTED="${TAG#v}"
           INSTALLED=$(python3 -c "import importlib.metadata; print(importlib.metadata.version('circtools'))")
           echo "Tag: $TAG  →  expected: $EXPECTED  |  installed: $INSTALLED"
-          if [ "$INSTALLED" != "$EXPECTED" ]; then
-            echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
-            exit 1
+          if echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+'; then
+            # Looks like a real version tag — enforce strictly
+            if [ "$INSTALLED" != "$EXPECTED" ]; then
+              echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
+              exit 1
+            fi
+            echo "✅ Version matched: $INSTALLED"
+          else
+            # Branch push (master, dev, etc.) — just warn
+            echo "::warning::Not a version tag (ref=$TAG) — skipping strict version check. installed=$INSTALLED"
           fi
 
 
@@ -473,11 +479,17 @@ jobs:
           EXPECTED="${TAG#v}"
           INSTALLED=$(python3 -c "import importlib.metadata; print(importlib.metadata.version('circtools'))")
           echo "Tag: $TAG  →  expected: $EXPECTED  |  installed: $INSTALLED"
-          if [ "$INSTALLED" != "$EXPECTED" ]; then
-            echo "::error::Prod version mismatch! installed=$INSTALLED expected=$EXPECTED"
-            exit 1
+          if echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+'; then
+            # Looks like a real version tag — enforce strictly
+            if [ "$INSTALLED" != "$EXPECTED" ]; then
+              echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
+              exit 1
+            fi
+            echo "✅ Version matched: $INSTALLED"
+          else
+            # Branch push (master, dev, etc.) — just warn
+            echo "::warning::Not a version tag (ref=$TAG) — skipping strict version check. installed=$INSTALLED"
           fi
-          echo "✅ Prod PyPI install verified: $INSTALLED"
 
 
   github-release:
