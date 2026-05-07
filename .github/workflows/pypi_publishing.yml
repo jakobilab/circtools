@@ -2,6 +2,8 @@ name: Publish to PyPI
 
 on:
   push:
+    tags:
+      - '*'
 
 jobs:
 
@@ -30,7 +32,6 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-
   publish-to-test-pypi:
     name: Publish to Test PyPI
     needs: build
@@ -52,7 +53,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-
 
   verify-test-pypi:
     name: Verify Test PyPI install (${{ matrix.os }} / py${{ matrix.python-version }})
@@ -80,24 +80,17 @@ jobs:
             --extra-index-url https://pypi.org/simple/ \
             circtools
 
-      - name: Verify installed version matches git tag
+      - name: Verify installed version matches tag
         run: |
-          TAG="${{ github.ref_name }}"
-          EXPECTED="${TAG#v}"
+          EXPECTED="${{ github.ref_name }}"
+          EXPECTED="${EXPECTED#v}"
           INSTALLED=$(python3 -c "import importlib.metadata; print(importlib.metadata.version('circtools'))")
-          echo "Tag: $TAG  →  expected: $EXPECTED  |  installed: $INSTALLED"
-          if echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+'; then
-            # Looks like a real version tag — enforce strictly
-            if [ "$INSTALLED" != "$EXPECTED" ]; then
-              echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
-              exit 1
-            fi
-            echo "✅ Version matched: $INSTALLED"
-          else
-            # Branch push (master, dev, etc.) — just warn
-            echo "::warning::Not a version tag (ref=$TAG) — skipping strict version check. installed=$INSTALLED"
+          echo "Expected: $EXPECTED  |  Installed: $INSTALLED"
+          if [ "$INSTALLED" != "$EXPECTED" ]; then
+            echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
+            exit 1
           fi
-
+          echo "✅ Version matched: $INSTALLED"
 
   ci-full:
     name: CI ${{ matrix.python-version }} | ${{ matrix.os }}
@@ -125,7 +118,6 @@ jobs:
       - name: Update pip & setuptools
         run: python3 -m pip install -U pip setuptools wheel
 
-      # ── OS-specific installs ──────────────────
       - name: Install (macOS Intel)
         if: matrix.os == 'macos-15-intel'
         run: |
@@ -206,7 +198,7 @@ jobs:
         run: |
           tar xvf ./tests/data/circtools_example.tar.bz2
           cd circtools_example
-          [ -f genome.fa.gz ]     && gunzip -f genome.fa.gz
+          [ -f genome.fa.gz ]      && gunzip -f genome.fa.gz
           [ -f annotation.gtf.gz ] && gunzip -f annotation.gtf.gz
           ls -lh genome.fa annotation.gtf || true
 
@@ -450,7 +442,6 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-
   verify-prod-pypi:
     name: Verify prod PyPI install (${{ matrix.os }} / py${{ matrix.python-version }})
     needs: publish-to-pypi
@@ -473,52 +464,14 @@ jobs:
       - name: Install circtools from PyPI
         run: pip install circtools
 
-      - name: Verify installed version matches git tag
+      - name: Verify installed version matches tag
         run: |
-          TAG="${{ github.ref_name }}"
-          EXPECTED="${TAG#v}"
+          EXPECTED="${{ github.ref_name }}"
+          EXPECTED="${EXPECTED#v}"
           INSTALLED=$(python3 -c "import importlib.metadata; print(importlib.metadata.version('circtools'))")
-          echo "Tag: $TAG  →  expected: $EXPECTED  |  installed: $INSTALLED"
-          if echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+'; then
-            # Looks like a real version tag — enforce strictly
-            if [ "$INSTALLED" != "$EXPECTED" ]; then
-              echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
-              exit 1
-            fi
-            echo "✅ Version matched: $INSTALLED"
-          else
-            # Branch push (master, dev, etc.) — just warn
-            echo "::warning::Not a version tag (ref=$TAG) — skipping strict version check. installed=$INSTALLED"
+          echo "Expected: $EXPECTED  |  Installed: $INSTALLED"
+          if [ "$INSTALLED" != "$EXPECTED" ]; then
+            echo "::error::Version mismatch! installed=$INSTALLED expected=$EXPECTED"
+            exit 1
           fi
-
-
-  github-release:
-    name: Create GitHub Release
-    needs: verify-prod-pypi
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download dists
-        uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh release create '${{ github.ref_name }}' \
-            --repo '${{ github.repository }}' \
-            --title '${{ github.ref_name }}' \
-            --notes "Released via automated pipeline. All CI checks passed on Test PyPI before promotion to production." \
-            --draft
-
-      - name: Upload artifacts to GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload '${{ github.ref_name }}' dist/** \
-            --repo '${{ github.repository }}'
+          echo "✅ Prod PyPI install verified: $INSTALLED"

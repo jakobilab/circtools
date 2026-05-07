@@ -18,9 +18,10 @@
 import argparse
 import os.path
 import sys
+from importlib.metadata import version
 
-# global settings
-version = "2.0.4"
+#global
+version = version("circtools")
 program_name = "circtools"
 
 
