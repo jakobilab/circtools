@@ -493,12 +493,11 @@ jobs:
 
 
   github-release:
-    name: Sign and create GitHub Release
+    name: Create GitHub Release
     needs: verify-prod-pypi
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
 
     steps:
       - name: Download dists
@@ -506,13 +505,6 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-
-      - name: Sign with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v1.2.3
-        with:
-          inputs: >-
-            ./dist/*.tar.gz
-            ./dist/*.whl
 
       - name: Create GitHub Release
         env:
@@ -524,7 +516,7 @@ jobs:
             --notes "Released via automated pipeline. All CI checks passed on Test PyPI before promotion to production." \
             --draft
 
-      - name: Upload artifact signatures to GitHub Release
+      - name: Upload artifacts to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
