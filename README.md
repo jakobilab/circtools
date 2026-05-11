@@ -43,7 +43,7 @@
   <li>macOS 15 (Apple Silicon)</li> 
   <li>macOS 26 (Apple Silicon)</li> </ul>
 
-`pip` workflows are tested daily across R versions 4.4.0 and 4.5.1, and Python versions 3.8 through 3.13.
+`pip` workflows are tested daily across Python versions 3.9 through 3.14.
 
 <table>
   <thead>
@@ -166,8 +166,7 @@ It requires only a small number of external dependencies, namely standard bioinf
 
 - [bedtools (>= 2.27.1)](https://bedtools.readthedocs.io/en/latest/content/installation.html)  
   *RBP enrichment module, installed automatically*
-- [R (>= 4.0)](https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-22-04)  
-  *Data visualization and data processing*
+
 
 Installation is managed through:
 
@@ -197,9 +196,6 @@ source circtools/bin/activate
 # install circtools
 pip install numpy # required for HTSeq, dependency of circtools
 pip install circtools
-
-# install R packages for circtools
-circtools_install_R_dependencies
 ```
 
 
@@ -247,8 +243,6 @@ pip install numpy # required for HTSeq, a dependency of circtools
 pip install git+https://github.com/jakobilab/circtools.git
 ```
 
-The primer-design module as well as the exon analysis and circRNA testing module require a working installation of [R](https://cran.r-project.org/) with [BioConductor](https://www.bioconductor.org/install/). All R packages required can be automatically installed during the setup. Please see the [Installing circtools](http://docs.circ.tools/en/latest/Installation.html) chapter of the main circtools documentation for more detailed installation instructions.
-
 ---
 
 
@@ -284,10 +278,6 @@ The `reconstruct` command is an interface to [FUCHS](https://github.com/dieteric
 ### circtest ([detailed documentation](https://docs.circ.tools/en/latest/Circtest.html))
 
 The `circtest` command is an interface to [CircTest](https://github.com/dieterich-lab/CircTest). The module is a convenient way to employ statistical testing to circRNA candidates generated with DCC without having to write an R script for each new experiment. For detailed information on the implementation itself take a look at the [CircTest documentation](https://github.com/dieterich-lab/CircTest). In essence, the module allows dynamic grouping of the columns (samples) in the DCC data.
-
-### exon ([detailed documentation](https://docs.circ.tools/en/latest/Exon.html))
-
-The exon module of circtools employs the [ballgown R package](https://www.bioconductor.org/packages/release/bioc/html/ballgown.html) to combine data generated with DCC and circtest with ballgown-compatible `stringtie` output or cufflinks output converted via [tablemaker](https://github.com/leekgroup/tablemaker) in order to get deeper insights into differential exon usage within circRNA candidates.
 
 ### enrich ([detailed documentation](https://docs.circ.tools/en/latest/Enrichment.html))
 
