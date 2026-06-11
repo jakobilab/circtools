@@ -386,6 +386,146 @@ def circ_test(Circ, Linear, group, alpha=0.05, plotsig=True, CircCoordinates=Non
 
 
 
+def circ_test_pairwise(Circ, Linear, group, sig_indices, circle_description,
+                       CircCoordinates=None, alpha=0.05):
+    """
+    Run pairwise beta-binomial LRT for every pair of groups, restricted to
+    circRNAs that were significant in the omnibus circ_test().
+
+    Uses the same beta_binomial_ll / safe_minimize / p_adjust_bh machinery as
+    circ_test() so the model is fully consistent with the omnibus result.
+
+    BH correction is applied globally across all pairs x all circRNAs in one
+    pass — the most rigorous approach.
+
+    Parameters
+    ----------
+    Circ, Linear        : filtered DataFrames (same shape, same index)
+    group               : list/Series of group labels per sample column
+    sig_indices         : index values of rows that passed the omnibus test
+    circle_description  : list of non-sample column names (already resolved to names)
+    CircCoordinates     : optional DataFrame with Chr/Start/End/Gene columns (same index
+                          as Circ) — used to emit human-readable CircID and Gene in output
+    alpha               : FDR threshold (used only for the 'sig' flag column)
+
+    Returns
+    -------
+    pd.DataFrame with columns:
+        CircID, Gene, group1, group2, raw_p, p_adj, sig
+    Sorted by CircID then group pair.
+    """
+    from itertools import combinations as _combinations
+
+    group = pd.Series(group)
+    unique_groups = sorted(np.unique(group))
+
+    if len(unique_groups) < 2:
+        logger.warning("[pairwise] Fewer than 2 groups — skipping pairwise test.")
+        return pd.DataFrame(columns=["CircID", "Gene", "group1", "group2", "raw_p", "p_adj", "sig"])
+
+    pairs = list(_combinations(unique_groups, 2))
+    logger.info(f"[pairwise] Testing {len(pairs)} pairs across {len(sig_indices)} significant circRNAs")
+
+    # Build index → (CircID, Gene) lookup from CircCoordinates if available
+    coord_lookup = {}
+    if CircCoordinates is not None:
+        for idx in sig_indices:
+            if idx in CircCoordinates.index:
+                row   = CircCoordinates.loc[idx]
+                chrom = str(row.iloc[0])
+                start = str(row.iloc[1])
+                end   = str(row.iloc[2])
+                gene  = str(row.get("Gene", row.get("gene", "Unknown")))
+                coord_lookup[idx] = (f"{chrom}:{start}-{end}", gene)
+            else:
+                coord_lookup[idx] = (str(idx), "Unknown")
+    else:
+        for idx in sig_indices:
+            coord_lookup[idx] = (str(idx), "Unknown")
+
+    records = []  # (circ_id, gene, g1, g2, raw_p)
+
+    for g1, g2 in pairs:
+        pair_mask = group.isin([g1, g2]).values   # boolean over samples
+        group_sub = group[pair_mask].reset_index(drop=True)
+
+        X_alt  = pd.get_dummies(group_sub, drop_first=False).astype(float)
+        X_null = np.ones((pair_mask.sum(), 1))
+        Z_pair = np.ones((pair_mask.sum(), 1))
+
+        for idx in sig_indices:
+            try:
+                circ_row   = Circ.loc[idx]
+                linear_row = Linear.loc[idx]
+
+                circ_vals   = pd.to_numeric(
+                    circ_row.drop(labels=circle_description), errors='coerce'
+                ).astype(float).values
+                linear_vals = pd.to_numeric(
+                    linear_row.drop(labels=circle_description), errors='coerce'
+                ).astype(float).values
+
+                circ_vals   = np.nan_to_num(circ_vals,   nan=0.0)[pair_mask]
+                linear_vals = np.nan_to_num(linear_vals, nan=0.0)[pair_mask]
+
+                total = circ_vals + linear_vals
+                total[total == 0] = 1
+
+                y = circ_vals.astype(int)
+                n = total.astype(int)
+
+                init_alt  = np.zeros(X_alt.shape[1]  + 1)
+                init_null = np.zeros(2)
+
+                res_alt = safe_minimize(
+                    beta_binomial_ll, init_alt,
+                    args=(X_alt.values, Z_pair, y, n),
+                    method='Nelder-Mead',
+                    options={'maxiter': 2000, 'xatol': 1e-8, 'fatol': 1e-8, 'disp': False}
+                )
+                res_null = safe_minimize(
+                    beta_binomial_ll, init_null,
+                    args=(X_null, Z_pair, y, n),
+                    method='Nelder-Mead',
+                    options={'maxiter': 2000, 'xatol': 1e-8, 'fatol': 1e-8, 'disp': False}
+                )
+
+                if not res_alt.success or not res_null.success:
+                    raise RuntimeError("Optimization did not converge")
+
+                llr   = 2 * ((-res_alt.fun) - (-res_null.fun))
+                df_d  = X_alt.shape[1] - 1   # always 1 for a 2-group pair
+                p_raw = float(chi2.sf(llr, df_d))
+
+            except Exception as e:
+                logger.warning(f"[pairwise] {g1} vs {g2}, idx {idx}: {e}")
+                p_raw = np.nan
+
+            circ_id, gene = coord_lookup[idx]
+            records.append((circ_id, gene, str(g1), str(g2), p_raw))
+
+    if not records:
+        return pd.DataFrame(columns=["CircID", "Gene", "group1", "group2", "raw_p", "p_adj", "sig"])
+
+    result_df = pd.DataFrame(records, columns=["CircID", "Gene", "group1", "group2", "raw_p"])
+
+    # Global BH correction across all pairs × all circRNAs
+    raw_p_arr = result_df["raw_p"].values.astype(float)
+    p_adj_arr = p_adjust_bh(np.where(np.isnan(raw_p_arr), 1.0, raw_p_arr))
+    # restore NaN where raw_p was NaN
+    p_adj_arr[np.isnan(raw_p_arr)] = np.nan
+
+    result_df["p_adj"] = p_adj_arr
+    result_df["sig"]   = result_df["p_adj"] <= alpha
+
+    result_df.sort_values(["CircID", "Gene", "group1", "group2"], inplace=True)
+    result_df.reset_index(drop=True, inplace=True)
+
+    n_sig = result_df["sig"].sum()
+    logger.info(f"[pairwise] Done. {n_sig}/{len(result_df)} pairwise comparisons significant at FDR≤{alpha}")
+    return result_df
+
+
 def circ_max_perc(circ_vals, linear_vals, Nreplicates):
     """
     Calculate the maximum proportion of circRNA reads over total (circ + linear) across all groups.
