@@ -28,9 +28,33 @@ jobs:
           done
 
           if [ "$ok" = "true" ]; then
-            echo "✅ Ensembl API is up"
+            echo "✅ Ensembl /info/ping is up"
           else
-            echo "❌ Ensembl API is down"
+            echo "❌ Ensembl /info/ping is down"
+            exit 1
+          fi
+
+      - name: Fetch a real sequence/region
+        shell: bash
+        run: |
+          set -euo pipefail
+          seq_url="https://rest.ensembl.org/sequence/region/human/6:136583554..136583740?content-type=application/json"
+
+          ok="false"
+          for i in $(seq 1 12); do
+            status=$(curl -sS -m 15 -w "%{http_code}" -o seq.json "$seq_url" || echo "000")
+            if [ "$status" = "200" ]; then
+              ok="true"
+              break
+            fi
+            echo "Attempt $i: sequence endpoint returned $status"
+            sleep $((i * 5))
+          done
+
+          if [ "$ok" = "true" ]; then
+            echo "✅ Ensembl /sequence/region is up"
+          else
+            echo "❌ Ensembl /sequence/region is down (this is the endpoint circtools conservation actually uses)"
             exit 1
           fi
 
@@ -43,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          url="http://hgdownload.cse.ucsc.edu/goldenPath/mm10/liftOver/mm10ToHg38.over.chain.gz"
+          url="https://hgdownload.cse.ucsc.edu/goldenPath/mm39/liftOver/mm39ToHg38.over.chain.gz"
 
           ok="false"
           for i in $(seq 1 12); do

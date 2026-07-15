@@ -121,24 +121,33 @@ jobs:
         if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
         ls -lh
 
+    - name: Stagger external API load across matrix jobs
+      shell: bash
+      run: sleep $(( ${{ strategy.job-index }} * 20 ))
+
     - name: Run conservation with PDF output
+      uses: nick-fields/retry@v4
       env:
-        MPLBACKEND: pdf
+        MPLBACKEND: Agg
         MPLCONFIGDIR: ${{ github.workspace }}/.mplconfig
-      run: |
-        cd circtools_example
-        mkdir -p conservation/temp "$MPLCONFIGDIR"
-        export MPLBACKEND=Agg
-        circtools conservation \
-          -d ./circtools_ci_master/CircCoordinates \
-          -f ./genome.fa \
-          -g ./annotation.gtf \
-          -O mm \
-          -G Map3k5 \
-          -o ./conservation/ \
-          -t ./conservation/temp/ \
-          -TS hs \
-          -pairwise
+      with:
+        timeout_minutes: 15
+        max_attempts: 4
+        retry_wait_seconds: 45
+        retry_on: error
+        command: |
+          cd circtools_example
+          mkdir -p conservation/temp "$MPLCONFIGDIR"
+          circtools conservation \
+            -d ./circtools_ci_master/CircCoordinates \
+            -f ./genome.fa \
+            -g ./annotation.gtf \
+            -O mm \
+            -G Map3k5 \
+            -o ./conservation/ \
+            -t ./conservation/temp/ \
+            -TS hs \
+            -pairwise
 
 
     - name: Checking generated output against master output
