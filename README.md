@@ -119,7 +119,7 @@
   </tbody>
 </table>
 
-
+NOTE (July 15, 2026): The Ensembl REST API has been experiencing some issues recently. Conservation has been consistently failing when calling the REST API. If using the Conservation module, failures are likely. 
 
 ---
 
