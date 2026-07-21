@@ -67,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          url="https://hgdownload.cse.ucsc.edu/goldenPath/mm39/liftOver/mm39ToHg38.over.chain.gz"
+          url="https://hgdownload.soe.ucsc.edu/goldenPath/mm39/liftOver/mm39ToHg38.over.chain.gz"
 
           ok="false"
           for i in $(seq 1 12); do

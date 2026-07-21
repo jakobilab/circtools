@@ -26,7 +26,7 @@ class liftover(object):
 
         if not os.path.exists(chain_path):
             # Try to download from UCSC
-            url = f"https://hgdownload.cse.ucsc.edu/goldenPath/{from_id}/liftOver/{chain_filename}"
+            url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{from_id}/liftOver/{chain_filename}"
             print(f"Downloading chain file from {url} ...")
             response = requests.get(url, stream=True)
             if response.status_code == 200:
