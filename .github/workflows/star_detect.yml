@@ -1,0 +1,279 @@
+name: circtools star + bowtie + detect (pip)
+
+on:
+  push:
+
+concurrency:
+  group: ci-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  Main:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04 ]
+        python-version: ["3.10",  "3.13", "3.14"]
+    name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    steps:
+    - name: Create files
+      uses: actions/checkout@v6
+      with:
+       ref: ${{ github.ref_name }}
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: '' 
+        
+    - name: Updating setuptools
+      run: |
+         python3 -m pip install -U pip setuptools
+
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            make g++ zlib1g-dev \
+            libblas-dev libatlas-base-dev liblapack-dev \
+            libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+            libbz2-dev liblzma-dev libncurses-dev \
+            autoconf automake libtool jq
+        python3 -m pip install ./
+
+    - name: Build STAR from source
+      run: |
+        set -euo pipefail
+        STAR_VERSION=2.7.10a
+        wget -q "https://github.com/alexdobin/STAR/archive/refs/tags/${STAR_VERSION}.tar.gz" -O star.tar.gz
+        tar xzf star.tar.gz
+        cd STAR-${STAR_VERSION}/source
+        make STAR
+        echo "$PWD" >> "$GITHUB_PATH"
+
+    - name: Build bowtie2 from source
+      run: |
+        set -euo pipefail
+        BOWTIE2_TAG=$(curl -s https://api.github.com/repos/BenLangmead/bowtie2/releases/latest | jq -r .tag_name)
+        echo "Building bowtie2 $BOWTIE2_TAG"
+        wget -q "https://github.com/BenLangmead/bowtie2/archive/refs/tags/${BOWTIE2_TAG}.tar.gz" -O bowtie2.tar.gz
+        tar xzf bowtie2.tar.gz
+        cd bowtie2-*/
+        make -j"$(nproc)" NO_TBB=1
+        echo "$PWD" >> "$GITHUB_PATH"
+
+    - name: Build samtools from source
+      run: |
+        set -euo pipefail
+        SAMTOOLS_TAG=$(curl -s https://api.github.com/repos/samtools/samtools/releases/latest | jq -r .tag_name)
+        SAMTOOLS_VERSION="${SAMTOOLS_TAG#v}"
+        echo "Building samtools $SAMTOOLS_VERSION"
+        # NOTE: uses the official release asset (bundles htslib), not the
+        # GitHub auto-generated source archive -- htslib is a git submodule
+        # and would be missing from a plain archive/refs/tags download.
+        wget -q "https://github.com/samtools/samtools/releases/download/${SAMTOOLS_TAG}/samtools-${SAMTOOLS_VERSION}.tar.bz2" -O samtools.tar.bz2
+        tar xjf samtools.tar.bz2
+        cd samtools-${SAMTOOLS_VERSION}
+        ./configure
+        make -j"$(nproc)"
+        echo "$PWD" >> "$GITHUB_PATH"
+
+    - name: Build fastp from source
+      run: |
+        set -euo pipefail
+        FASTP_TAG=$(curl -s https://api.github.com/repos/OpenGene/fastp/releases/latest | jq -r .tag_name)
+        echo "Building fastp $FASTP_TAG"
+        wget -q "https://github.com/OpenGene/fastp/archive/refs/tags/${FASTP_TAG}.tar.gz" -O fastp.tar.gz
+        tar xzf fastp.tar.gz
+        cd fastp-*/
+        make -j"$(nproc)"
+        echo "$PWD" >> "$GITHUB_PATH"
+
+    - name: Verify build tools
+      run: |
+        STAR --version
+        bowtie2 --version | head -1
+        samtools --version | head -1
+        fastp --version
+
+    - name: Unpack test dataset
+      run: |
+        tar xvf ./tests/data/circtools_example.tar.bz2
+        cd circtools_example
+        if [ -f genome.fa.gz ]; then gunzip -f genome.fa.gz; fi
+        if [ -f annotation.gtf.gz ]; then gunzip -f annotation.gtf.gz; fi
+        ls -lh
+    - name: Subset annotation to chr10 (for STAR sjdb)
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        # annotation.gtf is the full mouse GTF; STAR's on-the-fly splice
+        # junction insertion during alignment should match the chr10-only
+        # index, so filter it down. No genome/index work needed here since
+        # both indexes are downloaded pre-built.
+        awk -F'\t' '$1=="10"' annotation.gtf > chr10.gtf
+
+    - name: Download precomputed STAR index (chr10)
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        STAR_INDEX_URL="https://data.jakobilab.org/s/nikLMEegkPf8gJc/download"
+
+        echo "Downloading and unpacking STAR index..."
+        wget -q -O - "$STAR_INDEX_URL" | tar xjf -
+
+        ls -la star_index
+        du -sh star_index
+
+    - name: Download precomputed bowtie2 index (chr10)
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        BOWTIE2_INDEX_URL="https://data.jakobilab.org/s/G552fXyLrrcTDmW/download"
+
+        echo "Downloading and unpacking bowtie2 index..."
+        wget -q -O - "$BOWTIE2_INDEX_URL" | tar xjf -
+
+        ls -la bowtie2_index
+        du -sh bowtie2_index
+
+    - name: Download CI test fastqs (A, B, C)
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        FASTQ_URL="https://data.jakobilab.org/s/MqpNsxXyDcoASED/download"
+
+        echo "Downloading and unpacking test fastqs..."
+        wget -q -O - "$FASTQ_URL" | tar xjf -
+
+        ls -la samples
+
+    - name: Trim reads with fastp
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        SAMPLES="A B C"
+        mkdir -p fastp
+
+        for sample in $SAMPLES; do
+          fastp \
+            -i samples/${sample}_R1.fastq.gz -I samples/${sample}_R2.fastq.gz \
+            -o fastp/${sample}_1.fastq.gz -O fastp/${sample}_2.fastq.gz \
+            --adapter_sequence AGATCGGAAGAG \
+            --qualified_quality_phred 28 \
+            --length_required 30 \
+            --thread 4 \
+            --json fastp/${sample}.fastp.json \
+            --html fastp/${sample}.fastp.html
+        done
+
+    - name: Remove rRNA reads with bowtie2
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        SAMPLES="A B C"
+        mkdir -p rrna
+
+        for sample in $SAMPLES; do
+          bowtie2 -x bowtie2_index/reference_index \
+            -1 fastp/${sample}_1.fastq.gz -2 fastp/${sample}_2.fastq.gz \
+            --no-unal --omit-sec-seq \
+            --threads 4 --mm --seed 1337 --time \
+            --un-conc-gz rrna/${sample}_no_rRNA.fastq.gz \
+            2> rrna/${sample}_no_rRNA.log
+        done
+        ls -la rrna
+
+    - name: Run STAR alignment for CI samples
+      run: |
+        set -euo pipefail
+        cd circtools_example
+
+        SAMPLES="A B C"
+        : > bam_files.txt
+        : > samplesheet
+
+        for sample in $SAMPLES; do
+          mkdir -p alignment/$sample
+
+          STAR --runThreadN 4 \
+            --genomeDir star_index \
+            --readFilesIn rrna/${sample}_no_rRNA.fastq.1.gz rrna/${sample}_no_rRNA.fastq.2.gz \
+            --readFilesCommand zcat \
+            --outFileNamePrefix alignment/$sample/${sample}_ \
+            --outSAMattributes NH HI AS nM NM MD jM jI XS \
+            --outSJfilterOverhangMin 15 15 15 15 \
+            --outFilterMultimapNmax 20 \
+            --outFilterScoreMin 1 \
+            --outFilterMatchNminOverLread 0.7 \
+            --outFilterMismatchNmax 999 \
+            --outFilterMismatchNoverLmax 0.05 \
+            --alignIntronMin 20 \
+            --alignIntronMax 1000000 \
+            --alignMatesGapMax 1000000 \
+            --alignSJoverhangMin 15 \
+            --alignSJDBoverhangMin 10 \
+            --alignSoftClipAtReferenceEnds No \
+            --chimSegmentMin 15 \
+            --chimScoreMin 15 \
+            --chimScoreSeparation 10 \
+            --chimJunctionOverhangMin 15 \
+            --sjdbGTFfile chr10.gtf \
+            --quantMode GeneCounts \
+            --twopassMode Basic \
+            --chimOutType Junctions SeparateSAMold
+
+          samtools view -h alignment/$sample/${sample}_Aligned.out.sam \
+          | awk 'BEGIN{OFS="\t"} /^@/{print;next}
+              { split($6,C,/[0-9]*/); split($6,L,/[SMDIN]/);
+                if (C[2]=="S"){$10=substr($10,L[1]+1); $11=substr($11,L[1]+1)}
+                if (C[length(C)]=="S"){L1=length($10)-L[length(L)-1]; $10=substr($10,1,L1); $11=substr($11,1,L1)}
+                gsub(/[0-9]*S/,"",$6); print }' \
+          | samtools view -bS - \
+          | samtools sort -@ 4 -o alignment/$sample/${sample}_Aligned.noS.bam
+          samtools index alignment/$sample/${sample}_Aligned.noS.bam
+
+          echo "alignment/$sample/${sample}_Aligned.noS.bam" >> bam_files.txt
+          echo "alignment/$sample/${sample}_Chimeric.out.junction" >> samplesheet
+        done
+
+    - name: Clean up downloaded indexes and intermediates
+      run: |
+        cd circtools_example
+        # detect only needs bam_files.txt/samplesheet + genome.fa/annotation.gtf
+        # from here on -- free up the indexes and per-stage intermediates.
+        rm -rf star_index bowtie2_index samples fastp rrna
+        df -h .
+
+    - name: Running circtools detect with minimal data set
+      run: |
+        cd circtools_example
+        circtools detect \
+          @samplesheet \
+          -ss -T 2 -D \
+          -an annotation.gtf \
+          -A genome.fa \
+          -B @bam_files.txt \
+          -D -M -G \
+          -Nr 5 6 \
+          -O ./circtools_ci -k
+
+    - name: Checking generated output against master output
+      run: |
+         cd circtools_example
+         cd circtools_ci
+         ls -la
+         wc -l *
+         MASTER_DIR="../circtools_ci_master"
+         diff CircRNACount "$MASTER_DIR/CircRNACount"
+         sha1sum -c "$MASTER_DIR/sha1sums.txt"
