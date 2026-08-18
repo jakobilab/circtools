@@ -159,10 +159,10 @@ jobs:
         FASTQ_URL="https://data.jakobilab.org/s/MqpNsxXyDcoASED/download"
  
         echo "Downloading test fastqs..."
-        wget -q -O fastqs.tar.bz2 "$FASTQ_URL"
-        file fastqs.tar.bz2
-        tar xjf fastqs.tar.bz2
-        rm fastqs.tar.bz2
+        wget -q -O samples.zip "$FASTQ_URL"
+        file samples.zip
+        unzip -q samples.zip
+        rm samples.zip
  
         ls -la samples
 
