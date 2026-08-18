@@ -45,15 +45,14 @@ jobs:
             autoconf automake libtool jq
         python3 -m pip install ./
 
-    - name: Build STAR from source
+    - name: Get STAR (prebuilt binary from the 2.7.10a release)
       run: |
         set -euo pipefail
         STAR_VERSION=2.7.10a
         wget -q "https://github.com/alexdobin/STAR/archive/refs/tags/${STAR_VERSION}.tar.gz" -O star.tar.gz
         tar xzf star.tar.gz
-        cd STAR-${STAR_VERSION}/source
-        make STAR
-        echo "$PWD" >> "$GITHUB_PATH"
+        chmod +x "STAR-${STAR_VERSION}/bin/Linux_x86_64_static/STAR"
+        echo "$PWD/STAR-${STAR_VERSION}/bin/Linux_x86_64_static" >> "$GITHUB_PATH"
 
     - name: Build bowtie2 from source
       run: |
@@ -72,9 +71,6 @@ jobs:
         SAMTOOLS_TAG=$(curl -s https://api.github.com/repos/samtools/samtools/releases/latest | jq -r .tag_name)
         SAMTOOLS_VERSION="${SAMTOOLS_TAG#v}"
         echo "Building samtools $SAMTOOLS_VERSION"
-        # NOTE: uses the official release asset (bundles htslib), not the
-        # GitHub auto-generated source archive -- htslib is a git submodule
-        # and would be missing from a plain archive/refs/tags download.
         wget -q "https://github.com/samtools/samtools/releases/download/${SAMTOOLS_TAG}/samtools-${SAMTOOLS_VERSION}.tar.bz2" -O samtools.tar.bz2
         tar xjf samtools.tar.bz2
         cd samtools-${SAMTOOLS_VERSION}
@@ -111,11 +107,6 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
-
-        # annotation.gtf is the full mouse GTF; STAR's on-the-fly splice
-        # junction insertion during alignment should match the chr10-only
-        # index, so filter it down. No genome/index work needed here since
-        # both indexes are downloaded pre-built.
         awk -F'\t' '$1=="10"' annotation.gtf > chr10.gtf
 
     - name: Download precomputed STAR index (chr10)
