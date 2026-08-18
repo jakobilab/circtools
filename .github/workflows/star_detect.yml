@@ -123,12 +123,15 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
-
+ 
         STAR_INDEX_URL="https://data.jakobilab.org/s/nikLMEegkPf8gJc/download"
-
-        echo "Downloading and unpacking STAR index..."
-        wget -q -O - "$STAR_INDEX_URL" | tar xjf -
-
+ 
+        echo "Downloading STAR index..."
+        wget -q -O star_index.tar.bz2 "$STAR_INDEX_URL"
+        file star_index.tar.bz2
+        tar xjf star_index.tar.bz2
+        rm star_index.tar.bz2
+ 
         ls -la star_index
         du -sh star_index
 
@@ -136,12 +139,15 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
-
+ 
         BOWTIE2_INDEX_URL="https://data.jakobilab.org/s/G552fXyLrrcTDmW/download"
-
-        echo "Downloading and unpacking bowtie2 index..."
-        wget -q -O - "$BOWTIE2_INDEX_URL" | tar xjf -
-
+ 
+        echo "Downloading bowtie2 index..."
+        wget -q -O bowtie2_index.tar.bz2 "$BOWTIE2_INDEX_URL"
+        file bowtie2_index.tar.bz2
+        tar xjf bowtie2_index.tar.bz2
+        rm bowtie2_index.tar.bz2
+ 
         ls -la bowtie2_index
         du -sh bowtie2_index
 
@@ -149,12 +155,15 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
-
+ 
         FASTQ_URL="https://data.jakobilab.org/s/MqpNsxXyDcoASED/download"
-
-        echo "Downloading and unpacking test fastqs..."
-        wget -q -O - "$FASTQ_URL" | tar xjf -
-
+ 
+        echo "Downloading test fastqs..."
+        wget -q -O fastqs.tar.bz2 "$FASTQ_URL"
+        file fastqs.tar.bz2
+        tar xjf fastqs.tar.bz2
+        rm fastqs.tar.bz2
+ 
         ls -la samples
 
     - name: Trim reads with fastp
