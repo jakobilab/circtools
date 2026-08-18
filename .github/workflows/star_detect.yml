@@ -42,7 +42,7 @@ jobs:
             libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
             libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
             libbz2-dev liblzma-dev libncurses-dev \
-            libisal-dev libdeflate-dev \
+            libisal-dev libdeflate-dev cmake \
             autoconf automake libtool jq
         python3 -m pip install ./
 
@@ -78,6 +78,15 @@ jobs:
         ./configure
         make -j"$(nproc)"
         echo "$PWD" >> "$GITHUB_PATH"
+
+    - name: Build Google Highway from source (fastp dep)
+      run: |
+        set -euo pipefail
+        git clone --depth=1 --branch 1.3.0 https://github.com/google/highway.git
+        cd highway
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DHWY_ENABLE_TESTS=OFF -DHWY_ENABLE_EXAMPLES=OFF
+        cmake --build build -j"$(nproc)"
+        sudo cmake --install build
 
     - name: Build fastp from source
       run: |
