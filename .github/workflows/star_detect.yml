@@ -42,6 +42,7 @@ jobs:
             libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
             libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
             libbz2-dev liblzma-dev libncurses-dev \
+            libisal-dev libdeflate-dev \
             autoconf automake libtool jq
         python3 -m pip install ./
 
