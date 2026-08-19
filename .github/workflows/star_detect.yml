@@ -1,6 +1,11 @@
 name: circtools star + bowtie + detect (pip)
 
 on:
+  workflow_run:
+    workflows: ["API Health Check"]
+    types: [completed]
+  schedule:
+    - cron: '0 6 * * 1'
   push:
 
 concurrency:
@@ -16,7 +21,7 @@ jobs:
       matrix:
         os: [ ubuntu-24.04 ]
         python-version: ["3.10",  "3.13", "3.14"]
-    name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }} | ${{ matrix.os }} | ${{ github.event_name }}
     steps:
     - name: Create files
       uses: actions/checkout@v6
@@ -42,18 +47,41 @@ jobs:
             libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
             libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
             libbz2-dev liblzma-dev libncurses-dev \
-            libisal-dev libdeflate-dev cmake \
+            libisal-dev libdeflate-dev cmake unzip \
             autoconf automake libtool jq
         python3 -m pip install ./
 
-    - name: Get STAR (prebuilt binary from the 2.7.10a release)
+    - name: Get STAR (precompiled)
+      env:
+        EVENT_NAME: ${{ github.event_name }}
       run: |
         set -euo pipefail
-        STAR_VERSION=2.7.10a
+
+        if [ "$EVENT_NAME" = "schedule" ]; then
+          # Weekly run: track whatever STAR's latest release is.
+          STAR_VERSION=$(curl -s https://api.github.com/repos/alexdobin/STAR/releases/latest | jq -r .tag_name)
+        else
+          STAR_VERSION=2.7.10a
+        fi
+        echo "Using precompiled STAR $STAR_VERSION"
+
         wget -q "https://github.com/alexdobin/STAR/archive/refs/tags/${STAR_VERSION}.tar.gz" -O star.tar.gz
         tar xzf star.tar.gz
         chmod +x "STAR-${STAR_VERSION}/bin/Linux_x86_64_static/STAR"
         echo "$PWD/STAR-${STAR_VERSION}/bin/Linux_x86_64_static" >> "$GITHUB_PATH"
+
+    - name: Weekly check - compile latest STAR from source
+      if: github.event_name == 'schedule'
+      continue-on-error: true
+      run: |
+        set -euo pipefail
+        STAR_TAG=$(curl -s https://api.github.com/repos/alexdobin/STAR/releases/latest | jq -r .tag_name)
+        echo "Compiling STAR $STAR_TAG from source (smoke check)"
+        wget -q "https://github.com/alexdobin/STAR/archive/refs/tags/${STAR_TAG}.tar.gz" -O star-src.tar.gz
+        tar xzf star-src.tar.gz
+        cd "STAR-${STAR_TAG}/source"
+        make STAR
+        echo "STAR $STAR_TAG compiled successfully from source"
 
     - name: Build bowtie2 from source
       run: |
@@ -72,6 +100,7 @@ jobs:
         SAMTOOLS_TAG=$(curl -s https://api.github.com/repos/samtools/samtools/releases/latest | jq -r .tag_name)
         SAMTOOLS_VERSION="${SAMTOOLS_TAG#v}"
         echo "Building samtools $SAMTOOLS_VERSION"
+        
         wget -q "https://github.com/samtools/samtools/releases/download/${SAMTOOLS_TAG}/samtools-${SAMTOOLS_VERSION}.tar.bz2" -O samtools.tar.bz2
         tar xjf samtools.tar.bz2
         cd samtools-${SAMTOOLS_VERSION}
@@ -82,6 +111,7 @@ jobs:
     - name: Build Google Highway from source (fastp dep)
       run: |
         set -euo pipefail
+       
         git clone --depth=1 --branch 1.3.0 https://github.com/google/highway.git
         cd highway
         cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DHWY_ENABLE_TESTS=OFF -DHWY_ENABLE_EXAMPLES=OFF
@@ -117,21 +147,26 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
+
+        # annotation.gtf is the full mouse GTF; STAR's on-the-fly splice
+        # junction insertion during alignment should match the chr10-only
+        # index, so filter it down. No genome/index work needed here since
+        # both indexes are downloaded pre-built.
         awk -F'\t' '$1=="10"' annotation.gtf > chr10.gtf
 
     - name: Download precomputed STAR index (chr10)
       run: |
         set -euo pipefail
         cd circtools_example
- 
+
         STAR_INDEX_URL="https://data.jakobilab.org/s/nikLMEegkPf8gJc/download"
- 
+
         echo "Downloading STAR index..."
         wget -q -O star_index.tar.bz2 "$STAR_INDEX_URL"
         file star_index.tar.bz2
         tar xjf star_index.tar.bz2
         rm star_index.tar.bz2
- 
+
         ls -la star_index
         du -sh star_index
 
@@ -139,15 +174,15 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
- 
+
         BOWTIE2_INDEX_URL="https://data.jakobilab.org/s/G552fXyLrrcTDmW/download"
- 
+
         echo "Downloading bowtie2 index..."
         wget -q -O bowtie2_index.tar.bz2 "$BOWTIE2_INDEX_URL"
         file bowtie2_index.tar.bz2
         tar xjf bowtie2_index.tar.bz2
         rm bowtie2_index.tar.bz2
- 
+
         ls -la bowtie2_index
         du -sh bowtie2_index
 
@@ -155,15 +190,15 @@ jobs:
       run: |
         set -euo pipefail
         cd circtools_example
- 
+
         FASTQ_URL="https://data.jakobilab.org/s/MqpNsxXyDcoASED/download"
- 
+
         echo "Downloading test fastqs..."
         wget -q -O samples.zip "$FASTQ_URL"
         file samples.zip
         unzip -q samples.zip
         rm samples.zip
- 
+
         ls -la samples
 
     - name: Trim reads with fastp
@@ -279,11 +314,22 @@ jobs:
           -O ./circtools_ci_star -k
 
 
-    - name: Save chimeric junction and detect output as artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: stardetect-output-py${{ matrix.python-version }}
-        path: |
-          circtools_example/alignment/*/*_Chimeric.out.junction
-          circtools_example/circtools_ci_star/
-        retention-days: 14
+
+    - name: Checking generated output against stardetect_master
+      run: |
+         cd circtools_example
+         MASTER_DIR="stardetect_master"
+
+         echo "--- detect output (circtools_ci_star) ---"
+         cd circtools_ci_star
+         ls -la
+         wc -l *
+         diff CircRNACount "../$MASTER_DIR/circtools_ci_star/CircRNACount"
+         sha1sum -c "../$MASTER_DIR/circtools_ci_star/sha1sums.txt"
+         cd ..
+
+         echo "--- chimeric alignment files ---"
+         for sample in A B C; do
+           diff "alignment/$sample/${sample}_Chimeric.out.junction" \
+                "$MASTER_DIR/alignment/$sample/${sample}_Chimeric.out.junction"
+         done
