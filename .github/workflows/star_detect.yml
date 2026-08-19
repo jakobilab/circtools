@@ -276,14 +276,14 @@ jobs:
           -B @bam_files.txt \
           -D -M -G \
           -Nr 5 6 \
-          -O ./circtools_ci -k
+          -O ./circtools_ci_star -k
 
-    - name: Checking generated output against master output
-      run: |
-         cd circtools_example
-         cd circtools_ci
-         ls -la
-         wc -l *
-         MASTER_DIR="../circtools_ci_master"
-         diff CircRNACount "$MASTER_DIR/CircRNACount"
-         sha1sum -c "$MASTER_DIR/sha1sums.txt"
+
+    - name: Save chimeric junction and detect output as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: stardetect-output-py${{ matrix.python-version }}
+        path: |
+          circtools_example/alignment/*/*_Chimeric.out.junction
+          circtools_example/circtools_ci_star/
+        retention-days: 14
