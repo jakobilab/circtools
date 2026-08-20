@@ -319,17 +319,14 @@ jobs:
       run: |
          cd circtools_example
          MASTER_DIR="stardetect_master"
-
+ 
          echo "--- detect output (circtools_ci_star) ---"
          cd circtools_ci_star
          ls -la
-         wc -l *
-         diff CircRNACount "../$MASTER_DIR/circtools_ci_star/CircRNACount"
          sha1sum -c "../$MASTER_DIR/circtools_ci_star/sha1sums.txt"
          cd ..
-
+ 
          echo "--- chimeric alignment files ---"
-         for sample in A B C; do
-           diff "alignment/$sample/${sample}_Chimeric.out.junction" \
-                "$MASTER_DIR/alignment/$sample/${sample}_Chimeric.out.junction"
-         done
+         cd alignment
+         sha1sum -c "../$MASTER_DIR/alignment/sha1sums.txt"
+         cd ..
