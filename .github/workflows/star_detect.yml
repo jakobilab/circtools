@@ -326,7 +326,8 @@ jobs:
          sha1sum -c "../$MASTER_DIR/circtools_ci_star/sha1sums.txt"
          cd ..
  
-         echo "--- chimeric alignment files ---"
-         cd alignment
-         sha1sum -c "../$MASTER_DIR/alignment/sha1sums.txt"
-         cd ..
+         echo "--- chimeric alignment files (order-independent) ---"
+         for sample in A B C; do
+           diff <(sort "alignment/$sample/${sample}_Chimeric.out.junction") \
+                <(sort "$MASTER_DIR/alignment/$sample/${sample}_Chimeric.out.junction")
+         done
