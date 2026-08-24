@@ -6,8 +6,7 @@ on:
     types: [completed]
   schedule:
     - cron: '0 6 * * 1'
-  push:
-
+    
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
