@@ -5,7 +5,7 @@ on:
     workflows: ["API Health Check"]
     types: [completed]
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '0 6 * * 0'
     
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}
