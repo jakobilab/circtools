@@ -1,7 +1,6 @@
 name: circtools star + bowtie + detect (pip)
 
 on:
-  workflow_run:
   schedule:
     - cron: '0 6 * * 0'
     
