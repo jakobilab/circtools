@@ -1,4 +1,4 @@
-name: circtools nanopore (docker)
+name: circtools nanopore
 
 on:
   workflow_run:

@@ -1,4 +1,4 @@
-name: circtools detect (docker)
+name: circtools detect
 
 on:
   workflow_run:

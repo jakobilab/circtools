@@ -1,4 +1,4 @@
-name: circtools circtest (docker)
+name: circtools circtest
 
 on:
   workflow_run:

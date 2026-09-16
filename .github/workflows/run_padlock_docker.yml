@@ -1,4 +1,4 @@
-name: circtools padlock (docker)
+name: circtools padlock
 
 on:
   workflow_run:

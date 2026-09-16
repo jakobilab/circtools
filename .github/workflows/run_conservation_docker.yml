@@ -1,4 +1,4 @@
-name: circtools conservation (docker)
+name: circtools conservation
 
 on:
   workflow_run:
