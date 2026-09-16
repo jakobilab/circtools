@@ -28,8 +28,9 @@ def circ_ratio_plot(circ_row, linear_row, coord_row, group_indicators,
 
     circ_vals   = np.array(circ_row.values,   dtype=float)
     linear_vals = np.array(linear_row.values, dtype=float)
-    total       = circ_vals + linear_vals
-    ratio       = np.where(total > 0, circ_vals / total, np.nan)
+    total = circ_vals + linear_vals
+    ratio = np.full_like(total, np.nan, dtype=float)
+    np.divide(circ_vals, total, out=ratio, where=total > 0)
 
     groups      = np.array(group_indicators)
     uniq_grp    = list(dict.fromkeys(groups))   # preserve order
@@ -40,8 +41,14 @@ def circ_ratio_plot(circ_row, linear_row, coord_row, group_indicators,
     for g_idx, grp in enumerate(uniq_grp):
         mask      = groups == grp
         grp_ratio = ratio[mask]
-        mean_val  = np.nanmean(grp_ratio)
         n_valid   = np.sum(~np.isnan(grp_ratio))
+        mean_val  = np.nanmean(grp_ratio) if n_valid > 0 else np.nan
+        if n_valid > 0:
+            mean_val = float(np.nanmean(grp_ratio))
+            sem_val  = np.nanstd(grp_ratio, ddof=1) / np.sqrt(n_valid) if n_valid > 1 else 0.0
+        else:
+            mean_val = np.nan
+            sem_val  = 0.0
         sem_val   = np.nanstd(grp_ratio, ddof=1) / np.sqrt(n_valid) if n_valid > 1 else 0.0
         color     = palette[g_idx % len(palette)]
 
