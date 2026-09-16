@@ -120,7 +120,8 @@ jobs:
             sudo ln -sf "$(which gsed)" /usr/local/bin/sed || true
             sudo ln -sf "$(which ggrep)" /usr/local/bin/grep || true
 
-            # Resolve Homebrew prefixes (Intel & ARM)
+            # Resolve Homebrew prefixes (brew --prefix picks the right path
+            # natively on both arm64 and Intel runners, no Rosetta needed)
             OPENSSL_PREFIX="$(brew --prefix openssl@3)"
             ZLIB_PREFIX="$(brew --prefix zlib)"
 
@@ -137,33 +138,16 @@ jobs:
             sudo cp bin/* /usr/local/bin/
             cd ..
 
-            if [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; then
-              echo "Building pblat for Apple Silicon via Rosetta (Intel Homebrew)"
-              softwareupdate --install-rosetta --agree-to-license
-
-              # Ensure Intel Homebrew exists
-              if [ ! -x /usr/local/bin/brew ]; then
-                echo "Installing Intel Homebrew under /usr/local"
-                arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-              fi
-
-              arch -x86_64 /usr/local/bin/brew install openssl@3 zlib || true
-              OPENSSL_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix openssl@3)"
-              ZLIB_PREFIX="$(arch -x86_64 /usr/local/bin/brew --prefix zlib)"
-
-              export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${ZLIB_PREFIX}/include ${CPPFLAGS:-}"
-              export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${ZLIB_PREFIX}/lib ${LDFLAGS:-}"
-              export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig:${ZLIB_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-              export LIBRARY_PATH="${OPENSSL_PREFIX}/lib:${ZLIB_PREFIX}/lib:${LIBRARY_PATH:-}"
-
-            else
-              echo "Building pblat from source on macOS Intel"
-              git clone --depth=1 https://github.com/wjmellon/pblat.git pblat-src
-              cd pblat-src
-              make
-              sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
-              cd ..
-            fi
+            # pblat — build natively for whatever arch the runner is
+            # (arm64 or x86_64). No Rosetta / second Homebrew prefix needed:
+            # Homebrew's installer now refuses to bootstrap under a spoofed
+            # `arch -x86_64` on Apple Silicon, and a native build works fine.
+            echo "Building pblat natively for $(uname -m)"
+            git clone --depth=1 https://github.com/wjmellon/pblat.git pblat-src
+            cd pblat-src
+            make
+            sudo cp pblat /usr/local/bin/ || sudo cp pblat_bin /usr/local/bin/pblat
+            cd ..
 
             # pybedtools
             pip3 install pybedtools
