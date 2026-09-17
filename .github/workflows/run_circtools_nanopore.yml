@@ -2,6 +2,7 @@ name: circtools nanopore (pip)
 
 on:
   workflow_run:
+    push:
     workflows: ["API Health Check"]
     types: [completed]
 
@@ -216,6 +217,14 @@ jobs:
           -C hg38 \
           -O nanopore_output/ \
           --threads 16
+
+    - name: Upload nanopore output artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nanopore-output-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: circtools_example/nanopore_output/
+        if-no-files-found: warn
+        retention-days: 5
   
 
     - name: Checking generated output against master output
