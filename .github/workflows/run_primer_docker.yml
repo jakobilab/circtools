@@ -72,6 +72,7 @@ jobs:
               -f ./genome.fa \
               -g ./annotation.gtf \
               -O mm \
+              --no-blast \
               -G Slc16a9 \
               -T "Slc16a9_primer" \
               -o ./primer_output/ || true

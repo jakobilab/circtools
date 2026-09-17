@@ -1,6 +1,7 @@
 name: circtools primex (pip)
 
 on:
+  push:
   workflow_run:
     workflows: ["API Health Check"]
     types: [completed]
@@ -131,7 +132,17 @@ jobs:
             -O mm \
             -G Slc16a9 \
             -T "Slc16a9_primer" \
+            --no-blast \
             -o ./primer_output/
+
+
+    - name: Upload primer output artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: primer-output-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: circtools_example/primer_output/
+        if-no-files-found: warn
+        retention-days: 5
 
     - name: Checking generated output against master output
       run: |
