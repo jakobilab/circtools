@@ -166,7 +166,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         # circtools ships a prebuilt Intel pblat binary
-        # (contrib/pblat/AMD64/mac/pblat) that is dynamically linked against
+        # (contrib/pblat/AMD64/mac/pblat), run via Rosetta 2 on Apple
+        # Silicon. It's dynamically linked against
         # /usr/local/opt/openssl@3/lib/libssl.3.dylib. On Apple Silicon
         # runners, Homebrew lives under /opt/homebrew, so that path doesn't
         # exist and the binary aborts at load time. Recreate the expected
@@ -181,6 +182,14 @@ jobs:
         fi
 
         ls -l /usr/local/opt/openssl@3/lib/libssl.3.dylib
+
+    - name: Ensure Rosetta 2 is installed on Apple Silicon
+      if: runner.os == 'macOS'
+      run: |
+        if [ "$(uname -m)" = "arm64" ]; then
+          softwareupdate --install-rosetta --agree-to-license || true
+          arch -x86_64 /usr/bin/true && echo "Rosetta 2 OK"
+        fi
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'

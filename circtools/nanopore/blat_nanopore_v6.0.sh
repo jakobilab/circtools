@@ -26,7 +26,7 @@ if [ "$system" = "Darwin" ]; then
     if [ "$machine" = "x86_64" ]; then
         platform_dir="AMD64/mac"
     elif [ "$machine" = "arm64" ]; then
-        platform_dir="ARM64/mac"
+        platform_dir="AMD64/mac"
     else
         echo "Unsupported Mac architecture: $machine"
         exit 1
