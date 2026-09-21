@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-14, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
+        os: [ macos-14-intel, macos-15, macos-15-intel, macos-26, ubuntu-22.04, ubuntu-24.04 ]
         python-version: ["3.10",  "3.13", "3.14"]
     name: Python ${{ matrix.python-version }} | ${{ matrix.os }}
     steps:
@@ -41,7 +41,7 @@ jobs:
         python3 -m pip install -U pip setuptools
 
     - name: Install build tools and fix ARCHFLAGS for macOS Intel
-      if: matrix.os == 'macos-15-intel' || matrix.os == 'macos-14'
+      if: matrix.os == 'macos-15-intel' || matrix.os == 'macos-14-intel'
       run: |
         echo "Applying macOS Intel-specific build setup"
         sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
@@ -59,11 +59,6 @@ jobs:
         brew install xz pkg-config || true
         python3 -m pip install ./
 
-    - name: Install dependencies on macOS 14
-      if: matrix.os == 'macos-14'
-      run: |
-        brew install xz pkg-config || true
-        python3 -m pip install ./
 
     - name: Install Linux dependencies
       if: startsWith(matrix.os, 'ubuntu-')
@@ -268,7 +263,7 @@ jobs:
           MASTER_DIR="../nanopore_master"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
+        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-14-intel" ] || [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
           MASTER_DIR="../nanopore_master_mac_amd"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
