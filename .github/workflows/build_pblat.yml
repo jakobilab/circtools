@@ -17,16 +17,20 @@ jobs:
 
       - name: Install build deps
         run: |
-          sudo apt-get update
-          sudo apt-get install -y make g++ zlib1g-dev
+          brew install make zlib
+
       - name: Build pblat
         run: |
           git clone --depth=1 https://github.com/icebert/pblat.git pblat-src
           cd pblat-src
-          make -j$(nproc)
+          make -j$(sysctl -n hw.ncpu)
           ls -lh pblat*
+        env:
+          CFLAGS: -I$(brew --prefix zlib)/include
+          LDFLAGS: -L$(brew --prefix zlib)/lib
+
       - name: Upload pblat binary
         uses: actions/upload-artifact@v4
         with:
-          name: pblat-ubuntu-22.04
+          name: pblat-macos-14
           path: pblat-src/pblat
