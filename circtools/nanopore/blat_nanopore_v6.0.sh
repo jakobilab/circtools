@@ -21,12 +21,19 @@
 # -----------------------------
 system=$(uname -s)
 machine=$(uname -m)
+arch_prefix=""
 
 if [ "$system" = "Darwin" ]; then
     if [ "$machine" = "x86_64" ]; then
         platform_dir="AMD64/mac"
     elif [ "$machine" = "arm64" ]; then
         platform_dir="AMD64/mac"
+        if ! /usr/bin/arch -x86_64 /usr/bin/true >/dev/null 2>&1; then
+            echo "Error: Rosetta 2 is required to run pblat on Apple Silicon but is not installed."
+            echo "Install it with: softwareupdate --install-rosetta --agree-to-license"
+            exit 1
+        fi
+        arch_prefix="arch -x86_64"
     else
         echo "Unsupported Mac architecture: $machine"
         exit 1
@@ -104,7 +111,7 @@ date
 echo "Mapping with pblat - parallelized blat with multi-threads support (http://icebert.github.io/pblat/)"
 echo "lower case sequences in the genome file are masked out"
 echo "Showing a dot for every 50k sequences processed"
-"$pblat_bin" -threads="$threads" -trimT -dots=50000 -mask=lower "$fa" "$sample.fa" "$sample.psl"
+$arch_prefix "$pblat_bin" -threads="$threads" -trimT -dots=50000 -mask=lower "$fa" "$sample.fa" "$sample.psl"
 echo "Blat done"
 date
 
