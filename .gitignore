@@ -133,3 +133,7 @@ circtools/conservation/conservation.py
 circtools/.DS_Store
 .DS_Store
 pyvenv.cfg
+
+
+!circtools/contrib/pblat/AMD64/mac/lib/
+
