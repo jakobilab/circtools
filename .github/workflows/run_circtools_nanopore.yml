@@ -88,24 +88,6 @@ jobs:
         fi
 
 
-    - name: Install x86_64 openssl@3 for bundled Intel pblat binary (Rosetta)
-      if: runner.os == 'macOS'
-      run: |
-        # circtools ships a prebuilt Intel pblat binary, run via Rosetta 2
-        # on Apple Silicon. It's dynamically linked against
-        # /usr/local/opt/openssl@3/lib/libssl.3.dylib — an x86_64 library.
-        # The arm64 Homebrew's openssl@3 (at /opt/homebrew) is arm64-only
-        # and cannot satisfy this, even via symlink. Install a Rosetta
-        # (x86_64) Homebrew under /usr/local and get openssl@3 from that.
-        if [ "$(uname -m)" = "arm64" ]; then
-          if [ ! -x /usr/local/bin/brew ]; then
-            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
-          arch -x86_64 /usr/local/bin/brew install openssl@3
-        fi
-        ls -l /usr/local/opt/openssl@3/lib/libssl.3.dylib
-        file /usr/local/opt/openssl@3/lib/libssl.3.dylib
-
 
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools) with retry
       uses: nick-fields/retry@v4
