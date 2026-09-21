@@ -1,8 +1,6 @@
 name: Build pblat (macOS 14)
 
 on:
-  push:
-  pull_request:
 
 concurrency:
   group: ci-tests-${{ github.workflow }}-${{ github.ref }}

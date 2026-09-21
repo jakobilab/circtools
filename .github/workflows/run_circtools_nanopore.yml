@@ -38,7 +38,7 @@ jobs:
         python3 -m pip install -U pip setuptools
 
     - name: Install build tools and fix ARCHFLAGS for macOS Intel
-      if: matrix.os == 'macos-15-intel'
+      if: matrix.os == 'macos-15-intel' || 'macos-14'
       run: |
         echo "Applying macOS Intel-specific build setup"
         sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer || true
