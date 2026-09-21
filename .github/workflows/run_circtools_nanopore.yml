@@ -78,6 +78,34 @@ jobs:
         circtools --version
         which circtools
 
+    
+    - name: Ensure Rosetta 2 is installed on Apple Silicon
+      if: runner.os == 'macOS'
+      run: |
+        if [ "$(uname -m)" = "arm64" ]; then
+          softwareupdate --install-rosetta --agree-to-license || true
+          arch -x86_64 /usr/bin/true && echo "Rosetta 2 OK"
+        fi
+
+
+    - name: Install x86_64 openssl@3 for bundled Intel pblat binary (Rosetta)
+      if: runner.os == 'macOS'
+      run: |
+        # circtools ships a prebuilt Intel pblat binary, run via Rosetta 2
+        # on Apple Silicon. It's dynamically linked against
+        # /usr/local/opt/openssl@3/lib/libssl.3.dylib — an x86_64 library.
+        # The arm64 Homebrew's openssl@3 (at /opt/homebrew) is arm64-only
+        # and cannot satisfy this, even via symlink. Install a Rosetta
+        # (x86_64) Homebrew under /usr/local and get openssl@3 from that.
+        if [ "$(uname -m)" = "arm64" ]; then
+          if [ ! -x /usr/local/bin/brew ]; then
+            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          arch -x86_64 /usr/local/bin/brew install openssl@3
+        fi
+        ls -l /usr/local/opt/openssl@3/lib/libssl.3.dylib
+        file /usr/local/opt/openssl@3/lib/libssl.3.dylib
+
 
     - name: Install bioinformatics dependencies (bedtools, pblat, samtools, pybedtools) with retry
       uses: nick-fields/retry@v4
@@ -146,37 +174,6 @@ jobs:
           fi
 
 
-
-
-
-    - name: Fix hardcoded openssl@3 path for bundled pblat binary on macOS
-      if: runner.os == 'macOS'
-      run: |
-        # circtools ships a prebuilt Intel pblat binary
-        # (contrib/pblat/AMD64/mac/pblat), run via Rosetta 2 on Apple
-        # Silicon. It's dynamically linked against
-        # /usr/local/opt/openssl@3/lib/libssl.3.dylib. On Apple Silicon
-        # runners, Homebrew lives under /opt/homebrew, so that path doesn't
-        # exist and the binary aborts at load time. Recreate the expected
-        # /usr/local path as symlinks to the real Homebrew prefix.
-        OPENSSL_PREFIX="$(brew --prefix openssl@3)"
-        echo "Real openssl@3 prefix: $OPENSSL_PREFIX"
-
-        if [ "$OPENSSL_PREFIX" != "/usr/local/opt/openssl@3" ]; then
-          sudo mkdir -p /usr/local/opt/openssl@3
-          sudo ln -sfn "$OPENSSL_PREFIX/lib" /usr/local/opt/openssl@3/lib
-          sudo ln -sfn "$OPENSSL_PREFIX/include" /usr/local/opt/openssl@3/include
-        fi
-
-        ls -l /usr/local/opt/openssl@3/lib/libssl.3.dylib
-
-    - name: Ensure Rosetta 2 is installed on Apple Silicon
-      if: runner.os == 'macOS'
-      run: |
-        if [ "$(uname -m)" = "arm64" ]; then
-          softwareupdate --install-rosetta --agree-to-license || true
-          arch -x86_64 /usr/bin/true && echo "Rosetta 2 OK"
-        fi
 
     - name: Fix zcat on macOS
       if: runner.os == 'macOS'
@@ -252,7 +249,7 @@ jobs:
           MASTER_DIR="../nanopore_master"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] &&  [ "${{ matrix.os }}" = "macos-15-intel" ]; }; then
+        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-15-intel" ]; then
           MASTER_DIR="../nanopore_master_mac_amd"
           diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
           shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
