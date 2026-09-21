@@ -17,7 +17,7 @@ jobs:
 
       - name: Install build deps
         run: |
-          brew install make zlib
+          brew install make zlib openssl@3
 
       - name: Build pblat
         run: |
@@ -26,8 +26,8 @@ jobs:
           make -j$(sysctl -n hw.ncpu)
           ls -lh pblat*
         env:
-          CFLAGS: -I$(brew --prefix zlib)/include
-          LDFLAGS: -L$(brew --prefix zlib)/lib
+          CFLAGS: -I${{ '$(brew --prefix zlib)' }}/include -I${{ '$(brew --prefix openssl@3)' }}/include
+          LDFLAGS: -L${{ '$(brew --prefix zlib)' }}/lib -L${{ '$(brew --prefix openssl@3)' }}/lib
 
       - name: Upload pblat binary
         uses: actions/upload-artifact@v4
