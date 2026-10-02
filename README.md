@@ -63,14 +63,6 @@
       </td>
     </tr>
     <tr>
-      <td>Master Workflow</td>
-      <td colspan="2" align="center">
-        <a href="https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml">
-          <img src="https://github.com/jakobilab/circtools/actions/workflows/circtools_run_all.yml/badge.svg?branch=master" alt="Pip All"/>
-        </a>
-      </td>
-    </tr>
-    <tr>
       <td>Docker Build (Stable)</td>
       <td colspan="2" align="center">
         <a href="https://github.com/jakobilab/circtools/actions/workflows/multi_docker.yml">
