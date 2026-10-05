@@ -202,6 +202,8 @@ jobs:
           -C hg38
 
     - name: Run circtools nanopore (pip)
+      env:
+          CIRCTOOLS_DEBUG: "1"
       run: |
         cd circtools_example
         mkdir -p nanopore_output
@@ -212,6 +214,7 @@ jobs:
           -C hg38 \
           -O nanopore_output/ \
           --threads 16
+          --keep-temp
 
     - name: Upload nanopore output artifact
       uses: actions/upload-artifact@v4
