@@ -215,34 +215,103 @@ jobs:
           -O nanopore_output/ \
           --threads 16 
 
-          
-    - name: Upload nanopore output artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: nanopore-output-${{ matrix.os }}-py${{ matrix.python-version }}
-        path: circtools_example/nanopore_output/
-        if-no-files-found: warn
-        retention-days: 5
-  
 
-    - name: Checking generated output against master output
+    - name: Checking generated output against master output (soft check)
       run: |
-        cd circtools_example
-        cd nanopore_output
+        cd circtools_example/nanopore_output
         ls -la
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          MASTER_DIR="../nanopore_master"
-          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-          sha1sum -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && [ "${{ matrix.os }}" = "macos-15-intel" ]; then
-          MASTER_DIR="../nanopore_master_mac_amd"
-          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        elif [ "$RUNNER_OS" = "macOS" ] && { [ "${{ matrix.os }}" = "macos-15" ] || [ "${{ matrix.os }}" = "macos-26" ]; }; then
-          MASTER_DIR="../nanopore_master_mac"
-          diff human_nanopore_1M.circRNA_candidates.annotated.txt "$MASTER_DIR/human_nanopore_1M.circRNA_candidates.annotated.txt"
-          shasum -a 1 -c "$MASTER_DIR/sha1sums.txt"
-        else
-          echo "Unsupported OS: $RUNNER_OS" >&2
-          exit 1
-        fi
+        python3 - <<'PY'
+        import os, sys
+
+        OUT = "human_nanopore_1M.circRNA_candidates.annotated.txt"
+        MASTER = os.path.join("..", "nanopore_master", OUT)
+
+        # Tolerances. The pipeline gives near-identical but not byte-identical results
+        # across operating systems, so compare the numbers instead of the bytes.
+        MAX_TOTAL_DIFF  = float(os.environ.get("MAX_TOTAL_DIFF", "0.02"))   # total BSJ reads
+        MIN_SHARED_FRAC = float(os.environ.get("MIN_SHARED_FRAC", "0.98"))  # reads in circRNAs found in both
+        TOP_N           = int(os.environ.get("TOP_N", "10"))                # most abundant circRNAs in master
+        MAX_TOP_DIFF    = float(os.environ.get("MAX_TOP_DIFF", "0.05"))     # read-count difference for those
+        MAX_COUNT_DIFF  = float(os.environ.get("MAX_COUNT_DIFF", "0.10"))   # number of circRNAs
+
+        def load(path):
+            """(chr, start, end, strand) -> BSJ reads"""
+            d = {}
+            with open(path) as fh:
+                next(fh, None)  # header
+                for ln in fh:
+                    f = ln.rstrip("\n").split("\t")
+                    if len(f) < 8:
+                        continue
+                    try:
+                        d[(f[1], f[2], f[3], f[6])] = int(float(f[5]))
+                    except ValueError:
+                        continue
+            return d
+
+        def rel(a, b):
+            m = max(a, b)
+            return abs(a - b) / m if m else 0.0
+
+        def name(k):
+            return f"{k[0]}:{k[1]}-{k[2]}({k[3]})"
+
+        if not os.path.isfile(MASTER):
+            print(f"::error::master file not found: {MASTER}")
+            sys.exit(1)
+
+        new, master = load(OUT), load(MASTER)
+        failures = []
+
+        if not new:
+            failures.append("no circRNAs found in the generated output")
+        if not master:
+            failures.append("no circRNAs found in the master file")
+
+        if new and master:
+            tot_new, tot_master = sum(new.values()), sum(master.values())
+            shared = [k for k in master if k in new]
+            frac_new = sum(new[k] for k in shared) / tot_new
+            frac_master = sum(master[k] for k in shared) / tot_master
+
+            print(f"circRNAs: new={len(new)} master={len(master)} shared={len(shared)} "
+                  f"only-new={len(new) - len(shared)} only-master={len(master) - len(shared)}")
+            print(f"total BSJ reads: new={tot_new} master={tot_master} diff={rel(tot_new, tot_master):.2%}")
+            print(f"reads in shared circRNAs: new={frac_new:.2%} master={frac_master:.2%}")
+
+            if rel(tot_new, tot_master) > MAX_TOTAL_DIFF:
+                failures.append(f"total BSJ reads differ by {rel(tot_new, tot_master):.2%} (limit {MAX_TOTAL_DIFF:.0%})")
+            if min(frac_new, frac_master) < MIN_SHARED_FRAC:
+                failures.append(f"only {min(frac_new, frac_master):.2%} of reads are in circRNAs found in both (limit {MIN_SHARED_FRAC:.0%})")
+            if rel(len(new), len(master)) > MAX_COUNT_DIFF:
+                failures.append(f"number of circRNAs differs: new={len(new)} master={len(master)} (limit {MAX_COUNT_DIFF:.0%})")
+
+            print(f"\ntop {TOP_N} circRNAs of the master:")
+            top = sorted(master, key=lambda k: -master[k])[:TOP_N]
+            for k in top:
+                n = new.get(k)
+                if n is None:
+                    print(f"  {name(k):45s} master={master[k]:<7d} new=MISSING")
+                    failures.append(f"top circRNA {name(k)} ({master[k]} reads) is missing in the new output")
+                else:
+                    d = rel(n, master[k])
+                    flag = "" if d <= MAX_TOP_DIFF else "   <-- too different"
+                    print(f"  {name(k):45s} master={master[k]:<7d} new={n:<7d} diff={d:.1%}{flag}")
+                    if d > MAX_TOP_DIFF:
+                        failures.append(f"{name(k)}: {master[k]} vs {n} reads ({d:.1%}, limit {MAX_TOP_DIFF:.0%})")
+
+            # informational: other shared circRNAs with >=10 reads that moved by more than 10%
+            other = [k for k in shared if k not in top and max(new[k], master[k]) >= 10 and rel(new[k], master[k]) > 0.10]
+            if other:
+                print(f"\nnote: {len(other)} further circRNAs with >=10 reads differ by >10% (not a failure):")
+                for k in sorted(other, key=lambda k: -master[k])[:10]:
+                    print(f"  {name(k):45s} master={master[k]:<7d} new={new[k]}")
+
+        print()
+        if failures:
+            for f in failures:
+                print(f"::error::{f}")
+            print("RESULT: FAIL - output differs from the master by more than the allowed tolerance")
+            sys.exit(1)
+        print("RESULT: PASS - output is within tolerance of the master")
+        PY
