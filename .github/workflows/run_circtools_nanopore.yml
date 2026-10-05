@@ -213,9 +213,9 @@ jobs:
           -R reference \
           -C hg38 \
           -O nanopore_output/ \
-          --threads 16 \
-          --keep-temp
+          --threads 16 
 
+          
     - name: Upload nanopore output artifact
       uses: actions/upload-artifact@v4
       with:
