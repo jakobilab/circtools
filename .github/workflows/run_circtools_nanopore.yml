@@ -213,7 +213,7 @@ jobs:
           -R reference \
           -C hg38 \
           -O nanopore_output/ \
-          --threads 16
+          --threads 16 \
           --keep-temp
 
     - name: Upload nanopore output artifact
