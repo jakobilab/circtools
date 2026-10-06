@@ -28,7 +28,21 @@ program_name = "circtools"
 # samtools/git like parsing from http://chase-seibert.github.io/blog/2014/03/21/python-multilevel-argparse.html
 
 
+# Hidden developer/automation flag (deliberately not registered with argparse, so
+# it never shows up in any --help output). Skips the usage survey unconditionally.
+BOT_FLAGS = ("-bot", "--bot")
+
+
 def main():
+    bot_mode = any(arg in BOT_FLAGS for arg in sys.argv[1:])
+    # strip it so the command parsers never see an unknown option
+    sys.argv = sys.argv[:1] + [arg for arg in sys.argv[1:] if arg not in BOT_FLAGS]
+
+    if not bot_mode:
+        # optional, one-time anonymous usage survey (see circtools/survey.py)
+        from circtools import survey
+        survey.maybe_run_survey(version)
+
     CircTools()
 
 
