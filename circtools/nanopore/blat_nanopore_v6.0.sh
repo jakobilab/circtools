@@ -17,53 +17,6 @@
 #
 
 # -----------------------------
-# Reproducibility settings
-# -----------------------------
-# Byte-wise collation so sort/uniq/grep give identical results on Linux and macOS
-export LC_ALL=C
-
-# Set CIRCTOOLS_DEBUG=1 to keep the raw pblat output ($sample.raw.psl), write per-step
-# checkpoint hashes to checkpoints.tsv, record tool versions and keep a few
-# intermediate files that are normally removed at the end of this script.
-debug="${CIRCTOOLS_DEBUG:-}"
-
-# On macOS prefer GNU tools if Homebrew has them (sed '1~4' addresses, \t in sed,
-# grep -Fwf, gawk, GNU sort/uniq)
-if [ "$(uname -s)" = "Darwin" ] && command -v brew >/dev/null 2>&1; then
-    brew_prefix="$(brew --prefix 2>/dev/null)"
-    for gnu_pkg in coreutils gnu-sed grep gawk findutils; do
-        gnubin="$brew_prefix/opt/$gnu_pkg/libexec/gnubin"
-        [ -d "$gnubin" ] && PATH="$gnubin:$PATH"
-    done
-    export PATH
-fi
-
-if ! sed --version >/dev/null 2>&1; then
-    echo "Error: GNU sed is required (BSD sed does not support the 1~4 address or \\t)."
-    echo "On macOS: brew install gnu-sed  (and put its gnubin directory first in PATH)"
-    exit 1
-fi
-if ! grep --version 2>&1 | grep -q "GNU grep"; then
-    echo "Warning: GNU grep not found, grep -Fwf may behave differently. On macOS: brew install grep"
-fi
-
-# Deterministic BED-like sort (chr, start, end, then whole line as tie-breaker).
-# Replaces 'bedtools sort', whose order for records with equal chr/start is not defined.
-bsort() { sort -t$'\t' -k1,1 -k2,2n -k3,3n; }
-
-# Checkpoints (debug only): file, line count, hash in file order, hash in sorted order.
-# A file that differs in file order but not in sorted order is an ordering-only difference.
-_h() { if command -v sha1sum >/dev/null 2>&1; then sha1sum; else shasum -a 1; fi | cut -c1-12; }
-ck() {
-    [ -n "$debug" ] || return 0
-    local f
-    for f in "$@"; do
-        [ -f "$f" ] || continue
-        printf '%s\t%s\t%s\t%s\n' "$f" "$(wc -l < "$f" | tr -d ' ')" "$(_h < "$f")" "$(sort "$f" | _h)" >> checkpoints.tsv
-    done
-}
-
-# -----------------------------
 # Platform detection for pblat
 # -----------------------------
 system=$(uname -s)
@@ -127,22 +80,6 @@ sample_ext=$8
 mkdir -p "$output_path"
 cd "$output_path" || exit
 
-if [ -n "$debug" ]; then
-    {
-        uname -a
-        echo "LC_ALL=$LC_ALL"
-        for t in bedtools samtools sort sed grep awk; do
-            printf '%s: %s\n' "$t" "$(command -v $t)"
-        done
-        bedtools --version
-        samtools --version | head -n 1
-        sort --version 2>&1 | head -n 1
-        sed --version 2>&1 | head -n 1
-        $arch_prefix "$pblat_bin" 2>&1 | head -n 2
-    } > tool_versions.txt 2>&1
-    : > checkpoints.tsv
-fi
-
 fa=$reference_path/$genome/genome.fa
 mRNA=$reference_path/$genome/refFlat.csv.unique.bed
 exon=$reference_path/$genome/refFlat.csv.merged.bed
@@ -175,10 +112,6 @@ echo "Mapping with pblat - parallelized blat with multi-threads support (http://
 echo "lower case sequences in the genome file are masked out"
 echo "Showing a dot for every 50k sequences processed"
 $arch_prefix "$pblat_bin" -threads="$threads" -trimT -dots=50000 -mask=lower "$fa" "$sample.fa" "$sample.psl"
-if [ -n "$debug" ]; then
-    cp "$sample.psl" "$sample.raw.psl"
-    ck "$sample.raw.psl"
-fi
 echo "Blat done"
 date
 
@@ -187,48 +120,34 @@ date
 cat $sample.psl | grep -v "_random" | grep -v "_hap" | grep -v "chrUn_" > $sample.temp.psl
 rm $sample.psl
 mv $sample.temp.psl $sample.psl
+cat $sample.psl | awk '{print $10}' | sort | uniq -c | sort -nrk 1,1 > mappings_per_read.txt
+cat mappings_per_read.txt | awk '{print $1}' | uniq -c | sort -nrk 1,1 > $sample.histogram_number_of_genomic_hits_per_read.txt
 
-# Fix the order of the alignments: by read name, then PSL score (highest first, which is the
-# order pblat writes them in), then by position. pblat sorts hits with an unstable qsort, so the
-# order of equal-scoring hits otherwise depends on the libc the binary was built with, and
-# blat_output_processing_v3.py compares every hit of a read to the FIRST hit of that read.
-# Columns are shifted by one because the score is prepended as column 1.
-head -n 5 $sample.psl > $sample.sorted.tmp.psl
-tail -n +6 $sample.psl \
-    | awk 'BEGIN{FS=OFS="\t"}{print $1+int($3/2)-$2-$5-$7,$0}' \
-    | sort -t$'\t' -k11,11 -k1,1nr -k13,13n -k15,15 -k17,17n -k18,18n \
-    | cut -f2- >> $sample.sorted.tmp.psl
-mv $sample.sorted.tmp.psl $sample.psl
-cat $sample.psl | awk '{print $10}' | sort | uniq -c | sort -k1,1nr -k2,2 > mappings_per_read.txt
-cat mappings_per_read.txt | awk '{print $1}' | uniq -c | sort -k1,1nr -k2,2 > $sample.histogram_number_of_genomic_hits_per_read.txt
-
-cat $sample.psl | python3 $scriptFolder/psl2bed12.py |  bsort > $sample.psl.bed
+cat $sample.psl | python3 $scriptFolder/psl2bed12.py |  bedtools sort > $sample.psl.bed
 
 echo
 date
 echo "Getting group numbers"
-ck $sample.psl $sample.psl.bed
 cat $sample.psl | python3 $scriptFolder/blat_output_processing_v3.py > $sample.scan.psl
-ck $sample.scan.psl
 
 # Read fragment numbers
 echo
 date
 echo "The different groups, numbers of read fragments:"
-cat $sample.scan.psl | awk '{print $NF}' | sort | uniq -c | sort -k1,1nr -k2,2 | head -6
-cat $sample.scan.psl | awk '{print $NF}' | sort | uniq -c | sort -k1,1nr -k2,2 | head -6 > $sample.scan.groupNumbers.fragments.txt
+cat $sample.scan.psl | awk '{print $NF}' | sort | uniq -c | sort -nrk 1,1 | head -6
+cat $sample.scan.psl | awk '{print $NF}' | sort | uniq -c | sort -nrk 1,1 | head -6 > $sample.scan.groupNumbers.fragments.txt
 # Read numbers
 echo
 echo "The different groups, numbers of unique reads:"
-cat $sample.scan.psl | awk '{print $10,$NF}' | sort | uniq | awk '{print $NF}' | sort | uniq -c | sort -k1,1nr -k2,2 | head -6
-cat $sample.scan.psl | awk '{print $10,$NF}' | sort | uniq | awk '{print $NF}' | sort | uniq -c | sort -k1,1nr -k2,2 | head -6 > $sample.scan.groupNumbers.reads.txt
+cat $sample.scan.psl | awk '{print $10,$NF}' | sort | uniq | awk '{print $NF}' | sort | uniq -c | sort -nrk 1,1 | head -6
+cat $sample.scan.psl | awk '{print $10,$NF}' | sort | uniq | awk '{print $NF}' | sort | uniq -c | sort -nrk 1,1 | head -6 > $sample.scan.groupNumbers.reads.txt
 
 
 # Get circRNA reads
 head -5 $sample.scan.psl > $sample.scan.circRNA.psl
 grep circRNA $sample.scan.psl >> $sample.scan.circRNA.psl
 ## converting psl to bed12
-cat $sample.scan.circRNA.psl | python3 $scriptFolder/psl2bed12.py |  bsort > $sample.scan.circRNA.psl.bed
+cat $sample.scan.circRNA.psl | python3 $scriptFolder/psl2bed12.py |  bedtools sort > $sample.scan.circRNA.psl.bed
 
 
 
@@ -257,16 +176,16 @@ echo "outputting Potential_multi-round_circRNA"
 head -5 $sample.scan.psl > $sample.scan.Potential_multi-round_circRNA.psl
 grep Potential_multi-round_circRNA $sample.scan.psl >> $sample.scan.Potential_multi-round_circRNA.psl
 ## converting psl to bed12
-cat $sample.scan.Potential_multi-round_circRNA.psl | python3 $scriptFolder/psl2bed12.py |  bsort > $sample.scan.Potential_multi-round_circRNA.psl.bed
+cat $sample.scan.Potential_multi-round_circRNA.psl | python3 $scriptFolder/psl2bed12.py |  bedtools sort > $sample.scan.Potential_multi-round_circRNA.psl.bed
 bedtools bedtobam -i $sample.scan.Potential_multi-round_circRNA.psl.bed -bed12 -g $genomeSize > $sample.scan.Potential_multi-round_circRNA.bam
 samtools sort $sample.scan.Potential_multi-round_circRNA.bam > $sample.scan.Potential_multi-round_circRNA.sort.bam
 samtools index $sample.scan.Potential_multi-round_circRNA.sort.bam
 # Making a special file to show how many rounds each read takes
-cat $sample.scan.Potential_multi-round_circRNA.psl.bed | sed 's/~/\t/g' | awk 'OFS="\t"{print $4,$2,$3,$1,$6,$7}' |  bsort | awk 'OFS="\t"{print $1"~"$4,$2,$3,$4,$5,$6}' | bedtools merge > $sample.scan.Potential_multi-round_circRNA.psl.merge.bed
-cat $sample.scan.Potential_multi-round_circRNA.psl.bed | sed 's/~/\t/g' | awk 'OFS="\t"{print $4,$2,$3,$1,$6,$7}' |  bsort | awk 'OFS="\t"{print $1"~"$4,$2,$3,$4,$5,$6}' | bedtools coverage -counts -a $sample.scan.Potential_multi-round_circRNA.psl.merge.bed -b - > temp.$sample.multi-round.count.txt
+cat $sample.scan.Potential_multi-round_circRNA.psl.bed | sed 's/~/\t/g' | awk 'OFS="\t"{print $4,$2,$3,$1,$6,$7}' |  bedtools sort | awk 'OFS="\t"{print $1"~"$4,$2,$3,$4,$5,$6}' | bedtools merge > $sample.scan.Potential_multi-round_circRNA.psl.merge.bed
+cat $sample.scan.Potential_multi-round_circRNA.psl.bed | sed 's/~/\t/g' | awk 'OFS="\t"{print $4,$2,$3,$1,$6,$7}' |  bedtools sort | awk 'OFS="\t"{print $1"~"$4,$2,$3,$4,$5,$6}' | bedtools coverage -counts -a $sample.scan.Potential_multi-round_circRNA.psl.merge.bed -b - > temp.$sample.multi-round.count.txt
 printf "#Chr\tStart\tEnd\tRead_name\tNumber_of_rounds\tOverlapping_gene\n" > $sample.scan.Potential_multi-round_circRNA.psl.annot.bed
-cat temp.$sample.multi-round.count.txt | sed 's/~/\t/g' | awk 'OFS="\t"{print $2,$3,$4,$1,$5}' |  bsort | bedtools map -c 4 -o distinct -a - -b $mRNA >> $sample.scan.Potential_multi-round_circRNA.psl.annot.bed
-cat $sample.scan.Potential_multi-round_circRNA.psl.annot.bed | awk '{print $NF}' | sort | uniq -c | sort -k1,1nr -k2,2 > $sample.scan.Potential_multi-round_circRNA.psl.annot.count.txt
+cat temp.$sample.multi-round.count.txt | sed 's/~/\t/g' | awk 'OFS="\t"{print $2,$3,$4,$1,$5}' |  bedtools sort | bedtools map -c 4 -o distinct -a - -b $mRNA >> $sample.scan.Potential_multi-round_circRNA.psl.annot.bed
+cat $sample.scan.Potential_multi-round_circRNA.psl.annot.bed | awk '{print $NF}' | sort | uniq -c | sort -nrk 1,1 > $sample.scan.Potential_multi-round_circRNA.psl.annot.count.txt
 cat $sample.scan.Potential_multi-round_circRNA.psl.annot.bed | awk '{print $4}' | grep -v Read_name > $sample.temp.read_names
 #grep --no-group-separator -A1 -f $sample.temp.read_names $sample.fa > $sample.Potential_multi-round_circRNA.fa
 samtools faidx $sample.fa
@@ -302,28 +221,27 @@ rm $sample.scan.circRNA.psl.annot.0*.bed
 
 
 printf "#chr\tstart\tend\tread_name\tread_length\tgene_coverage\texon_coverage\tEST_coverage\tintron_coverage\n" > $sample.scan.circRNA.psl.annot.txt
-cat $sample.scan.circRNA.psl.annot.bed | sort -t$'\t' -k4,4 -k1,1 -k2,2n -k3,3n -T $temp_sort | awk 'OFS="\t"{print $1,$2,$3,$4,$3-$2,($3-$2)*$8,($3-$2)*$10,($3-$2)*$12,($3-$2)*$8-($3-$2)*$10}' | python3 $scriptFolder/combine_annot_segments.py >> $sample.scan.circRNA.psl.annot.txt
+cat $sample.scan.circRNA.psl.annot.bed | sort -k 4,4 -T $temp_sort | awk 'OFS="\t"{print $1,$2,$3,$4,$3-$2,($3-$2)*$8,($3-$2)*$10,($3-$2)*$12,($3-$2)*$8-($3-$2)*$10}' | python3 $scriptFolder/combine_annot_segments.py >> $sample.scan.circRNA.psl.annot.txt
 cat $sample.scan.circRNA.psl.annot.txt | python3 $scriptFolder/make_circRNAs_from_annot.txt.py > $sample.scan.circRNA.psl.annot.combine.txt
-ck $sample.scan.circRNA.psl.annot.bed $sample.scan.circRNA.psl.annot.txt $sample.scan.circRNA.psl.annot.combine.txt
 
 echo
 date
 echo "Refining circRNA edges based annotated exon boundaries and annotated circRNAs"
 # Making a unique list of circRNAs
-cat $sample.scan.circRNA.psl.annot.combine.txt | awk 'NR>1,OFS="\t"{print $1,$2,$2+1,$4"~"$5"~"$6"~"$7"~"$8"~"$9}' | bsort | uniq > temp_start
-cat $sample.scan.circRNA.psl.annot.combine.txt | awk 'NR>1,OFS="\t"{print $1,$3-1,$3,$4"~"$5"~"$6"~"$7"~"$8"~"$9}' | bsort | uniq > temp_end
+cat $sample.scan.circRNA.psl.annot.combine.txt | awk 'NR>1,OFS="\t"{print $1,$2,$2+1,$4"~"$5"~"$6"~"$7"~"$8"~"$9}' | bedtools sort | uniq > temp_start
+cat $sample.scan.circRNA.psl.annot.combine.txt | awk 'NR>1,OFS="\t"{print $1,$3-1,$3,$4"~"$5"~"$6"~"$7"~"$8"~"$9}' | bedtools sort | uniq > temp_end
 # bedtools sort -i $single_exon > exon_ref
 # Prints the start and end position of closest exon. In special cases where the circRNA is produced far inside an annoteted exon, such as occurs for Malat1, are filtered away.
 bedtools closest -t first -d -header -a temp_start -b $single_exon -nonamecheck | awk 'OFS="\t"{if ($2 - $6 < 31) print $1,$6,$7,$4,$10,$11}' | awk 'OFS="\t"{if($2 > -1) print $0 }' > temp_start.exon
 bedtools closest -t first -d -header -a temp_end -b $single_exon -nonamecheck | awk 'OFS="\t"{if ($7 - $3 < 31) print $1,$6,$7,$4,$10,$11}' | awk 'OFS="\t"{if($2 > -1) print $0 }' > temp_end.exon
-cat temp_start.exon temp_end.exon | sort -t$'\t' -k4,4 -k2,2n -k3,3n -k1,1 -k5,5 -k6,6 > temp_edge_exon
+cat temp_start.exon temp_end.exon | sort -k 4,4 > temp_edge_exon
 bedtools groupby -g 4 -c 1,2,3,5,6,4 -o distinct,min,max,distinct,max,count -i temp_edge_exon | awk 'OFS="\t"{print $2,$3,$4,$1,$6,$5,$7}' > temp_exon-ends0
 # Allowing only edges that are formed from 2 read segments:
 cat temp_exon-ends0 | awk 'OFS="\t"{if ($7 == 2) print $1,$2,$3,$4,$5,$6}' > temp_exon-ends
 ## Exon match: Max 30 bp distance, correct strand
 grep -v "+,-" temp_exon-ends | awk 'OFS="\t"{if($5 < 31) print $0 }' > $sample.scan.circRNA.psl.annot.combine.correct.bed
-cat $sample.scan.circRNA.psl.annot.combine.correct.bed | awk 'OFS="\t"{print $1,$2,$3,"exon_match",0,$6}' | bsort | uniq > base_list_exon-match.bed
-cat $sample.scan.circRNA.psl.annot.combine.correct.bed | awk 'OFS="\t"{print $1,$2,$3,$5,$6,$4}' | sed 's/~/\t/g' | awk 'OFS="\t"{print $1,$2,$3,$6,$4,$5,$7,$8,$9,$10,$11}' |  bsort > $sample.scan.circRNA.psl.annot.combine.correct.full.bed
+cat $sample.scan.circRNA.psl.annot.combine.correct.bed | awk 'OFS="\t"{print $1,$2,$3,"exon_match",0,$6}' | sort -nk 3,3 | sort -nk 2,2 | sort -k 1,1 | uniq  |  bedtools sort > base_list_exon-match.bed
+cat $sample.scan.circRNA.psl.annot.combine.correct.bed | awk 'OFS="\t"{print $1,$2,$3,$5,$6,$4}' | sed 's/~/\t/g' | awk 'OFS="\t"{print $1,$2,$3,$6,$4,$5,$7,$8,$9,$10,$11}' |  bedtools sort > $sample.scan.circRNA.psl.annot.combine.correct.full.bed
 ## No exon match: Over 30 bp distance or segments on different strands
 grep "+,-" temp_exon-ends | awk 'OFS="\t"{ print $4 }' > temp_exon-ends_nohit
 cat temp_exon-ends | awk 'OFS="\t"{if($5 > 30) print $4 }' >> temp_exon-ends_nohit
@@ -340,7 +258,7 @@ awk '{print $0"\t.\t.\t."}' base_list_exon-match.temp > base_list_exon-match.tem
 # print out 3 dots for each db, do we do not loose anything
 
 # Mapping stuff on to the base list
-bedtools map -f 1.0 -F 1.0 -c 4,7,8,9,10,11,5,5,5 -o count,mean,mean,mean,mean,mean,min,max,mean -a base_list_exon-match.temp4.bed -b $sample.scan.circRNA.psl.annot.combine.correct.full.bed -nonamecheck | awk 'OFS="\t"{print $1,$2,$3,$4,$11,$6,$7,$8,$9,$10,$12,$13,$14,$15,$16,$17,$18,$19}' | sort -t$'\t' -k5,5nr -k1,1 -k2,2n -k3,3n -k4,4 -k6,6 > base_list_exon-match.annot.prefilter.bed
+bedtools map -f 1.0 -F 1.0 -c 4,7,8,9,10,11,5,5,5 -o count,mean,mean,mean,mean,mean,min,max,mean -a base_list_exon-match.temp4.bed -b $sample.scan.circRNA.psl.annot.combine.correct.full.bed -nonamecheck | awk 'OFS="\t"{print $1,$2,$3,$4,$11,$6,$7,$8,$9,$10,$12,$13,$14,$15,$16,$17,$18,$19}' | sort -nrk 5,5 > base_list_exon-match.annot.prefilter.bed
 
 echo
 cat base_list_exon-match.annot.prefilter.bed | grep -v chrM | grep -v Rn45s > $sample.base_list_exon-match.annot.bed
@@ -349,21 +267,21 @@ rm base_list_exon-match.temp base_list_exon-match.temp4.bed base_list_exon-match
 
 # For v 5.5 I increased the stringency. See below
 ### for the reads that do not match exons I check for similarity to circBase, circAtlas or CIRCpedia circRNA. If this is found, the annotated circRNA entry defines boundaries.
-cat $sample.scan.circRNA.psl.annot.combine.txt |  bsort > $sample.scan.circRNA.psl.annot.combine.sort.txt
+cat $sample.scan.circRNA.psl.annot.combine.txt |  bedtools sort > $sample.scan.circRNA.psl.annot.combine.sort.txt
 # finding host gene: Any overlap of the circRNA with an annotated refSeq gene on either
 bedtools intersect -wao -a $sample.scan.circRNA.psl.annot.combine.sort.txt -b $mRNA -nonamecheck | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{print $NF,$0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{$NF=""; print $0}' | awk 'OFS="\t"{print $0,$1}' | awk 'BEGIN{FS=OFS="\t"}{$1="";sub("\t","")}1' | sed s'/\t\t/\t/g' > $sample.scan.circRNA.psl.annot.combine.sort.temp
 
 awk '{print $0"\t.\t.\t."}' $sample.scan.circRNA.psl.annot.combine.sort.temp > $sample.scan.circRNA.psl.annot.combine.circID.bed
 
 # Getting only the no_match reads:
-grep -Fwf temp_exon-ends_nohit_uniq $sample.scan.circRNA.psl.annot.combine.circID.bed |  bsort > no_exon_match_reads.bed
+grep -Fwf temp_exon-ends_nohit_uniq $sample.scan.circRNA.psl.annot.combine.circID.bed |  bedtools sort > no_exon_match_reads.bed
 
 
 echo
 date
 echo "Generating internal_circRNA_name and outputting candidate circRNA list"
 # Combine the positive hits
-cat $sample.base_list_exon-match.annot.bed  | sort -t$'\t' -k5,5nr -k1,1 -k2,2n -k3,3n -k4,4 -k6,6 > temp.circ.hits
+cat $sample.base_list_exon-match.annot.bed  | sort -nrk 5,5 > temp.circ.hits
 
 printf "chr\tstart\tend\tdescription\tBSJ_reads\tstrand\tgene\tcircBase_ID\tcircAtlas_ID\tCIRCpedia_ID\tmean_read_coverage\tmean_gene_coverage\tmean_exon_coverage\tmean_EST_coverage\tmean_intron_coverage\tmin_exon_adjust\tmax_exon_adjust\tmean_exon_adjust\n" > $sample.circRNA_candidates.annotated.bed
 cat temp.circ.hits >> $sample.circRNA_candidates.annotated.bed
@@ -390,11 +308,10 @@ cat temp.circ.hits >> $sample.circRNA_candidates.annotated.bed
                count=$(expr $count + 1)
         done < $sample.circRNA_candidates.annotated.bed
 	paste circRNA_name.temp $sample.circRNA_candidates.annotated.bed > $sample.circRNA_candidates.annotated.txt
-ck temp.circ.hits $sample.circRNA_candidates.annotated.txt
 
 
 #### for the reads that do not match exons and also does not have 99% similarity to known circRNAs
-cat no_exon_match_reads.bed | uniq | grep "\.[[:space:]]\.[[:space:]]\." |  bsort > no_exon_no_circRNA.bed
+cat no_exon_match_reads.bed | uniq | grep "\.[[:space:]]\.[[:space:]]\." |  bedtools sort > no_exon_no_circRNA.bed
 
 
 ## Delete temp files
@@ -408,9 +325,7 @@ rm $sample.scan.Potential_multi-round_circRNA.sort.bam
 #rm $sample.sort.bam.bai $sample.psl.bed $sample.fa.fai $sample.psl $sample.fa no_exon_no_circRNA.bed
 rm base_list_exon-match.bed no_exon_match_reads.bed
 #rm base_list_no-exon.cirBaseID.annot.prefilter.bed
-if [ -z "$debug" ]; then
-    rm mappings_per_read.txt $sample.scan.psl
-fi
+rm mappings_per_read.txt $sample.scan.psl #$sample.base_list_no-exon.cirBaseID.annot.bed
 
 echo
 date
