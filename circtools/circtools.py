@@ -19,6 +19,8 @@ import argparse
 import os.path
 import sys
 from importlib.metadata import version
+from circtools import survey
+
 
 #global
 version = version("circtools")
@@ -33,18 +35,20 @@ program_name = "circtools"
 BOT_FLAGS = ("-bot", "--bot")
 
 
+
 def main():
     bot_mode = any(arg in BOT_FLAGS for arg in sys.argv[1:])
     # strip it so the command parsers never see an unknown option
     sys.argv = sys.argv[:1] + [arg for arg in sys.argv[1:] if arg not in BOT_FLAGS]
 
-    if not bot_mode:
+    
+    if bot_mode:
+        survey.send_bot_ping(version, sys.argv[1:])
+    else:
         # optional, one-time anonymous usage survey (see circtools/survey.py)
-        from circtools import survey
         survey.maybe_run_survey(version)
 
     CircTools()
-
 
 def product_range(p):
     try:

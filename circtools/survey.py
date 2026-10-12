@@ -19,9 +19,13 @@
 Optional, anonymous first-run usage survey.
 
 On the first interactive run, the user is asked whether they want to share
-four pieces of information: operating system, OS version, circtools version
-and Python version. Nothing else is collected. The answer (yes or no) is
-stored locally so the question is only ever asked once.
+a short list of platform information: operating system, OS version,
+architecture, circtools version, Python version, bedtools version, STAR
+version and whether circtools runs inside a Docker container. In addition,
+the server derives an approximate country from the IP address of the request
+and stores only the country code, never the IP. Nothing else is collected.
+The answer (yes or no) is stored locally so the question is only ever asked
+once.
 
 Design rules:
   * Uses only the standard library (no new dependencies for circtools).
@@ -35,6 +39,9 @@ Design rules:
 import json
 import os
 import platform
+import re
+import shutil
+import subprocess
 import sys
 import time
 import urllib.error
@@ -47,7 +54,7 @@ DEFAULT_SURVEY_URL = "http://10.228.21.77:8111/api/v1/survey"
 OPT_OUT_ENV = "CIRCTOOLS_NO_SURVEY"
 URL_ENV = "CIRCTOOLS_SURVEY_URL"
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 REQUEST_TIMEOUT_SECONDS = 3
 
 # Arguments for which we never want to interrupt the user
@@ -116,14 +123,54 @@ def _os_info():
     return system or "unknown", platform.release() or "unknown"
 
 
+_VERSION_RE = re.compile(r"\d+\.\d+(?:\.\d+)*[A-Za-z]?")
+
+
+def _tool_version(names, args=("--version",)):
+    """Return the version string of the first installed tool, or None."""
+    for name in names:
+        exe = shutil.which(name)
+        if not exe:
+            continue
+        try:
+            result = subprocess.run(
+                [exe, *args], capture_output=True, text=True,
+                timeout=3, stdin=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        match = _VERSION_RE.search((result.stdout or "") + (result.stderr or ""))
+        if match:
+            return match.group(0)[:32]
+    return None
+
+
+def _in_docker():
+    try:
+        if os.path.exists("/.dockerenv"):
+            return True
+        with open("/proc/1/cgroup") as handle:
+            if any(t in handle.read() for t in ("docker", "containerd", "kubepods")):
+                return True
+        # cgroup v2 hides the markers above; mountinfo still shows them
+        with open("/proc/self/mountinfo") as handle:
+            return "/docker/containers/" in handle.read()
+    except OSError:
+        return False
+
+
 def collect_survey_data(circtools_version):
     os_name, os_version = _os_info()
     return {
         "schema_version": SCHEMA_VERSION,
         "os": os_name,
         "os_version": os_version,
+        "architecture": platform.machine() or "unknown",
         "circtools_version": str(circtools_version),
         "python_version": platform.python_version(),
+        "bedtools_version": _tool_version(["bedtools"]),
+        "star_version": _tool_version(["STAR", "star"]),
+        "in_docker": _in_docker(),
     }
 
 
@@ -174,13 +221,23 @@ def _ask_user(data):
         "which platforms to support:\n\n"
         "    Operating system:    %s\n"
         "    OS version:          %s\n"
+        "    Architecture:        %s\n"
         "    circtools version:   %s\n"
         "    Python version:      %s\n"
+        "    bedtools version:    %s\n"
+        "    STAR version:        %s\n"
+        "    Running in Docker:   %s\n"
         "\n"
+        "In addition, the server derives your approximate country from your IP\n"
+        "address when the data arrives. The IP address itself is not stored.\n"
         "Nothing else is collected. To disable this question permanently without\n"
         "answering, set the environment variable %s=1.\n"
-        "\n" % (data["os"], data["os_version"], data["circtools_version"],
-                data["python_version"], OPT_OUT_ENV)
+        "\n" % (data["os"], data["os_version"], data["architecture"],
+                data["circtools_version"], data["python_version"],
+                data["bedtools_version"] or "not found",
+                data["star_version"] or "not found",
+                "yes" if data["in_docker"] else "no",
+                OPT_OUT_ENV)
     )
     err.flush()
 
@@ -213,6 +270,27 @@ def maybe_run_survey(circtools_version, argv=None):
         pass
 
 
+def send_bot_ping(circtools_version, argv=None):
+    """Report an automated (-bot) run. Never raises, never prompts, never writes local state."""
+    try:
+        if os.environ.get(OPT_OUT_ENV):
+            return
+        argv = argv if argv is not None else sys.argv[1:]
+        if not argv or argv[0] in _PASSTHROUGH_ARGS:
+            return
+        os_name, os_version = _os_info()
+        _send({
+            "schema_version": SCHEMA_VERSION,
+            "bot_mode": True,
+            "os": os_name,
+            "os_version": os_version,
+            "architecture": platform.machine() or "unknown",
+            "circtools_version": str(circtools_version),
+            "python_version": platform.python_version(),
+        })
+    except Exception:
+        pass
+
 def _maybe_run_survey(circtools_version, argv):
     if os.environ.get(OPT_OUT_ENV):
         return
@@ -230,9 +308,18 @@ def _maybe_run_survey(circtools_version, argv):
 
         # accepted earlier but the upload failed (e.g. offline): retry quietly
         if state.get("status") == "accepted":
-            if _send(collect_survey_data(circtools_version)):
+            payload = state.get("payload")
+            if not isinstance(payload, dict):
+                # consent predates the extended survey: ask again next time
+                try:
+                    _state_file().unlink()
+                except OSError:
+                    pass
+                return
+            if _send(payload):
                 state["sent"] = True
                 state["sent_at"] = int(time.time())
+                state.pop("payload", None)
                 _save_state(state)
             return
 
@@ -260,10 +347,13 @@ def _maybe_run_survey(circtools_version, argv):
         sys.stderr.write("No problem, you won't be asked again.\n\n")
         return
 
-    state = {"status": "accepted", "answered_at": int(time.time()), "sent": False}
+    # keep exactly what the user agreed to, so a retry never sends anything else
+    state = {"status": "accepted", "answered_at": int(time.time()),
+             "sent": False, "payload": data}
     if _send(data):
         state["sent"] = True
         state["sent_at"] = int(time.time())
+        state.pop("payload", None)
         sys.stderr.write("Thank you for participating!\n\n")
     else:
         sys.stderr.write("Thank you! Couldn't reach the survey server just now; "
