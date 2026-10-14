@@ -42,7 +42,7 @@ elif [ "$system" = "Linux" ]; then
     if [ "$machine" = "x86_64" ] || [ "$machine" = "amd64" ]; then
         platform_dir="AMD64/linux"
     elif [ "$machine" = "aarch64" ] || [ "$machine" = "arm64" ]; then
-        platform_dir="AMD64/linux"
+        platform_dir="ARM64/linux"
     else
         echo "Unsupported Linux architecture: $machine"
         exit 1

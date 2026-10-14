@@ -55,7 +55,10 @@ class liftover(object):
             else:
                 raise RuntimeError(f"Unsupported Mac architecture: {machine}")
         elif system == "Linux":
-            platform_dir = "AMD64/linux"
+            if machine ==  "x86_64":
+                platform_dir = "AMD64/linux"
+            elif machine == "arm64":
+                platform_dir = "ARM64/linux"
         else:
             raise RuntimeError(f"Unsupported operating system: {system}")
 
