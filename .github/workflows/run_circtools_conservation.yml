@@ -2,6 +2,7 @@ name: circtools conservation (pip)
 
 on:
   workflow_run:
+    push:
     workflows: ["API Health Check"]
     types: [completed]
     

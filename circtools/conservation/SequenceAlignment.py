@@ -45,7 +45,12 @@ class Alignment(object):
             else:
                 raise RuntimeError(f"Unsupported Mac architecture: {machine}")
         elif system == "Linux":
-            platform_dir = "AMD64/linux"
+            if machine in ("x86_64", "amd64"):
+                platform_dir = "AMD64/linux"
+            elif machine in ("aarch64", "arm64"):
+                platform_dir = "ARM64/linux"
+            else:
+                raise RuntimeError(f"Unsupported linux architecture: {machine}")
         else:
             raise RuntimeError(f"Unsupported operating system: {system}")
 
