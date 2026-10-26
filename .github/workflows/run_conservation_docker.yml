@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run-circtest-docker:
+  run-conservation-docker:
     name: circtools circtest (Docker)
     runs-on: ubuntu-24.04
     env:
